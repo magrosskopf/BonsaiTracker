@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  bonsais   Bonsai[]
+}
+
+model Bonsai {
+  id          Int         @id @default(autoincrement())
+  name        String
+  location    String
+  species     String
+  age         Int
+  ownedSince  DateTime
+  notes       String?
+  images      String[]
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  subEntries  SubEntry[]
+}
+
+model SubEntry {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  notes     String?
+  images    String[]
+  bonsaiId  Int
+  bonsai    Bonsai   @relation(fields: [bonsaiId], references: [id])
+}
