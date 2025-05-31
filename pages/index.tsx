@@ -1,11 +1,12 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 
-export default function Home() {
+const Home = () => {
   const { data: session } = useSession();
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-bold">Willkommen beim Bonsai Tracker</h1>
+      <h1 className="text-4xl font-bold">Welcome to Bonsai Tracker</h1>
+      <p>This is the home page.</p>
       {!session ? (
         <button
           onClick={() => signIn()}
@@ -26,4 +27,6 @@ export default function Home() {
       )}
     </div>
   );
-}
+};
+
+export default Home;

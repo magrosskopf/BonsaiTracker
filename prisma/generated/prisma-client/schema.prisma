@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  name          String?
+  password      String? // Optional
+  bonsais       Bonsai[]
+  emailVerified DateTime?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Bonsai {
+  id         Int        @id @default(autoincrement())
+  name       String
+  location   String
+  species    String
+  age        Int
+  ownedSince DateTime // Ensure this is of type DateTime
+  notes      String?
+  images     String[]
+  userId     Int
+  user       User       @relation(fields: [userId], references: [id])
+  subEntries SubEntry[]
+}
+
+model SubEntry {
+  id       Int      @id @default(autoincrement())
+  date     DateTime
+  notes    String?
+  images   String[]
+  bonsaiId Int
+  bonsai   Bonsai   @relation(fields: [bonsaiId], references: [id])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
