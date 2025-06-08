@@ -229,6 +229,12 @@ export default function BonsaiDetail() {
             <p className="mt-4 text-center text-sm text-gray-600">{uploadStatus}</p>
           )}
         </div>
+        <div className="mt-6">
+          <a href={`/bonsai/${id}/subentries`}
+          className="px-4 py-2 bg-green-500 text-white rounded shadow hover:bg-green-600 transition">
+            Status hinzufügen
+          </a>
+      </div>
       </div>
     </div>
   );

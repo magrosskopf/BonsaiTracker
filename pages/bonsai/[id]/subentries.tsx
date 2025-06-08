@@ -12,19 +12,32 @@ export default function SubEntries() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("SubEntries ID:", id); // Debugging log
     if (id) {
       fetch(`/api/subentries?bonsaiId=${id}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to fetch subentries");
+          }
+          return res.json();
+        })
         .then((data) => {
           setSubEntries(data);
           setLoading(false);
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error("Error fetching subentries:", err); // Debugging log
           setError("Fehler beim Laden der Sub-Einträge.");
           setLoading(false);
         });
     }
   }, [id]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setNewEntry({ ...newEntry, images: Array.from(e.target.files) });
+    }
+  };
 
   const handleAddSubEntry = async () => {
     if (!newEntry.date) {
@@ -35,10 +48,16 @@ export default function SubEntries() {
       setUploadStatus("Notizen dürfen maximal 500 Zeichen lang sein.");
       return;
     }
+
+    const formData = new FormData();
+    formData.append("bonsaiId", id as string);
+    formData.append("date", newEntry.date);
+    formData.append("notes", newEntry.notes);
+    newEntry.images.forEach((image) => formData.append("images", image));
+
     const res = await fetch("/api/subentries", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...newEntry, bonsaiId: id }),
+      body: formData,
     });
 
     if (res.ok) {
@@ -88,6 +107,12 @@ export default function SubEntries() {
           value={newEntry.notes}
           onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })}
           className="mt-2 border p-2 w-full"
+        />
+        <input
+          type="file"
+          multiple
+          onChange={handleFileChange}
+          className="mt-2"
         />
         <button
           onClick={handleAddSubEntry}

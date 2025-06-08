@@ -102,6 +102,26 @@ export default function BonsaiDetail() {
           )}
         </div>
         <div className="mt-6">
+          {bonsai.subEntries?.map((entry: any) => (
+            <div key={entry.id} className="border p-4 mb-4 rounded-lg shadow-sm">
+              <p className="text-gray-600">
+                Datum: {new Date(entry.date).toLocaleDateString()}
+              </p>
+              <p className="text-gray-600">Notizen: {entry.notes || "Keine Notizen"}</p>
+              <div className="grid grid-cols-3 gap-4 mt-2">
+                {entry.images?.map((image: string, index: number) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`Sub-Eintrag Bild ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-md"
+                  />
+                ))}
+                </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6">
           
           <Link href={`/bonsai/edit/${id}`}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"

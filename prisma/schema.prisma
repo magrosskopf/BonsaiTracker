@@ -48,17 +48,16 @@ model Session {
 }
 
 model Bonsai {
-  id       Int     @id @default(autoincrement())
-  name     String
-  location String
-  species  String
-  age         Int
-  ownedSince  DateTime    // Ensure this is of type DateTime
-  notes       String?
-  images      String[]
+  id        Int        @id @default(autoincrement())
+  name      String
+  location  String
+  species   String
+  age       Int
+  notes     String?
+  images    String[]
+  subEntries SubEntry[]
   userId      Int
   user        User        @relation(fields: [userId], references: [id])
-  subEntries  SubEntry[]
 }
 
 model SubEntry {
