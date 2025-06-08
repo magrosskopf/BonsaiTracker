@@ -43,6 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         age,
         notes: "",
         images: [],
+        ownedSince: parsedOwnedSince, // Use the parsed Date object
         user: { connect: { email: session.user.email } }, // Associate bonsai with the user
       },
     });
