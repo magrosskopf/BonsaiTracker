@@ -7,15 +7,18 @@ const prisma = new PrismaClient().$extends(withAccelerate())
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
 
-  // Ensure `id` is a valid number
-  const bonsaiId = parseInt(id as string, 10);
-  if (isNaN(bonsaiId) || bonsaiId <= 0) {
+  // Ensure `id` is a valid number if provided
+  const bonsaiId = id ? parseInt(id as string, 10) : null;
+  if (id && (isNaN(bonsaiId) || bonsaiId <= 0)) {
     console.error("Invalid ID received:", id);
     return res.status(400).json({ error: "Ungültige ID. Die ID muss eine positive Zahl sein." });
   }
 
   switch (req.method) {
     case "GET":
+      if (!bonsaiId) {
+        return res.status(400).json({ error: "ID ist erforderlich für GET-Anfragen." });
+      }
       try {
         const bonsai = await prisma.bonsai.findUnique({
           where: { id: bonsaiId },
@@ -31,32 +34,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(500).json({ error: "Interner Serverfehler." });
       }
       break;
+
     case "PATCH":
-      const { images } = req.body;
-      if (!Array.isArray(images)) {
-        return res.status(400).json({ error: "Bilder müssen ein Array sein." });
+      if (!bonsaiId) {
+        return res.status(400).json({ error: "ID ist erforderlich für PATCH-Anfragen." });
       }
+      const { name, location, species, age, notes, images } = req.body;
 
       try {
-        // Validate and process images (e.g., base64 strings)
-        const processedImages = images.map((image: string) => {
-          if (!image.startsWith("data:image/")) {
-            throw new Error("Ungültiges Bildformat.");
-          }
-          return image; // Store as-is or process further if needed
-        });
+        const updateData: any = {};
+        if (name) updateData.name = name;
+        if (location) updateData.location = location;
+        if (species) updateData.species = species;
+        if (age) updateData.age = age;
+        if (notes) updateData.notes = notes;
+        if (images && Array.isArray(images)) {
+          updateData.images = images.map((image: string) => {
+            if (!image.startsWith("data:image/")) {
+              throw new Error("Ungültiges Bildformat.");
+            }
+            return image; // Store as-is or process further if needed
+          });
+        }
 
-        // Update bonsai with image data
         const updatedBonsai = await prisma.bonsai.update({
           where: { id: bonsaiId },
-          data: { images: processedImages },
+          data: updateData,
         });
 
         res.status(200).json(updatedBonsai);
       } catch (error) {
-        res.status(500).json({ error: "Fehler beim Speichern der Bilder." });
+        console.error("Error updating Bonsai:", error);
+        res.status(500).json({ error: "Fehler beim Aktualisieren des Bonsais." });
       }
       break;
+
     default:
       res.setHeader("Allow", ["GET", "PATCH"]);
       res.status(405).end(`Method Not Allowed`);
