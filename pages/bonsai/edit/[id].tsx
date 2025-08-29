@@ -51,7 +51,7 @@ export default function BonsaiDetail() {
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("bonsaiId", id.toString()); // Include bonsaiId in the request
+    formData.append("bonsaiId", id.toString()); // Include bonsaiId in the request 
 
     const res = await fetch("/api/upload", {
       method: "POST",

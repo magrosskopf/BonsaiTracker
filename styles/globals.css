@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+@plugin "daisyui";
 /* Ensure Tailwind CSS is properly configured */
 
 /* Add any custom styles below */

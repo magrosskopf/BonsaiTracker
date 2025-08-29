@@ -39,26 +39,42 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen w-full max-w-md">
+    <div className="w-full  p-5">
       <h1 className="text-4xl font-bold">Deine Bonsai</h1>
-      <ul className="mt-4 flex flex-row">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5">
         {bonsais.map((bonsai) => (
-            <Link href={`/bonsai/${bonsai.id}`} className="h-full w-full">
-          <li key={bonsai.id} className="border p-4 mb-2 mx-1">
-            
-                { bonsai.images.length > 0 &&
-                    <Image src={bonsai.images[0] || "/placeholder.png"} alt={bonsai.name} width={150} height={150} className="mb-2" />
-                }
-                <h2 className="text-2xl">{bonsai.name}</h2>
-                <p>Standort: {bonsai.location}</p>
-                <p>Art: {bonsai.species}</p>
-                
-                <p>Details ansehen</p>
-            </li>
-            </Link>
-
+           
+          <div className="card card-md  bg-base-300 w-96 shadow-sm ">
+             <figure>
+               {bonsai.images.length > 0 ? (
+                 <img
+                   src={bonsai.images[0] || "/public/uploads/1748636775038-fleisch_steak.jpg"}
+                   alt={bonsai.name}
+                    className="w-full h-48 object-cover rounded-lg "
+                 />
+               ) : (
+                 <img
+                   src="/public/uploads/1748636775038-fleisch_steak.jpg"
+                   alt="Placeholder"
+                   width={150}
+                   height={150}
+                   className="mb-2 object-cover"
+                 />
+               )}
+             </figure>
+             <div className="card-body ">
+               <div>
+                 <h2 className="card-title">{bonsai.name}</h2>
+                 <p>Standort: {bonsai.location}</p>
+                 <p>Art: {bonsai.species}</p>
+               </div>
+               <div className="card-actions justify-end mt-4">
+                 <a href={`/bonsai/${bonsai.id}`} className="btn btn-primary">Details ansehen</a>
+               </div>
+             </div>
+         </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

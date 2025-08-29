@@ -50,9 +50,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (notes) updateData.notes = notes;
         if (images && Array.isArray(images)) {
           updateData.images = images.map((image: string) => {
-            if (!image.startsWith("data:image/")) {
-              throw new Error("Ungültiges Bildformat.");
-            }
             return image; // Store as-is or process further if needed
           });
         }

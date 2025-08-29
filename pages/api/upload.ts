@@ -33,7 +33,7 @@ apiRoute.post((req: any, res: NextApiResponse) => {
   res.status(200).json({ filePath: `/uploads/${req.file.filename}` });
 });
 
-export default apiRoute;
+export default apiRoute.handler();
 
 export const config = {
   api: {

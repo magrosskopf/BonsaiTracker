@@ -68,10 +68,11 @@ export default function BonsaiDetail() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
-      <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-4xl">
-        <h1 className="text-4xl font-bold text-center mb-4">{bonsai.name}</h1>
-        <div className="text-center text-gray-600 mb-6">
+    <div className="flex flex-col items-center justify-center min-h-screen  p-6">
+      <div className="card card-lg shadow-lg bg-base-300 rounded-lg p-6 w-full max-w-4xl">
+      <div className="card-body">
+        <h1 className="text-4xl card-title font-bold text-center mb-4">{bonsai.name}</h1>
+        <div className="text-center text-gray-300 mb-6">
           <p>Standort: {bonsai.location}</p>
           <p>Art: {bonsai.species}</p>
           <p>Alter: {bonsai.age} Jahre</p>
@@ -121,7 +122,7 @@ export default function BonsaiDetail() {
             </div>
           ))}
         </div>
-        <div className="mt-6">
+        <div className="card-actions justify-end mt-6">
           
           <Link href={`/bonsai/edit/${id}`}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"
@@ -130,6 +131,7 @@ export default function BonsaiDetail() {
           </Link>
           
         </div>
+      </div>
       </div>
     </div>
   );

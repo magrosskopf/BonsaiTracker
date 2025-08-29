@@ -5,8 +5,8 @@ import "../styles/globals.css";
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <SessionProvider session={pageProps.session}>
-      <Navigation />
       <Component {...pageProps} />
+      <Navigation />
     </SessionProvider>
   );
 }
