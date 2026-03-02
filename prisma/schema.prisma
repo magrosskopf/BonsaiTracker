@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./generated/prisma-client"
 }
 
 datasource db {
@@ -9,14 +8,19 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  name          String?
-  password      String?  // Optional
-  bonsais       Bonsai[]
-  emailVerified DateTime?
-  accounts      Account[]
-  sessions      Session[]
+  id               Int           @id @default(autoincrement())
+  email            String        @unique
+  name             String?
+  bio              String?
+  profileImageUrl  String?
+  emailVerified    DateTime?
+  accounts         Account[]
+  sessions         Session[]
+  bonsais          Bonsai[]
+  reminders        Reminder[]
+  posts            Post[]
+  postLikes        PostLike[]
+  postComments     PostComment[]
 }
 
 model Account {
@@ -48,25 +52,150 @@ model Session {
 }
 
 model Bonsai {
-  id        Int        @id @default(autoincrement())
-  name      String
-  location  String
-  species   String
-  age       Int
-  notes     String?
-  images    String[]
-  subEntries SubEntry[]
-  userId      Int
-  user        User        @relation(fields: [userId], references: [id])
+  id                 Int                  @id @default(autoincrement())
+  userId             Int
+  deletedAt          DateTime?
+  name               String
+  nickname           String?
+  species            String
+  latinName          String?
+  location           String
+  indoorOutdoor      IndoorOutdoorEnum
+  age                Int
+  heightCm           Int?
+  widthCm            Int?
+  trunkDiameterMm    Int?
+  style              String
+  customStyle        String?
+  ownedSince         DateTime
+  acquiredFrom      String?
+  purchasePriceCents Int?
+  healthStatus      HealthStatusEnum
+  developmentStage  DevelopmentStageEnum
+  lastRepotDate     DateTime?
+  nextRepotDue      DateTime?
+  winterHardiness   WinterHardinessEnum?
+  sunExposure       SunExposureEnum?
+  potType           String?
+  potColor          String?
+  wateringNotes     String?
+  fertilizingNotes  String?
+  pruningNotes      String?
+  wiringNotes       String?
+  notes             String?
+  images            String[]             @default([])
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subEntries         SubEntry[]
+  reminders          Reminder[]
+  posts              Post[]
+
+  @@index([userId])
+  @@index([userId, deletedAt, updatedAt, id(sort: Desc)])
 }
 
 model SubEntry {
+  id                Int               @id @default(autoincrement())
+  bonsaiId          Int
+  date              DateTime
+  entryType         EntryTypeEnum
+  healthObservation HealthStatusEnum?
+  performedActions  String[]          @default([])
+  nextAction        String?
+  reminderDate      DateTime?
+  notes             String?
+  images            String[]          @default([])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  bonsai            Bonsai            @relation(fields: [bonsaiId], references: [id], onDelete: Cascade)
+  reminders         Reminder[]
+  postReferences    PostEntryReference[]
+
+  @@index([bonsaiId])
+  @@index([bonsaiId, date(sort: Desc), id(sort: Desc)])
+}
+
+model Reminder {
+  id           Int            @id @default(autoincrement())
+  userId       Int
+  bonsaiId     Int
+  subEntryId   Int?
+  title        String?
+  reminderDate DateTime
+  status       ReminderStatus @default(PENDING)
+  completedAt  DateTime?
+  snoozedUntil DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bonsai       Bonsai         @relation(fields: [bonsaiId], references: [id], onDelete: Cascade)
+  subEntry     SubEntry?      @relation(fields: [subEntryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, reminderDate])
+  @@index([bonsaiId, status, reminderDate])
+  @@index([subEntryId])
+}
+
+model Post {
+  id              Int                  @id @default(autoincrement())
+  userId          Int
+  bonsaiId        Int
+  text            String
+  postType        PostType
+  snapshotName    String
+  snapshotSpecies String
+  images          String[]             @default([])
+  archivedAt      DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bonsai          Bonsai               @relation(fields: [bonsaiId], references: [id], onDelete: Cascade)
+  entryReferences PostEntryReference[]
+  likes           PostLike[]
+  comments        PostComment[]
+
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([bonsaiId, createdAt(sort: Desc)])
+}
+
+model PostEntryReference {
+  id         Int       @id @default(autoincrement())
+  postId     Int
+  subEntryId Int?
+  createdAt  DateTime  @default(now())
+  post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  subEntry    SubEntry? @relation(fields: [subEntryId], references: [id], onDelete: SetNull)
+
+  @@index([postId])
+  @@index([subEntryId])
+}
+
+model PostLike {
   id        Int      @id @default(autoincrement())
-  date      DateTime
-  notes     String?
-  images    String[]
-  bonsaiId  Int
-  bonsai    Bonsai   @relation(fields: [bonsaiId], references: [id])
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId])
+}
+
+model PostComment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt(sort: Desc)])
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -75,4 +204,59 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum IndoorOutdoorEnum {
+  INDOOR
+  OUTDOOR
+  BEIDES
+}
+
+enum HealthStatusEnum {
+  UNBEKANNT
+  SEHR_GUT
+  GUT
+  BEOBACHTEN
+  KRITISCH
+}
+
+enum DevelopmentStageEnum {
+  ROHLING
+  IN_GESTALTUNG
+  VERFEINERUNG
+  REIF
+}
+
+enum WinterHardinessEnum {
+  NICHT_WINTERHART
+  BEDINGT_WINTERHART
+  WINTERHART
+}
+
+enum SunExposureEnum {
+  VOLLE_SONNE
+  HALBSCHATTEN
+  SCHATTEN
+}
+
+enum EntryTypeEnum {
+  GIESSEN
+  DUENGEN
+  SCHNEIDEN
+  DRAHTEN
+  UMTOPFEN
+  KONTROLLE
+  FOTO_UPDATE
+  SONSTIGES
+}
+
+enum ReminderStatus {
+  PENDING
+  DONE
+  SNOOZED
+}
+
+enum PostType {
+  SHOWCASE
+  HELP
 }

@@ -1,241 +1,160 @@
-import React from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import Navigation from "swiper";
-import Pagination from "swiper";
+import { useSession } from "next-auth/react";
+import BonsaiForm from "@/components/BonsaiForm";
+import { bonsaiDetailToFormValues, bonsaiFormValuesToPayload } from "@/lib/forms";
+import type { BonsaiDetail } from "@/types/dto";
+import type { BonsaiFormValues } from "@/types/forms";
 
-export default function BonsaiDetail() {
+export default function EditBonsaiPage() {
   const router = useRouter();
   const { id } = router.query;
-  const [bonsai, setBonsai] = useState(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [addedDate, setAddedDate] = useState<string | null>(null);
-  const [name, setName] = useState<string | null>(null);
-  const [place, setPlace] = useState<string | null>(null);
-  const [type, setType] = useState<string | null>(null);
-  const [age, setAge] = useState<number | null>(null);
-  const [notes, setNotes] = useState<string | null>(null);
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      void router.replace("/");
+    },
+  });
+  const [bonsai, setBonsai] = useState<BonsaiDetail | null>(null);
+  const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
-      fetch(`/api/bonsais/${id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setBonsai(data);
-          setAddedDate(data.addedDate || null); // Initialize addedDate
-          setName(data.name || null);
-          setPlace(data.location || null);
-          setType(data.species || null);
-          setAge(data.age || null);
-          setNotes(data.notes || null);
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+    if (!id || status !== "authenticated") {
+      return;
     }
-  }, [id]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+    void (async () => {
+      const response = await fetch(`/api/bonsais/${id}`);
+      const json = (await response.json()) as { ok: boolean; data?: BonsaiDetail; error?: { message: string } };
+
+      if (!response.ok || !json.ok || !json.data) {
+        setError(json.error?.message ?? "Der Bonsai konnte nicht geladen werden.");
+        return;
+      }
+
+      setBonsai(json.data);
+      setImages(json.data.images);
+    })();
+  }, [id, status]);
+
+  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0 || !id) {
+      return;
     }
-  };
 
-  const handleUpload = async () => {
-    if (!file || !id) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const uploaded = await Promise.all(
+        files.map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("bonsaiId", String(id));
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("bonsaiId", id.toString()); // Include bonsaiId in the request 
-
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const updatedBonsai = await fetch(`/api/bonsais/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images: [...(bonsai.images || []), data.filePath] }),
-      }).then((res) => res.json());
-
-      setBonsai(updatedBonsai);
-      setUploadStatus("Bild erfolgreich hochgeladen.");
-    } else {
-      setUploadStatus("Upload fehlgeschlagen.");
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const json = (await response.json()) as { ok: boolean; data?: { filePath: string }; error?: { message: string } };
+          if (!response.ok || !json.ok || !json.data) {
+            throw new Error(json.error?.message ?? "Das Bild konnte nicht hochgeladen werden.");
+          }
+          return json.data.filePath;
+        }),
+      );
+      setImages((current) => [...current, ...uploaded]);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Die Bilder konnten nicht hochgeladen werden.");
+    } finally {
+      setUploading(false);
     }
-  };
-
-  const handleDateChange = async () => {
-    if (!addedDate || !id) return;
-
-    const res = await fetch(`/api/bonsais/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addedDate }),
-    });
-
-    if (res.ok) {
-      const updatedBonsai = await res.json();
-      setBonsai(updatedBonsai);
-      setUploadStatus("Datum erfolgreich aktualisiert.");
-    } else {
-      setUploadStatus("Fehler beim Aktualisieren des Datums.");
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!id) return;
-
-    const res = await fetch(`/api/bonsais/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, location: place, species: type, age, notes }),
-    });
-
-    if (res.ok) {
-      const updatedBonsai = await res.json();
-      setBonsai(updatedBonsai);
-      setUploadStatus("Bonsai erfolgreich aktualisiert.");
-    } else {
-      setUploadStatus("Fehler beim Aktualisieren des Bonsais.");
-    }
-  };
-
-  if (loading) {
-    return <p className="text-center mt-10">Lade Bonsai-Daten...</p>;
   }
 
-  if (!bonsai) {
-    return <p className="text-center mt-10">Bonsai nicht gefunden.</p>;
+  async function handleSubmit(values: BonsaiFormValues) {
+    if (!id) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
+    const response = await fetch(`/api/bonsais/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...bonsaiFormValuesToPayload(values),
+        images,
+      }),
+    });
+    const json = (await response.json()) as { ok: boolean; data?: BonsaiDetail; error?: { message: string } };
+    setSubmitting(false);
+
+    if (!response.ok || !json.ok || !json.data) {
+      setError(json.error?.message ?? "Der Bonsai konnte nicht gespeichert werden.");
+      return;
+    }
+
+    setBonsai(json.data);
+    setImages(json.data.images);
+    setSuccess("Änderungen gespeichert.");
+  }
+
+  if (status !== "authenticated" || !bonsai) {
+    return null;
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
-      <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-4xl">
-        <h1 className="text-4xl font-bold text-center mb-4">Bonsai bearbeiten</h1>
-        <div className="text-center text-gray-600 mb-6">
-          <div className="mt-4">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Name:
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name || ""}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
-          <div className="mt-4">
-            <label htmlFor="place" className="block text-sm font-medium text-gray-700">
-              Standort:
-            </label>
-            <input
-              type="text"
-              id="place"
-              value={place || ""}
-              onChange={(e) => setPlace(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
-          <div className="mt-4">
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-              Art:
-            </label>
-            <input
-              type="text"
-              id="type"
-              value={type || ""}
-              onChange={(e) => setType(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
-          <div className="mt-4">
-            <label htmlFor="age" className="block text-sm font-medium text-gray-700">
-              Alter:
-            </label>
-            <input
-              type="number"
-              id="age"
-              value={age || ""}
-              onChange={(e) => setAge(Number(e.target.value))}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
-          <div className="mt-4">
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-              Notizen:
-            </label>
-            <textarea
-              id="notes"
-              value={notes || ""}
-              onChange={(e) => setNotes(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
-          </div>
-          <button
-            onClick={handleUpdate}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"
-          >
-            Aktualisieren
-          </button>
+    <main className="page-shell mx-auto max-w-5xl px-4 py-6">
+      <div className="hero-panel mb-6 flex items-center justify-between gap-4 rounded-[2rem] p-6">
+        <div>
+          <p className="text-sm uppercase tracking-[0.2em] text-primary">Bearbeiten</p>
+          <h1 className="text-3xl font-bold">{bonsai.name}</h1>
         </div>
-        <div className="mt-6">
-          <h2 className="text-2xl font-semibold mb-4">Bilder</h2>
-          {bonsai.images?.length > 0 ? (
-            <Swiper
-              navigation
-              pagination={{ clickable: true }}
-              spaceBetween={20}
-              slidesPerView={1}
-              className="w-full"
-            >
-              {bonsai.images.map((image: string, index: number) => (
-                <SwiperSlide key={index}>
-                  <img
-                    src={image}
-                    alt={`Bonsai Bild ${index + 1}`}
-                    className="w-full h-64 object-cover rounded-lg shadow-md"
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          ) : (
-            <p className="text-center text-gray-500">Keine Bilder verfügbar.</p>
-          )}
-        </div>
-        <div className="mt-6">
-          <h2 className="text-2xl font-semibold mb-4">Bild hinzufügen</h2>
-          <input
-            type="file"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-          <button
-            onClick={handleUpload}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"
-          >
-            Hochladen
-          </button>
-          {uploadStatus && (
-            <p className="mt-4 text-center text-sm text-gray-600">{uploadStatus}</p>
-          )}
-        </div>
-        <div className="mt-6">
-          <a href={`/bonsai/${id}/subentries`}
-          className="px-4 py-2 bg-green-500 text-white rounded shadow hover:bg-green-600 transition">
-            Status hinzufügen
-          </a>
+        <Link href={`/bonsai/${bonsai.id}`} className="btn btn-outline">
+          Zurück
+        </Link>
       </div>
-      </div>
-    </div>
+
+      <section className="surface-card mb-6 card">
+        <div className="card-body gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 className="card-title">Bilder</h2>
+            <label className="btn btn-secondary">
+              {uploading ? "Lädt..." : "Bild hinzufügen"}
+              <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleUpload} />
+            </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {images.map((image) => (
+              <div key={image} className="relative">
+                <img src={image} alt="Bonsai" className="h-40 w-full rounded-2xl object-cover" loading="lazy" />
+                <button
+                  type="button"
+                  className="btn btn-error btn-xs absolute right-2 top-2"
+                  onClick={() => setImages((current) => current.filter((entry) => entry !== image))}
+                >
+                  Entfernen
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <BonsaiForm
+        initialValues={bonsaiDetailToFormValues(bonsai)}
+        submitLabel="Änderungen speichern"
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        error={error}
+        success={success}
+      />
+    </main>
   );
 }

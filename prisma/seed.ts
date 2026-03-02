@@ -3,11 +3,14 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.user.create({
-    data: {
-      email: "info@magrosskopf.de",
-      name: "Test User",
-      password: "hashedpassword", // Ensure this matches the schema (optional or required)
+  await prisma.user.upsert({
+    where: { email: "demo@example.com" },
+    create: {
+      email: "demo@example.com",
+      name: "Demo Benutzer",
+    },
+    update: {
+      name: "Demo Benutzer",
     },
   });
 }

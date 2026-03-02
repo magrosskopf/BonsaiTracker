@@ -1,42 +1,72 @@
-import {createRouter} from "next-connect";
+import type { NextApiRequest, NextApiResponse } from "next";
 import multer from "multer";
-import { NextApiRequest, NextApiResponse } from "next";
+import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/authz";
+import { fail, ok } from "@/lib/api/response";
+import { runMiddleware } from "@/lib/middleware";
+import { createImageUpload, filePathFor } from "@/lib/uploads";
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: "./public/uploads",
-    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-  }),
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png"];
-    if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error("Nur JPEG- und PNG-Dateien sind erlaubt."));
+type UploadRequest = NextApiRequest & {
+  file?: Express.Multer.File;
+};
+
+const upload = createImageUpload("");
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
+  const userId = await requireUser(req, res);
+  if (!userId) {
+    return;
+  }
+
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    fail(res, "BAD_REQUEST", `Methode ${req.method} wird nicht unterstützt.`, 400);
+    return;
+  }
+
+  try {
+    await runMiddleware(req as UploadRequest, res, upload.single("file"));
+  } catch (error) {
+    if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+      fail(res, "PAYLOAD_TOO_LARGE", "Dateien dürfen maximal 5 MB groß sein.", 413);
+      return;
     }
-    cb(null, true);
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, // Maximal 5 MB
-});
-const apiRoute = createRouter<NextApiRequest, NextApiResponse>();
- apiRoute.handler({
-  onError(error, req: NextApiRequest, res: NextApiResponse) {
-    const errorMessage = error instanceof Error ? error.message : "Unbekannter Fehler";
-    res.status(500).json({ error: `Fehler: ${errorMessage}` });
-  },
-  onNoMatch(req: NextApiRequest, res: NextApiResponse) {
-    res.status(405).json({ error: `Methode ${req.method} nicht erlaubt.` });
-  },
-});
+    if (error instanceof Error && error.message === "UNSUPPORTED_MEDIA_TYPE") {
+      fail(res, "UNSUPPORTED_MEDIA_TYPE", "Es sind nur JPEG-, PNG- oder WEBP-Dateien erlaubt.", 415);
+      return;
+    }
+    fail(res, "BAD_REQUEST", "Der Upload konnte nicht verarbeitet werden.", 400);
+    return;
+  }
 
-apiRoute.use(upload.single("file"));
+  const bonsaiId = Number(req.body.bonsaiId);
+  if (req.body.bonsaiId !== undefined && req.body.bonsaiId !== "") {
+    if (!Number.isInteger(bonsaiId) || bonsaiId <= 0) {
+      fail(res, "BAD_REQUEST", "Ungültige Bonsai-ID.", 400);
+      return;
+    }
 
-apiRoute.post((req: any, res: NextApiResponse) => {
-  res.status(200).json({ filePath: `/uploads/${req.file.filename}` });
-});
+    const bonsai = await prisma.bonsai.findFirst({
+      where: { id: bonsaiId, userId, deletedAt: null },
+    });
 
-export default apiRoute.handler();
+    if (!bonsai) {
+      fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
+      return;
+    }
+  }
+
+  const file = (req as UploadRequest).file;
+  if (!file) {
+    fail(res, "BAD_REQUEST", "Es wurde keine Datei hochgeladen.", 400);
+    return;
+  }
+
+  ok(res, { filePath: filePathFor("", file) });
+}
 
 export const config = {
   api: {
-    bodyParser: false, // Deaktiviert Body-Parsing für Datei-Uploads
+    bodyParser: false,
   },
 };

@@ -1,105 +1,112 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "../../lib/prisma"; // Adjust the path if necessary
+import type { NextApiRequest, NextApiResponse } from "next";
+import type { Prisma } from "@prisma/client";
 import multer from "multer";
-import { createRouter } from "next-connect";
+import { ZodError } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/authz";
+import { fail, ok } from "@/lib/api/response";
+import { firstQueryValue, toOptionalStringArray } from "@/lib/api/request";
+import { mapSubEntryToDto } from "@/lib/mappers";
+import { runMiddleware } from "@/lib/middleware";
+import { createImageUpload, filePathFor } from "@/lib/uploads";
+import { subEntryCreateSchema } from "@/lib/validators/subentry";
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: "./public/uploads/subentries",
-    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-  }),
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png"];
-    if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error("Nur JPEG- und PNG-Dateien sind erlaubt."));
+type MulterRequest = NextApiRequest & {
+  files?: Express.Multer.File[];
+};
+
+const upload = createImageUpload("subentries");
+
+function handleUploadError(res: NextApiResponse, error: unknown): void {
+  if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+    fail(res, "PAYLOAD_TOO_LARGE", "Dateien dürfen maximal 5 MB groß sein.", 413);
+    return;
+  }
+  if (error instanceof Error && error.message === "UNSUPPORTED_MEDIA_TYPE") {
+    fail(res, "UNSUPPORTED_MEDIA_TYPE", "Es sind nur JPEG-, PNG- oder WEBP-Dateien erlaubt.", 415);
+    return;
+  }
+  fail(res, "BAD_REQUEST", "Die Upload-Daten konnten nicht verarbeitet werden.", 400);
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
+  const userId = await requireUser(req, res);
+  if (!userId) {
+    return;
+  }
+
+  if (req.method === "GET") {
+    const bonsaiId = Number(firstQueryValue(req.query.bonsaiId));
+    if (!Number.isInteger(bonsaiId) || bonsaiId <= 0) {
+      fail(res, "BAD_REQUEST", "Ungültige Bonsai-ID.", 400);
+      return;
     }
-    cb(null, true);
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, // Maximal 5 MB
-});
 
-const apiRoute = createRouter<NextApiRequest, NextApiResponse>();
+    const bonsai = await prisma.bonsai.findFirst({
+      where: { id: bonsaiId, userId, deletedAt: null },
+    });
 
-apiRoute.use(upload.array("images", 5)); // Allow up to 5 images per subentry
+    if (!bonsai) {
+      fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
+      return;
+    }
 
-apiRoute.get(async (req: NextApiRequest, res: NextApiResponse) => {
-  const bonsaiId = Number(req.query.bonsaiId);
-  if (isNaN(bonsaiId)) {
-    console.error("Invalid bonsaiId received in query:", req.query.bonsaiId);
-    return res.status(400).json({ error: "Ungültige Bonsai-ID." });
-  }
-
-  try {
-    console.log("Fetching subentries for bonsaiId:", bonsaiId);
-    const subEntries = await prisma.subEntry.findMany({
+    const items = await prisma.subEntry.findMany({
       where: { bonsaiId },
+      orderBy: [{ date: "desc" }, { id: "desc" }],
     });
-    console.log("Subentries fetched successfully:", subEntries);
-    return res.status(200).json(subEntries);
-  } catch (error) {
-    console.error("Error fetching subentries for bonsaiId:", bonsaiId, error);
-    return res.status(500).json({ error: "Fehler beim Abrufen der Sub-Einträge." });
-  }
-});
 
-apiRoute.post(async (req: any, res: NextApiResponse) => {
-  const { bonsaiId, date, notes } = req.body;
-
-  if (!bonsaiId || isNaN(Number(bonsaiId))) {
-    console.error("Invalid bonsaiId received in body:", bonsaiId);
-    return res.status(400).json({ error: "Ungültige Bonsai-ID." });
+    ok(res, { items: items.map(mapSubEntryToDto) });
+    return;
   }
 
-  if (!date) {
-    console.error("Missing date in request body.");
-    return res.status(400).json({ error: "Datum ist erforderlich." });
+  if (req.method === "POST") {
+    try {
+      await runMiddleware(req as MulterRequest, res, upload.array("images", 5));
+    } catch (error) {
+      handleUploadError(res, error);
+      return;
+    }
+
+    try {
+      const files = ((req as MulterRequest).files ?? []).map((file) => filePathFor("subentries", file));
+      const parsed = subEntryCreateSchema.parse({
+        ...req.body,
+        performedActions: toOptionalStringArray(req.body["performedActions[]"] ?? req.body.performedActions),
+        images: files,
+      });
+
+      const bonsai = await prisma.bonsai.findFirst({
+        where: { id: parsed.bonsaiId, userId, deletedAt: null },
+      });
+
+      if (!bonsai) {
+        fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
+        return;
+      }
+
+      const created = await prisma.subEntry.create({
+        data: parsed as Prisma.SubEntryUncheckedCreateInput,
+      });
+
+      ok(res, mapSubEntryToDto(created), 201);
+      return;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        fail(res, "VALIDATION_ERROR", "Die Sub-Entry-Daten sind ungültig.", 422, error.flatten());
+        return;
+      }
+      fail(res, "INTERNAL_SERVER_ERROR", "Der Sub-Eintrag konnte nicht erstellt werden.", 500);
+      return;
+    }
   }
 
-  const parsedDate = new Date(date);
-  if (isNaN(parsedDate.getTime())) {
-    console.error("Invalid date format:", date);
-    return res.status(400).json({ error: "Ungültiges Datumsformat." });
-  }
-
-  const year = parsedDate.getUTCFullYear();
-  if (year < 1900 || year > 2200) {
-    console.error("Date out of range:", date);
-    return res.status(400).json({ error: "Datum muss zwischen 1900 und 2100 liegen." });
-  }
-
-  if (notes && notes.length > 500) {
-    console.error("Notes exceed maximum length:", notes.length);
-    return res.status(400).json({ error: "Notizen dürfen maximal 500 Zeichen lang sein." });
-  }
-
-  const imagePaths = req.files?.map((file: any) => `/uploads/subentries/${file.filename}`) || [];
-
-  try {
-    console.log("Creating new subentry for bonsaiId:", bonsaiId, {
-      date,
-      notes,
-      images: imagePaths,
-    });
-    const newSubEntry = await prisma.subEntry.create({
-      data: {
-        date: parsedDate,
-        notes,
-        images: imagePaths,
-        bonsaiId: Number(bonsaiId),
-      },
-    });
-    console.log("Subentry created successfully:", newSubEntry);
-    return res.status(201).json(newSubEntry);
-  } catch (error) {
-    console.error("Error creating subentry for bonsaiId:", bonsaiId, error);
-    return res.status(500).json({ error: "Fehler beim Erstellen des Sub-Eintrags." });
-  }
-});
-
-export default apiRoute.handler();
+  res.setHeader("Allow", "GET, POST");
+  fail(res, "BAD_REQUEST", `Methode ${req.method} wird nicht unterstützt.`, 400);
+}
 
 export const config = {
   api: {
-    bodyParser: false, // Disable body parsing for file uploads
+    bodyParser: false,
   },
 };

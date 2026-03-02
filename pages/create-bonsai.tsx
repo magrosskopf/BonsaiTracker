@@ -1,153 +1,142 @@
-import { useState, useEffect } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useState } from "react";
+import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
+import BonsaiForm from "@/components/BonsaiForm";
+import { getFirstValidationMessage, type ValidationErrorDetails } from "@/lib/api/validation";
+import { bonsaiFormValuesToPayload, emptyBonsaiFormValues } from "@/lib/forms";
+import type { BonsaiFormValues } from "@/types/forms";
 
-const CreateBonsai = () => {
-  const { data: session, status } = useSession();
+interface ApiErrorPayload {
+  message: string;
+  details?: ValidationErrorDetails;
+}
 
-  // Move all hooks to the top level
-  const [name, setName] = useState("");
-  const [species, setSpecies] = useState("");
-  const [location, setLocation] = useState("");
-  const [age, setAge] = useState<number | "">("");
-  const [style, setStyle] = useState("");
-  const [ownedSince, setOwnedSince] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+function getCreateBonsaiErrorMessage(error: ApiErrorPayload | undefined): string {
+  if (!error) {
+    return "Der Bonsai konnte nicht erstellt werden.";
+  }
 
-  useEffect(() => {
-    console.log("Session in frontend:", session); // Debugging: Log the session
-    if (status === "unauthenticated") {
-      signIn(); // Redirect to login page
+  return getFirstValidationMessage(error.details, error.message);
+}
+
+export default function CreateBonsaiPage() {
+  const router = useRouter();
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      void router.replace("/");
+    },
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  async function uploadFiles(files: FileList | null) {
+    if (!files || files.length === 0) {
+      return;
     }
-  }, [status, session]);
 
-  if (status === "loading") {
-    return <p className="text-center text-gray-500 mt-10">Loading...</p>;
-  }
-
-  if (status === "unauthenticated") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <h1 className="text-4xl font-bold mb-6 text-gray-800">Please Log In</h1>
-        <button
-          onClick={() => signIn()}
-          className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600"
-        >
-          Log In
-        </button>
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null; // Prevent rendering if not authenticated
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+    setUploading(true);
+    setError(null);
 
     try {
-      const response = await fetch("/api/bonsais/create", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          species,
-          location,
-          age,
-          style,
-          ownedSince, // Send the date string directly
+      const uploaded = await Promise.all(
+        Array.from(files).map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const json = (await response.json()) as { ok: boolean; data?: { filePath: string }; error?: { message: string } };
+          if (!response.ok || !json.ok || !json.data) {
+            throw new Error(json.error?.message ?? "Ein Bild konnte nicht hochgeladen werden.");
+          }
+          return json.data.filePath;
         }),
-      });
-
-      if (!response.ok) {
-        const { error } = await response.json();
-        throw new Error(error || "Failed to create Bonsai");
-      }
-
-      const { id, message } = await response.json();
-      setSuccess(`${message} (ID: ${id})`);
-      setName("");
-      setSpecies("");
-      setLocation("");
-      setAge("");
-      setStyle("");
-      setOwnedSince("");
-    } catch (err: any) {
-      setError(err.message);
+      );
+      setImages((current) => [...current, ...uploaded]);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Die Bilder konnten nicht hochgeladen werden.");
+    } finally {
+      setUploading(false);
     }
-  };
+  }
+
+  async function handleSubmit(values: BonsaiFormValues) {
+    setSubmitting(true);
+    setError(null);
+
+    const response = await fetch("/api/bonsais", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...bonsaiFormValuesToPayload(values),
+        images,
+      }),
+    });
+
+    const json = (await response.json()) as { ok: boolean; data?: { id: number }; error?: ApiErrorPayload };
+    setSubmitting(false);
+
+    if (!response.ok || !json.ok || !json.data) {
+      setError(getCreateBonsaiErrorMessage(json.error));
+      return;
+    }
+
+    await router.push(`/bonsai/${json.data.id}`);
+  }
+
+  if (status !== "authenticated") {
+    return null;
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-red">
-      <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-          Create a New Bonsai
-        </h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="text"
-            placeholder="Bonsai Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Species"
-            value={species}
-            onChange={(e) => setSpecies(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-          <input
-            type="number"
-            placeholder="Age (years)"
-            value={age}
-            onChange={(e) => setAge(Number(e.target.value) || "")}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Style"
-            value={style}
-            onChange={(e) => setStyle(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-          <input
-            type="date"
-            placeholder="Owned Since"
-            value={ownedSince}
-            onChange={(e) => setOwnedSince(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            required
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600"
-          >
-            Create Bonsai
-          </button>
-        </form>
-        {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-        {success && <p className="text-green-500 mt-4 text-center">{success}</p>}
+    <main className="page-shell mx-auto max-w-5xl px-4 py-6">
+      <div className="hero-panel mb-6 space-y-2 rounded-[2rem] p-6">
+        <p className="text-sm uppercase tracking-[0.2em] text-primary">Neuer Bonsai</p>
+        <h1 className="text-3xl font-bold">Bonsai anlegen</h1>
       </div>
-    </div>
+      <section className="surface-card mb-6 card">
+        <div className="card-body gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h2 className="card-title">Bilder</h2>
+            <label className="btn btn-secondary">
+              {uploading ? "Laedt..." : "Bilder hochladen"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                className="hidden"
+                onChange={(event) => void uploadFiles(event.target.files)}
+              />
+            </label>
+          </div>
+          {images.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+              {images.map((image) => (
+                <div key={image} className="relative">
+                  <img src={image} alt="Upload" className="h-40 w-full rounded-2xl object-cover" />
+                  <button type="button" className="btn btn-error btn-xs absolute right-2 top-2" onClick={() => setImages((current) => current.filter((item) => item !== image))}>
+                    Entfernen
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-base-content/70">Lade optional Bilder hoch, damit der Bonsai direkt mit Galerie und Slideshow startet.</p>
+          )}
+        </div>
+      </section>
+      <BonsaiForm
+        initialValues={emptyBonsaiFormValues}
+        submitLabel="Bonsai speichern"
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        error={error}
+      />
+    </main>
   );
-};
-
-export default CreateBonsai;
+}

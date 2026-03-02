@@ -1,0 +1,74 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { ZodError } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/authz";
+import { mapProfileToDto } from "@/lib/mappers";
+import { fail, ok } from "@/lib/api/response";
+import { getZodErrorMessage } from "@/lib/api/validation";
+import { profilePatchSchema } from "@/lib/validators/profile";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
+  const userId = await requireUser(req, res);
+  if (!userId) {
+    return;
+  }
+
+  if (req.method === "GET") {
+    const profile = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        posts: {
+          include: {
+            user: true,
+            likes: { select: { userId: true } },
+            comments: { include: { user: true } },
+            entryReferences: true,
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        },
+      },
+    });
+
+    if (!profile) {
+      fail(res, "NOT_FOUND", "Profil nicht gefunden.", 404);
+      return;
+    }
+
+    ok(res, mapProfileToDto(profile, userId));
+    return;
+  }
+
+  if (req.method === "PATCH") {
+    try {
+      const parsed = profilePatchSchema.parse(req.body);
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: parsed,
+        include: {
+          posts: {
+            include: {
+              user: true,
+              likes: { select: { userId: true } },
+              comments: { include: { user: true } },
+              entryReferences: true,
+            },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          },
+        },
+      });
+      ok(res, mapProfileToDto(updated, userId));
+      return;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const { details, message } = getZodErrorMessage(error, "Die Profil-Daten sind ungueltig.");
+        fail(res, "VALIDATION_ERROR", message, 422, details);
+        return;
+      }
+      fail(res, "INTERNAL_SERVER_ERROR", "Das Profil konnte nicht gespeichert werden.", 500);
+      return;
+    }
+  }
+
+  res.setHeader("Allow", "GET, PATCH");
+  fail(res, "BAD_REQUEST", `Methode ${req.method} wird nicht unterstützt.`, 400);
+}

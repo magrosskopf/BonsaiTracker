@@ -1,0 +1,30 @@
+export interface BonsaiFormValues {
+  name: string;
+  nickname: string;
+  species: string;
+  latinName: string;
+  location: string;
+  indoorOutdoor: string;
+  age: string;
+  heightCm: string;
+  widthCm: string;
+  trunkDiameterMm: string;
+  style: string;
+  customStyle: string;
+  ownedSince: string;
+  acquiredFrom: string;
+  purchasePriceCents: string;
+  healthStatus: string;
+  developmentStage: string;
+  lastRepotDate: string;
+  nextRepotDue: string;
+  winterHardiness: string;
+  sunExposure: string;
+  potType: string;
+  potColor: string;
+  wateringNotes: string;
+  fertilizingNotes: string;
+  pruningNotes: string;
+  wiringNotes: string;
+  notes: string;
+}
