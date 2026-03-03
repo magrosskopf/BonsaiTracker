@@ -1,3 +1,6 @@
+const daisyuiModule = require("daisyui");
+const daisyui = daisyuiModule.default ?? daisyuiModule;
+
 module.exports = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx}",
@@ -8,7 +11,7 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: [require("daisyui")],
+  plugins: [daisyui],
   daisyui: {
     themes: ["light"],
   },
