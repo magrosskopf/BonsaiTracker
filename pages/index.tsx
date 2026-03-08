@@ -10,6 +10,10 @@ export default function Home() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistMessage, setWaitlistMessage] = useState<string | null>(null);
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -17,20 +21,73 @@ export default function Home() {
     setMessage(null);
     setSubmitting(true);
 
-    const result = await signIn("email", {
-      email,
-      redirect: false,
-      callbackUrl: "/dashboard",
-    });
+    try {
+      const precheckResponse = await fetch("/api/auth/precheck", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
 
-    setSubmitting(false);
+      const precheckPayload = await precheckResponse.json();
+      if (!precheckResponse.ok || !precheckPayload?.ok) {
+        setError("Die Anmeldung konnte nicht gestartet werden.");
+        return;
+      }
 
-    if (result?.error) {
-      setError("Der Magic Link konnte nicht versendet werden.");
-      return;
+      if (!precheckPayload.data?.allowed) {
+        setError(precheckPayload.data?.message ?? "Registrierungen sind aktuell nur mit Freigabe möglich.");
+        return;
+      }
+
+      const result = await signIn("email", {
+        email,
+        redirect: false,
+        callbackUrl: "/dashboard",
+      });
+
+      if (result?.error) {
+        setError("Der Magic Link konnte nicht versendet werden.");
+        return;
+      }
+
+      setMessage("Der Login-Link wurde versendet. Bitte prüfe dein Postfach.");
+    } catch {
+      setError("Die Anmeldung konnte nicht gestartet werden.");
+    } finally {
+      setSubmitting(false);
     }
+  }
 
-    setMessage("Der Login-Link wurde versendet. Bitte prüfe dein Postfach.");
+  async function handleWaitlistRequest(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setWaitlistError(null);
+    setWaitlistMessage(null);
+    setWaitlistSubmitting(true);
+
+    try {
+      const response = await fetch("/api/access-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: waitlistEmail }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok || !payload?.ok) {
+        setWaitlistError(payload?.error?.message ?? "Die Wartelisten-Anfrage konnte nicht gesendet werden.");
+        return;
+      }
+
+      setWaitlistMessage(payload.data?.message ?? "Danke. Wir melden uns, sobald ein Platz frei wird.");
+      setWaitlistEmail("");
+    } catch {
+      setWaitlistError("Die Wartelisten-Anfrage konnte nicht gesendet werden.");
+    } finally {
+      setWaitlistSubmitting(false);
+    }
   }
 
   return (
@@ -55,14 +112,14 @@ export default function Home() {
 
       <section className="surface-card card w-full max-w-lg">
         <div className="card-body">
-          <h2 className="card-title text-2xl">Login per Magic Link</h2>
-          <p className="text-base-content/70">Gib deine E-Mail-Adresse ein. Nach erfolgreichem Login landest du auf `/dashboard`.</p>
+          <h2 className="card-title text-2xl">Login und Beta-Zugang</h2>
+          <p className="text-base-content/70">Bestehender Account? Login-Link anfordern. Neu hier? Zugang über Warteliste anfragen.</p>
           {router.query.error ? <div className="alert alert-error">Der Login konnte nicht abgeschlossen werden.</div> : null}
           {message ? <div className="alert alert-success">{message}</div> : null}
           {error ? <div className="alert alert-error">{error}</div> : null}
-          <form className="space-y-4" onSubmit={handleLogin}>
+          <form className="space-y-4 border-b border-base-300 pb-6" onSubmit={handleLogin}>
             <fieldset className="fieldset gap-2">
-              <legend className="fieldset-legend text-sm font-medium">E-Mail</legend>
+              <legend className="fieldset-legend text-sm font-medium">Bestehender Account</legend>
               <input
                 className="input input-bordered"
                 type="email"
@@ -75,6 +132,25 @@ export default function Home() {
             <button className="btn btn-primary w-full" disabled={submitting || !email}>
               {submitting ? <span className="loading loading-spinner loading-sm" /> : null}
               Magic Link senden
+            </button>
+          </form>
+          {waitlistMessage ? <div className="alert alert-success">{waitlistMessage}</div> : null}
+          {waitlistError ? <div className="alert alert-error">{waitlistError}</div> : null}
+          <form className="space-y-4 pt-2" onSubmit={handleWaitlistRequest}>
+            <fieldset className="fieldset gap-2">
+              <legend className="fieldset-legend text-sm font-medium">Neu hier? Zugang anfragen</legend>
+              <input
+                className="input input-bordered"
+                type="email"
+                value={waitlistEmail}
+                onChange={(event) => setWaitlistEmail(event.target.value)}
+                placeholder="du@example.com"
+                required
+              />
+            </fieldset>
+            <button className="btn btn-outline w-full" disabled={waitlistSubmitting || !waitlistEmail}>
+              {waitlistSubmitting ? <span className="loading loading-spinner loading-sm" /> : null}
+              Warteliste anfragen
             </button>
           </form>
         </div>

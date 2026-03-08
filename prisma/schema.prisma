@@ -206,6 +206,45 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model SignupAllowlist {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WaitlistRequest {
+  id        Int            @id @default(autoincrement())
+  email     String         @unique
+  sourceIp  String?
+  userAgent String?
+  status    WaitlistStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model AuthRateLimitEvent {
+  id        Int      @id @default(autoincrement())
+  key       String
+  scope     String
+  createdAt DateTime @default(now())
+
+  @@index([scope, key, createdAt])
+}
+
+model SignupSlot {
+  id         Int       @id @default(autoincrement())
+  slotNumber Int       @unique
+  email      String?
+  reservedAt DateTime?
+  releasedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([email])
+}
+
 enum IndoorOutdoorEnum {
   INDOOR
   OUTDOOR
@@ -259,4 +298,10 @@ enum ReminderStatus {
 enum PostType {
   SHOWCASE
   HELP
+}
+
+enum WaitlistStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

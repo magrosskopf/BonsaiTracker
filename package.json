@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "prisma": "npx prisma",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "approve-waitlist": "node scripts/approve-waitlist.js"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

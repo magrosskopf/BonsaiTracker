@@ -5,6 +5,15 @@ import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { Resend } from "resend";
 import { prisma } from "./prisma";
+import {
+  evaluateSignupEligibility,
+  isExistingUser,
+  isSlotReservedForEmail,
+  normalizeEmail,
+  releaseExpiredSignupSlots,
+  releaseSignupSlot,
+  reserveSignupSlot,
+} from "./signup-gating";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -45,6 +54,58 @@ export const authOptions: NextAuthOptions = {
     verifyRequest: "/?status=link-sent",
   },
   callbacks: {
+    async signIn({ user, account, email }) {
+      if (account?.provider !== "email") {
+        return true;
+      }
+
+      const emailPayload = email as { email?: string; verificationRequest?: boolean } | undefined;
+      const candidateEmail = user?.email ?? emailPayload?.email;
+      if (!candidateEmail) {
+        return false;
+      }
+
+      const normalizedEmail = normalizeEmail(candidateEmail);
+
+      if (!email?.verificationRequest) {
+        try {
+          await releaseSignupSlot(normalizedEmail);
+        } catch (error) {
+          console.error("signIn slot release failed", error);
+        }
+        return true;
+      }
+
+      try {
+        await releaseExpiredSignupSlots();
+
+        if (await isExistingUser(normalizedEmail)) {
+          return true;
+        }
+
+        const eligibility = await evaluateSignupEligibility(normalizedEmail);
+        if (!eligibility.allowed) {
+          console.info("signup denied", { reason: eligibility.reason, email: normalizedEmail });
+          return false;
+        }
+
+        const alreadyReserved = await isSlotReservedForEmail(normalizedEmail);
+        if (alreadyReserved) {
+          return true;
+        }
+
+        const reserved = await reserveSignupSlot(normalizedEmail);
+        if (!reserved.reserved) {
+          console.info("signup denied", { reason: reserved.reason, email: normalizedEmail });
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        console.error("email signIn guard failed", error);
+        return false;
+      }
+    },
     async jwt({ token, user }) {
       if (user?.id) {
         token.sub = String(user.id);

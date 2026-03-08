@@ -1,0 +1,1 @@
+Für den Freigabeprozess nutzt du aktuell das Script: npx ts-node scripts/approve-waitlist.ts --email <email>
