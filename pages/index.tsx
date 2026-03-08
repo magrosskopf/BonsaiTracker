@@ -94,9 +94,9 @@ export default function Home() {
     <main className="page-shell mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-8 px-6 py-10 lg:flex-row lg:items-center">
       <section className="landing-copy max-w-xl space-y-6">
         <div className="badge badge-outline px-4 py-3 text-primary">Bonsai Tracker</div>
-        <h1 className="text-5xl font-bold leading-tight">Pflegeverläufe, Bilder und Entwicklung deiner Bonsais an einem Ort.</h1>
+        <h1 className="text-5xl font-bold leading-tight">Behalte Pflege, Entwicklung und Fotos deiner Bonsai uebersichtlich an einem Ort.</h1>
         <p className="text-lg text-base-content/70">
-          Verwalte deine Sammlung, dokumentiere Pflegehistorien und halte Repot-, Düngungs- und Foto-Updates sauber in UTC-normalisierten Datensätzen fest.
+          Verwalte deine Sammlung und halte fest, wann du gegossen, geduengt, umgetopft oder geschnitten hast. So bleibt die Entwicklung jedes Baums nachvollziehbar, mit Notizen und Bildern direkt dabei.
         </p>
         {status === "authenticated" && session ? (
           <div className="flex flex-wrap gap-3">
@@ -113,7 +113,7 @@ export default function Home() {
       <section className="surface-card card w-full max-w-lg">
         <div className="card-body">
           <h2 className="card-title text-2xl">Login und Beta-Zugang</h2>
-          <p className="text-base-content/70">Bestehender Account? Login-Link anfordern. Neu hier? Zugang über Warteliste anfragen.</p>
+          <p className="text-base-content/70">Du hast schon einen Zugang? Dann fordere hier deinen Login-Link an. Wenn du neu bist, kannst du dich fuer die Warteliste eintragen.</p>
           {router.query.error ? <div className="alert alert-error">Der Login konnte nicht abgeschlossen werden.</div> : null}
           {message ? <div className="alert alert-success">{message}</div> : null}
           {error ? <div className="alert alert-error">{error}</div> : null}
