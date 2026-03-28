@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import WaitlistRequestForm from "@/components/WaitlistRequestForm";
 
 export default function Home() {
   const router = useRouter();
@@ -10,10 +11,6 @@ export default function Home() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlistMessage, setWaitlistMessage] = useState<string | null>(null);
-  const [waitlistError, setWaitlistError] = useState<string | null>(null);
-  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,36 +57,6 @@ export default function Home() {
     }
   }
 
-  async function handleWaitlistRequest(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setWaitlistError(null);
-    setWaitlistMessage(null);
-    setWaitlistSubmitting(true);
-
-    try {
-      const response = await fetch("/api/access-requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: waitlistEmail }),
-      });
-
-      const payload = await response.json();
-      if (!response.ok || !payload?.ok) {
-        setWaitlistError(payload?.error?.message ?? "Die Wartelisten-Anfrage konnte nicht gesendet werden.");
-        return;
-      }
-
-      setWaitlistMessage(payload.data?.message ?? "Danke. Wir melden uns, sobald ein Platz frei wird.");
-      setWaitlistEmail("");
-    } catch {
-      setWaitlistError("Die Wartelisten-Anfrage konnte nicht gesendet werden.");
-    } finally {
-      setWaitlistSubmitting(false);
-    }
-  }
-
   return (
     <main className="page-shell mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-8 px-6 py-10 lg:flex-row lg:items-center">
       <section className="landing-copy max-w-xl space-y-6">
@@ -106,6 +73,14 @@ export default function Home() {
             <button className="btn btn-outline" onClick={() => signOut({ callbackUrl: "/" })}>
               Logout
             </button>
+          </div>
+        ) : null}
+        {status !== "authenticated" ? (
+          <div className="flex flex-wrap gap-3 text-sm text-base-content/70">
+            <Link href="/waitlist" className="btn btn-outline">
+              Zur oeffentlichen Warteliste
+            </Link>
+            <p className="max-w-sm self-center">Du willst Bonsai Tracker schon jetzt teilen? Nutze die neue Landingpage fuer die Voranmeldung.</p>
           </div>
         ) : null}
       </section>
@@ -134,25 +109,14 @@ export default function Home() {
               Magic Link senden
             </button>
           </form>
-          {waitlistMessage ? <div className="alert alert-success">{waitlistMessage}</div> : null}
-          {waitlistError ? <div className="alert alert-error">{waitlistError}</div> : null}
-          <form className="space-y-4 pt-2" onSubmit={handleWaitlistRequest}>
-            <fieldset className="fieldset gap-2">
-              <legend className="fieldset-legend text-sm font-medium">Neu hier? Zugang anfragen</legend>
-              <input
-                className="input input-bordered"
-                type="email"
-                value={waitlistEmail}
-                onChange={(event) => setWaitlistEmail(event.target.value)}
-                placeholder="du@example.com"
-                required
-              />
-            </fieldset>
-            <button className="btn btn-outline w-full" disabled={waitlistSubmitting || !waitlistEmail}>
-              {waitlistSubmitting ? <span className="loading loading-spinner loading-sm" /> : null}
-              Warteliste anfragen
-            </button>
-          </form>
+          <div className="border-t border-base-300 pt-6">
+            <WaitlistRequestForm
+              title="Neu hier? Zugang anfragen"
+              description="Wenn du vor dem offiziellen Start informiert werden willst, kannst du dich hier direkt auf die Warteliste setzen."
+              submitLabel="Warteliste anfragen"
+              variant="embedded"
+            />
+          </div>
         </div>
       </section>
     </main>

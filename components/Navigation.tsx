@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 
-const items = [
+export const navigationItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/feed", label: "Feed" },
   { href: "/reminders", label: "Reminder" },
@@ -10,21 +10,33 @@ const items = [
   { href: "/profile", label: "Profil" },
 ];
 
+export const hiddenRoutes = new Set(["/", "/waitlist"]);
+
+type NavigationSessionStatus = "authenticated" | "loading" | "unauthenticated";
+
+export function shouldHideNavigation(pathname: string, status: NavigationSessionStatus): boolean {
+  return status !== "authenticated" || hiddenRoutes.has(pathname);
+}
+
+export function getNavigationItemClassName(active: boolean): string {
+  return active ? "bonsai-dock__item bonsai-dock__item--active" : "bonsai-dock__item";
+}
+
 export default function Navigation() {
   const router = useRouter();
   const { status } = useSession();
 
-  if (status !== "authenticated" || router.pathname === "/") {
+  if (shouldHideNavigation(router.pathname, status)) {
     return null;
   }
 
   return (
-    <nav className="bonsai-dock dock border-t backdrop-blur">
-      {items.map((item) => {
+    <nav aria-label="Primaere Navigation" className="bonsai-dock">
+      {navigationItems.map((item) => {
         const active = router.pathname === item.href || router.asPath.startsWith(`${item.href}/`);
         return (
-          <Link key={item.href} href={item.href} className={active ? "dock-active text-primary" : "text-base-content/70"}>
-            <span className="text-sm font-medium">{item.label}</span>
+          <Link key={item.href} href={item.href} className={getNavigationItemClassName(active)}>
+            <span className="bonsai-dock__label">{item.label}</span>
           </Link>
         );
       })}

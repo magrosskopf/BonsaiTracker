@@ -8,7 +8,9 @@ import { fail, ok } from "@/lib/api/response";
 import { firstQueryValue, toOptionalStringArray } from "@/lib/api/request";
 import { mapSubEntryToDto } from "@/lib/mappers";
 import { runMiddleware } from "@/lib/middleware";
-import { createImageUpload, filePathFor } from "@/lib/uploads";
+import { logError } from "@/lib/observability";
+import { removeManagedMediaBatch } from "@/lib/storage";
+import { createImageUpload, persistImageUpload } from "@/lib/uploads";
 import { subEntryCreateSchema } from "@/lib/validators/subentry";
 
 type MulterRequest = NextApiRequest & {
@@ -27,6 +29,14 @@ function handleUploadError(res: NextApiResponse, error: unknown): void {
     return;
   }
   fail(res, "BAD_REQUEST", "Die Upload-Daten konnten nicht verarbeitet werden.", 400);
+}
+
+async function safeCleanup(mediaPaths: string[], context: Record<string, unknown>): Promise<void> {
+  try {
+    await removeManagedMediaBatch(mediaPaths);
+  } catch (error) {
+    logError("subentry.create_cleanup_failed", error, context);
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
@@ -61,6 +71,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "POST") {
+    const persistedImages: string[] = [];
+
     try {
       await runMiddleware(req as MulterRequest, res, upload.array("images", 5));
     } catch (error) {
@@ -69,7 +81,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      const files = ((req as MulterRequest).files ?? []).map((file) => filePathFor("subentries", file));
+      const files = await Promise.all(
+        ((req as MulterRequest).files ?? []).map(async (file) => {
+          const image = await persistImageUpload("subentries", file);
+          persistedImages.push(image);
+          return image;
+        }),
+      );
       const parsed = subEntryCreateSchema.parse({
         ...req.body,
         performedActions: toOptionalStringArray(req.body["performedActions[]"] ?? req.body.performedActions),
@@ -93,9 +111,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     } catch (error) {
       if (error instanceof ZodError) {
+        await safeCleanup(persistedImages, { userId });
         fail(res, "VALIDATION_ERROR", "Die Sub-Entry-Daten sind ungültig.", 422, error.flatten());
         return;
       }
+      await safeCleanup(persistedImages, { userId });
+      logError("subentry.create_failed", error, { userId });
       fail(res, "INTERNAL_SERVER_ERROR", "Der Sub-Eintrag konnte nicht erstellt werden.", 500);
       return;
     }

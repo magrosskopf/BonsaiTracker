@@ -1,5 +1,5 @@
 import type { Bonsai, Prisma, Reminder, SubEntry } from "@prisma/client";
-import type { BonsaiDetail, BonsaiSummary, PostCommentDto, PostDto, ProfileDto, ReminderDto, SubEntryDto } from "@/types/dto";
+import type { BonsaiDetail, BonsaiSummary, PostCommentDto, PostDto, PublicProfileDto, ReminderDto, SelfProfileDto, SubEntryDto } from "@/types/dto";
 
 type BonsaiWithCount = Bonsai & {
   _count: {
@@ -197,13 +197,19 @@ export type ProfileRecord = Prisma.UserGetPayload<{
   };
 }>;
 
-export function mapProfileToDto(profile: ProfileRecord, viewerUserId?: number): ProfileDto {
+export function mapPublicProfileToDto(profile: ProfileRecord, viewerUserId?: number): PublicProfileDto {
   return {
     id: profile.id,
     name: profile.name,
-    email: profile.email,
     bio: profile.bio,
     profileImageUrl: profile.profileImageUrl,
     posts: profile.posts.map((post) => mapPostToDto(post, viewerUserId)),
+  };
+}
+
+export function mapSelfProfileToDto(profile: ProfileRecord, viewerUserId?: number): SelfProfileDto {
+  return {
+    ...mapPublicProfileToDto(profile, viewerUserId),
+    email: profile.email,
   };
 }

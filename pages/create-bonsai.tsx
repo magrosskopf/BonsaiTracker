@@ -114,13 +114,17 @@ export default function CreateBonsaiPage() {
               />
             </label>
           </div>
+          <p className="text-sm text-base-content/70">
+            Uploads werden sofort in den Medien-Storage geladen. Mit <strong>Bonsai speichern</strong> werden sie
+            diesem neuen Bonsai zugeordnet. Entfernen nimmt ein Bild nur aus dieser Auswahlliste.
+          </p>
           {images.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
               {images.map((image) => (
                 <div key={image} className="relative">
                   <img src={image} alt="Upload" className="h-40 w-full rounded-2xl object-cover" />
                   <button type="button" className="btn btn-error btn-xs absolute right-2 top-2" onClick={() => setImages((current) => current.filter((item) => item !== image))}>
-                    Entfernen
+                    Aus Auswahl entfernen
                   </button>
                 </div>
               ))}

@@ -7,7 +7,9 @@ import { getOwnedSubEntryOr404, requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
 import { mapSubEntryToDto } from "@/lib/mappers";
 import { runMiddleware } from "@/lib/middleware";
-import { createImageUpload, filePathFor } from "@/lib/uploads";
+import { logError } from "@/lib/observability";
+import { removeManagedMediaBatch } from "@/lib/storage";
+import { createImageUpload, persistImageUpload } from "@/lib/uploads";
 import { toOptionalStringArray } from "@/lib/api/request";
 import { subEntryPatchSchema, subEntryPersistedSchema } from "@/lib/validators/subentry";
 
@@ -35,6 +37,14 @@ function handleUploadError(res: NextApiResponse, error: unknown): void {
   fail(res, "BAD_REQUEST", "Die Upload-Daten konnten nicht verarbeitet werden.", 400);
 }
 
+async function safeCleanup(mediaPaths: string[], context: Record<string, unknown>, event: string): Promise<void> {
+  try {
+    await removeManagedMediaBatch(mediaPaths);
+  } catch (error) {
+    logError(event, error, context);
+  }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   const userId = await requireUser(req, res);
   if (!userId) {
@@ -48,6 +58,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "PATCH") {
+    const newlyPersistedImages: string[] = [];
+
     try {
       await runMiddleware(req as MulterRequest, res, upload.array("newImages", 5));
     } catch (error) {
@@ -63,7 +75,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const keepImages = toOptionalStringArray(req.body["keepImages[]"] ?? req.body.keepImages) ?? [];
-      const newImages = ((req as MulterRequest).files ?? []).map((file) => filePathFor("subentries", file));
+      const newImages = await Promise.all(
+        ((req as MulterRequest).files ?? []).map(async (file) => {
+          const image = await persistImageUpload("subentries", file);
+          newlyPersistedImages.push(image);
+          return image;
+        }),
+      );
       const finalImages = [...keepImages.filter((image) => existing.images.includes(image)), ...newImages];
 
       const patch = subEntryPatchSchema.parse({
@@ -97,13 +115,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         } as Prisma.SubEntryUpdateInput,
       });
 
+      const removedImages = existing.images.filter((image) => !candidate.images.includes(image));
+      await safeCleanup(removedImages, { userId, subEntryId }, "subentry.removed_media_cleanup_failed");
+
       ok(res, mapSubEntryToDto(updated));
       return;
     } catch (error) {
       if (error instanceof ZodError) {
+        await safeCleanup(newlyPersistedImages, { userId, subEntryId }, "subentry.new_media_cleanup_failed");
         fail(res, "VALIDATION_ERROR", "Die Sub-Entry-Daten sind ungültig.", 422, error.flatten());
         return;
       }
+      await safeCleanup(newlyPersistedImages, { userId, subEntryId }, "subentry.new_media_cleanup_failed");
+      logError("subentry.update_failed", error, { userId, subEntryId });
       fail(res, "INTERNAL_SERVER_ERROR", "Der Sub-Eintrag konnte nicht aktualisiert werden.", 500);
       return;
     }
@@ -119,6 +143,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await prisma.subEntry.delete({
       where: { id: subEntryId },
     });
+    await safeCleanup(existing.images, { userId, subEntryId }, "subentry.delete_cleanup_failed");
 
     res.status(204).end();
     return;

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
-import { mapProfileToDto } from "@/lib/mappers";
+import { mapPublicProfileToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 
 function parseId(value: string | string[] | undefined): number | null {
@@ -48,5 +48,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  ok(res, mapProfileToDto(profile, userId));
+  ok(res, mapPublicProfileToDto(profile, userId));
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import type { ProfileDto } from "@/types/dto";
+import type { SelfProfileDto } from "@/types/dto";
 import { POST_TYPE_LABELS } from "@/types/domain";
 
 export default function Profile() {
@@ -13,7 +13,7 @@ export default function Profile() {
       void router.replace("/");
     },
   });
-  const [profile, setProfile] = useState<ProfileDto | null>(null);
+  const [profile, setProfile] = useState<SelfProfileDto | null>(null);
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [profileImageUrl, setProfileImageUrl] = useState("");
@@ -27,7 +27,7 @@ export default function Profile() {
 
     void (async () => {
       const response = await fetch("/api/profile/me");
-      const json = (await response.json()) as { ok: boolean; data?: ProfileDto; error?: { message: string } };
+      const json = (await response.json()) as { ok: boolean; data?: SelfProfileDto; error?: { message: string } };
       if (!response.ok || !json.ok || !json.data) {
         setError(json.error?.message ?? "Das Profil konnte nicht geladen werden.");
         return;
@@ -52,7 +52,7 @@ export default function Profile() {
         profileImageUrl,
       }),
     });
-    const json = (await response.json()) as { ok: boolean; data?: ProfileDto; error?: { message: string } };
+    const json = (await response.json()) as { ok: boolean; data?: SelfProfileDto; error?: { message: string } };
     if (!response.ok || !json.ok || !json.data) {
       setError(json.error?.message ?? "Das Profil konnte nicht gespeichert werden.");
       return;
@@ -71,7 +71,7 @@ export default function Profile() {
         <div className="hero-panel rounded-[2rem] p-6">
           <p className="text-sm uppercase tracking-[0.2em] text-primary">Profil</p>
           <h1 className="text-3xl font-bold">Dein Konto</h1>
-          <p className="mt-2 text-base-content/70">Dieses Profil ist fuer andere eingeloggte Nutzer im Community-Bereich sichtbar.</p>
+          <p className="mt-2 text-base-content/70">Name, Bio, Profilbild und deine veroeffentlichten Posts sind fuer andere eingeloggte Beta-Nutzer sichtbar. Deine E-Mail bleibt privat.</p>
         </div>
 
         {error ? <div className="alert alert-error">{error}</div> : null}

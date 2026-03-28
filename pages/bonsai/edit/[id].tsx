@@ -19,6 +19,8 @@ export default function EditBonsaiPage() {
   const [bonsai, setBonsai] = useState<BonsaiDetail | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [deletingImage, setDeletingImage] = useState(false);
+  const [imagePendingDeletion, setImagePendingDeletion] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -105,6 +107,38 @@ export default function EditBonsaiPage() {
     setSuccess("Änderungen gespeichert.");
   }
 
+  async function confirmImageDeletion() {
+    if (!id || !imagePendingDeletion) {
+      return;
+    }
+
+    setDeletingImage(true);
+    setError(null);
+    setSuccess(null);
+
+    const nextImages = images.filter((image) => image !== imagePendingDeletion);
+    const response = await fetch(`/api/bonsais/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        images: nextImages,
+      }),
+    });
+
+    const json = (await response.json()) as { ok: boolean; data?: BonsaiDetail; error?: { message: string } };
+    setDeletingImage(false);
+
+    if (!response.ok || !json.ok || !json.data) {
+      setError(json.error?.message ?? "Das Bild konnte nicht entfernt werden.");
+      return;
+    }
+
+    setBonsai(json.data);
+    setImages(json.data.images);
+    setImagePendingDeletion(null);
+    setSuccess("Bild entfernt.");
+  }
+
   if (status !== "authenticated" || !bonsai) {
     return null;
   }
@@ -130,6 +164,10 @@ export default function EditBonsaiPage() {
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleUpload} />
             </label>
           </div>
+          <p className="text-sm text-base-content/70">
+            Neue Uploads werden sofort mit diesem Bonsai verknüpft. Das Entfernen eines Bilds wird nach Bestätigung
+            direkt gespeichert.
+          </p>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {images.map((image) => (
               <div key={image} className="relative">
@@ -137,9 +175,13 @@ export default function EditBonsaiPage() {
                 <button
                   type="button"
                   className="btn btn-error btn-xs absolute right-2 top-2"
-                  onClick={() => setImages((current) => current.filter((entry) => entry !== image))}
+                  onClick={() => {
+                    setError(null);
+                    setSuccess(null);
+                    setImagePendingDeletion(image);
+                  }}
                 >
-                  Entfernen
+                  Direkt entfernen
                 </button>
               </div>
             ))}
@@ -155,6 +197,35 @@ export default function EditBonsaiPage() {
         error={error}
         success={success}
       />
+
+      <dialog className={`modal ${imagePendingDeletion ? "modal-open" : ""}`}>
+        <div className="modal-box max-w-lg">
+          <h3 className="text-lg font-bold">Bild entfernen?</h3>
+          <p className="mt-3 text-sm text-base-content/70">
+            Das Bild wird nach der Bestätigung sofort aus diesem Bonsai entfernt und muss nicht zusätzlich über das
+            Formular gespeichert werden.
+          </p>
+          <div className="modal-action">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setImagePendingDeletion(null)}
+              disabled={deletingImage}
+            >
+              Abbrechen
+            </button>
+            <button
+              type="button"
+              className="btn btn-error"
+              onClick={() => void confirmImageDeletion()}
+              disabled={deletingImage}
+            >
+              {deletingImage ? <span className="loading loading-spinner loading-sm" /> : null}
+              Jetzt entfernen
+            </button>
+          </div>
+        </div>
+      </dialog>
     </main>
   );
 }

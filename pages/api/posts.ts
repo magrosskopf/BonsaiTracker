@@ -5,6 +5,7 @@ import { getOwnedBonsaiOr404, requireUser } from "@/lib/authz";
 import { mapPostToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 import { getZodErrorMessage } from "@/lib/api/validation";
+import { logError } from "@/lib/observability";
 import { normalizeSelectedImages, snapshotEntryReferenceIds } from "@/lib/posts";
 import { postCreateSchema } from "@/lib/validators/post";
 
@@ -37,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ok(res, { items: posts.map((post) => mapPostToDto(post, userId)) });
       return;
     } catch (error) {
-      console.error("GET /api/posts failed", error);
+      logError("posts.list_failed", error, { userId });
       fail(res, "INTERNAL_SERVER_ERROR", "Der Feed konnte nicht geladen werden.", 500);
       return;
     }

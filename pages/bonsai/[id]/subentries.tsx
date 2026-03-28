@@ -94,6 +94,8 @@ export default function BonsaiSubEntriesPage() {
   const [createForm, setCreateForm] = useState<EntryFormState>(emptyEntryForm());
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<EntryFormState>(emptyEntryForm());
+  const [imagePendingDeletion, setImagePendingDeletion] = useState<string | null>(null);
+  const [removingImage, setRemovingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -174,6 +176,40 @@ export default function BonsaiSubEntriesPage() {
     setEditForm(emptyEntryForm());
   }
 
+  async function removeEditImage() {
+    if (!editingId || !imagePendingDeletion) {
+      return;
+    }
+
+    setRemovingImage(true);
+    setError(null);
+
+    const nextKeepImages = editForm.keepImages.filter((image) => image !== imagePendingDeletion);
+    const nextFormData = toPatchFormData({
+      ...editForm,
+      keepImages: nextKeepImages,
+    });
+
+    const response = await fetch(`/api/subentries/${editingId}`, {
+      method: "PATCH",
+      body: nextFormData,
+    });
+    const json = (await response.json()) as { ok: boolean; data?: SubEntryDto; error?: { message: string } };
+    setRemovingImage(false);
+
+    if (!response.ok || !json.ok || !json.data) {
+      setError(json.error?.message ?? "Das Bild konnte nicht entfernt werden.");
+      return;
+    }
+
+    setEntries((current) => current.map((entry) => (entry.id === editingId ? json.data! : entry)));
+    setEditForm((current) => ({
+      ...current,
+      keepImages: json.data!.images,
+    }));
+    setImagePendingDeletion(null);
+  }
+
   async function deleteEntry(entryId: number) {
     const response = await fetch(`/api/subentries/${entryId}`, { method: "DELETE" });
     if (!response.ok) {
@@ -244,6 +280,10 @@ export default function BonsaiSubEntriesPage() {
             </fieldset>
             <fieldset className="fieldset gap-2 md:col-span-2">
               <legend className="fieldset-legend text-sm font-medium">Bilder</legend>
+              <p className="text-sm text-base-content/70">
+                Neue Bilder werden erst mit <strong>Sub-Eintrag anlegen</strong> gespeichert und diesem Eintrag
+                zugeordnet.
+              </p>
               <input className="file-input file-input-bordered" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={(event) => setCreateForm((current) => ({ ...current, newImages: Array.from(event.target.files ?? []) }))} />
             </fieldset>
           </div>
@@ -352,13 +392,24 @@ export default function BonsaiSubEntriesPage() {
                 <textarea className="textarea textarea-bordered h-28" value={editForm.notes} onChange={(event) => setEditForm((current) => ({ ...current, notes: event.target.value }))} />
               </fieldset>
               <div className="md:col-span-2">
-                <p className="mb-2 text-sm font-medium">Bestehende Bilder behalten</p>
+                <p className="mb-2 text-sm font-medium">Bestehende Bilder</p>
+                <p className="mb-3 text-sm text-base-content/70">
+                  Bestehende Bilder können nach Bestätigung sofort entfernt werden. Neue Bilder werden erst mit
+                  <strong> Speichern</strong> übernommen.
+                </p>
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {editForm.keepImages.map((image) => (
                     <div key={image} className="relative">
                       <img src={image} alt="Bestehendes Bild" className="h-32 w-full rounded-2xl object-cover" loading="lazy" />
-                      <button className="btn btn-error btn-xs absolute right-2 top-2" onClick={() => setEditForm((current) => ({ ...current, keepImages: current.keepImages.filter((entry) => entry !== image) }))}>
-                        Entfernen
+                      <button
+                        type="button"
+                        className="btn btn-error btn-xs absolute right-2 top-2"
+                        onClick={() => {
+                          setError(null);
+                          setImagePendingDeletion(image);
+                        }}
+                      >
+                        Direkt entfernen
                       </button>
                     </div>
                   ))}
@@ -371,10 +422,39 @@ export default function BonsaiSubEntriesPage() {
             </div>
           ) : null}
           <div className="modal-action">
-            <button className="btn" onClick={() => setEditingId(null)}>Abbrechen</button>
-            <button className="btn btn-primary" onClick={saveEdit} disabled={submitting}>
+            <button className="btn" onClick={() => setEditingId(null)} type="button">Abbrechen</button>
+            <button className="btn btn-primary" onClick={saveEdit} disabled={submitting} type="button">
               {submitting ? <span className="loading loading-spinner loading-sm" /> : null}
               Speichern
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog className={`modal ${imagePendingDeletion ? "modal-open" : ""}`}>
+        <div className="modal-box max-w-lg">
+          <h3 className="text-lg font-bold">Bild entfernen?</h3>
+          <p className="mt-3 text-sm text-base-content/70">
+            Das Bild wird nach der Bestätigung sofort aus diesem Sub-Eintrag entfernt und muss nicht zusätzlich
+            über den Bearbeiten-Dialog gespeichert werden.
+          </p>
+          <div className="modal-action">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setImagePendingDeletion(null)}
+              disabled={removingImage}
+            >
+              Abbrechen
+            </button>
+            <button
+              type="button"
+              className="btn btn-error"
+              onClick={() => void removeEditImage()}
+              disabled={removingImage}
+            >
+              {removingImage ? <span className="loading loading-spinner loading-sm" /> : null}
+              Jetzt entfernen
             </button>
           </div>
         </div>

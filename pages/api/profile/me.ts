@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
-import { mapProfileToDto } from "@/lib/mappers";
+import { mapSelfProfileToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 import { getZodErrorMessage } from "@/lib/api/validation";
 import { profilePatchSchema } from "@/lib/validators/profile";
@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    ok(res, mapProfileToDto(profile, userId));
+    ok(res, mapSelfProfileToDto(profile, userId));
     return;
   }
 
@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         },
       });
-      ok(res, mapProfileToDto(updated, userId));
+      ok(res, mapSelfProfileToDto(updated, userId));
       return;
     } catch (error) {
       if (error instanceof ZodError) {

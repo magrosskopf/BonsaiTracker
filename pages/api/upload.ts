@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
 import { runMiddleware } from "@/lib/middleware";
-import { createImageUpload, filePathFor } from "@/lib/uploads";
+import { logError } from "@/lib/observability";
+import { createImageUpload, persistImageUpload } from "@/lib/uploads";
+import { removeManagedMedia } from "@/lib/storage";
 
 type UploadRequest = NextApiRequest & {
   file?: Express.Multer.File;
@@ -40,17 +42,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const bonsaiId = Number(req.body.bonsaiId);
+  let targetBonsai: { id: number; images: string[] } | null = null;
   if (req.body.bonsaiId !== undefined && req.body.bonsaiId !== "") {
     if (!Number.isInteger(bonsaiId) || bonsaiId <= 0) {
       fail(res, "BAD_REQUEST", "Ungültige Bonsai-ID.", 400);
       return;
     }
 
-    const bonsai = await prisma.bonsai.findFirst({
+    targetBonsai = await prisma.bonsai.findFirst({
       where: { id: bonsaiId, userId, deletedAt: null },
+      select: { id: true, images: true },
     });
 
-    if (!bonsai) {
+    if (!targetBonsai) {
       fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
       return;
     }
@@ -62,7 +66,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  ok(res, { filePath: filePathFor("", file) });
+  try {
+    const filePath = await persistImageUpload("", file);
+
+    if (targetBonsai) {
+      const nextImages = targetBonsai.images.includes(filePath)
+        ? targetBonsai.images
+        : [...targetBonsai.images, filePath];
+
+      try {
+        await prisma.bonsai.update({
+          where: { id: targetBonsai.id },
+          data: { images: nextImages },
+        });
+      } catch (error) {
+        await removeManagedMedia(filePath).catch((cleanupError) => {
+          logError("upload.link_cleanup_failed", cleanupError, { userId, bonsaiId: targetBonsai?.id, filePath });
+        });
+        throw error;
+      }
+    }
+
+    ok(res, { filePath });
+  } catch (error) {
+    logError("upload.persist_failed", error, { userId, bonsaiId: Number.isInteger(bonsaiId) ? bonsaiId : null });
+    fail(res, "INTERNAL_SERVER_ERROR", "Der Upload konnte nicht gespeichert werden.", 500);
+  }
 }
 
 export const config = {

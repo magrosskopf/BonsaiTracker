@@ -5,12 +5,22 @@ import { prisma } from "@/lib/prisma";
 import { getOwnedBonsaiIncludingArchived, getOwnedBonsaiOr404, requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
 import { mapBonsaiDetail } from "@/lib/mappers";
+import { logError } from "@/lib/observability";
+import { removeManagedMediaBatch } from "@/lib/storage";
 import { bonsaiPatchSchema, bonsaiPersistedSchema } from "@/lib/validators/bonsai";
 
 function parseId(value: string | string[] | undefined): number | null {
   const raw = Array.isArray(value) ? value[0] : value;
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+async function safeCleanup(mediaPaths: string[], context: Record<string, unknown>): Promise<void> {
+  try {
+    await removeManagedMediaBatch(mediaPaths);
+  } catch (error) {
+    logError("bonsai.removed_media_cleanup_failed", error, context);
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
@@ -106,6 +116,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         },
       });
+
+      const nextImages = patch.images ?? existing.images;
+      const removedImages = existing.images.filter((image) => !nextImages.includes(image));
+      await safeCleanup(removedImages, { userId, bonsaiId });
 
       ok(res, mapBonsaiDetail(updated as Parameters<typeof mapBonsaiDetail>[0]));
       return;

@@ -48,7 +48,7 @@ Diese Spezifikation definiert ein konsistentes Soll-System auf Basis des vorhand
 - Backend: Next.js API Routes
 - Auth: NextAuth mit E-Mail-Magic-Link
 - Datenbank: PostgreSQL via Prisma
-- Storage: Lokal (`public/uploads`) wie im aktuellen Projekt, austauschbar auf externes Object Storage in späteren Versionen
+- Storage: PostgreSQL bleibt für relationale Daten; Uploads liegen produktiv in Supabase Storage, lokal in der Entwicklung im Dateisystem
 
 Architekturprinzipien:
 - Eine konsistente Router-Welt: nur Pages Router in v1
@@ -76,7 +76,7 @@ Architekturprinzipien:
 - Validierung serverseitig zentral, clientseitig ergänzend
 - Falls zusätzliche Validierungsbibliothek eingeführt wird, ist `zod` der Standard
 - Interne Navigation mit `next/link`
-- Bilder primär als normale Public-Assets; `next/image` kann verwendet werden, ist aber nicht verpflichtend für lokale Upload-Pfade in v1
+- Bilder werden über stabile App-Media-Pfade ausgeliefert; `next/image` kann verwendet werden, ist aber nicht verpflichtend
 
 ## 4.3 Laufzeit- und Umgebungsannahmen
 Diese Annahmen basieren auf der aktuellen `.env.local` und sind für die Implementierung in v1 verbindlich.
@@ -470,18 +470,18 @@ Cursor-Konvention für Listen:
 - Zweck: Sub-Eintrag löschen
 - 204 ohne Body
 - Sub-Einträge werden in v1 physisch gelöscht
-- Zugehörige Upload-Dateien werden in v1 nicht automatisch von der Festplatte entfernt
+- Zugehörige verwaltete Upload-Dateien werden beim Löschen eines Sub-Entries mit entfernt
 - Fehlercodes: `401`, `404`, `500`
 
 ## 7.10 `POST /api/upload`
 - Zweck: Einzelbildupload für Bonsai (Legacy-kompatibel)
 - `multipart/form-data`: `file`, `bonsaiId`
-- Speicherung identisch zum aktuellen Projekt unter `public/uploads`
+- Speicherung über den konfigurierten Upload-Storage; produktiv Supabase Storage, lokal Dateisystem
 - Ownership-Check für `bonsaiId`
 - 200: `{ ok: true, data: { filePath } }`
+- Wenn `bonsaiId` mitgegeben wird, wird der Bildpfad direkt an den Bonsai-Datensatz angehängt
 - Hinweis: Für neue Entwicklung bevorzugt in Bonsai-Endpoint integrieren
-- `filePath` ist immer ein relativer Public-Pfad, z. B. `/uploads/1735689600000-mein-bild.jpg`
-- Die Route aktualisiert den Bonsai-Datensatz nicht automatisch
+- `filePath` ist ein stabiler Media-Pfad der App, z. B. `/api/media/local/1735689600000-mein-bild.jpg`
 - Fehlercodes: `401`, `400`, `404`, `413`, `415`, `500`
 
 ## 7.11 Beispiel-Requests und -Responses
@@ -793,7 +793,7 @@ Bereinigung:
 - Build und Tests laufen lokal durch
 
 ## 17. Festgelegte Produktentscheidungen
-- Bilder bleiben in v1 lokal gespeichert, wie im aktuellen Projekt.
+- Relationale Daten bleiben in PostgreSQL; Bilder liegen produktiv in Supabase Storage.
 - Sub-Einträge erhalten in v1 keine zusätzlichen Kategorien.
 - Bonsais werden per Soft Delete entfernt (`deletedAt`).
 - Die Anwendung ist in v1 ausschließlich auf Deutsch.
@@ -838,7 +838,7 @@ Die folgenden Punkte sind bereits entschieden und dürfen nicht eigenständig an
 - Infinite Scroll mit Cursor-Pagination
 - Deutsch als einzige Sprache in v1
 - `style` als feste Liste mit `customStyle` nur bei `Sonstiger`
-- Lokale Dateispeicherung unter `public/uploads`
+- PostgreSQL für relationale Daten, Supabase Storage für Uploads
 
 ### 19.3 Pflicht bei Abweichungen im Bestandscode
 - Entferne oder migriere app-router-artige Artefakte im `pages`-basierten Projekt.

@@ -136,11 +136,14 @@ export interface PostDto {
   viewerHasLiked: boolean;
 }
 
-export interface ProfileDto {
+export interface PublicProfileDto {
   id: number;
   name: string | null;
-  email: string | null;
   bio: string | null;
   profileImageUrl: string | null;
   posts: PostDto[];
+}
+
+export interface SelfProfileDto extends PublicProfileDto {
+  email: string | null;
 }

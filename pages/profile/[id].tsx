@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import type { ProfileDto } from "@/types/dto";
+import type { PublicProfileDto } from "@/types/dto";
 import { POST_TYPE_LABELS } from "@/types/domain";
 
 export default function PublicProfilePage() {
@@ -14,7 +14,7 @@ export default function PublicProfilePage() {
       void router.replace("/");
     },
   });
-  const [profile, setProfile] = useState<ProfileDto | null>(null);
+  const [profile, setProfile] = useState<PublicProfileDto | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function PublicProfilePage() {
 
     void (async () => {
       const response = await fetch(`/api/profiles/${profileId}`);
-      const json = (await response.json()) as { ok: boolean; data?: ProfileDto; error?: { message: string } };
+      const json = (await response.json()) as { ok: boolean; data?: PublicProfileDto; error?: { message: string } };
       if (!response.ok || !json.ok || !json.data) {
         setError(json.error?.message ?? "Das Profil konnte nicht geladen werden.");
         return;
@@ -46,6 +46,7 @@ export default function PublicProfilePage() {
             <p className="text-sm uppercase tracking-[0.2em] text-primary">Profil</p>
             <h1 className="text-3xl font-bold">{profile.name ?? "Unbekannt"}</h1>
             <p className="mt-2 text-base-content/70">{profile.bio ?? "Keine Bio hinterlegt."}</p>
+            <p className="mt-3 text-sm text-base-content/60">Sichtbar sind nur Community-Daten innerhalb der geschlossenen Beta. Private Kontodaten wie die E-Mail-Adresse werden hier nicht angezeigt.</p>
           </div>
 
           {profile.posts.length === 0 ? (
