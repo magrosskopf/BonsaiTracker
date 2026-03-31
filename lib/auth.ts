@@ -5,6 +5,7 @@ import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { Resend } from "resend";
 import { prisma } from "./prisma";
+import { logError, logInfo } from "./observability";
 import {
   evaluateSignupEligibility,
   isExistingUser,
@@ -71,7 +72,7 @@ export const authOptions: NextAuthOptions = {
         try {
           await releaseSignupSlot(normalizedEmail);
         } catch (error) {
-          console.error("signIn slot release failed", error);
+          logError("auth.signin_slot_release_failed", error);
         }
         return true;
       }
@@ -85,7 +86,7 @@ export const authOptions: NextAuthOptions = {
 
         const eligibility = await evaluateSignupEligibility(normalizedEmail);
         if (!eligibility.allowed) {
-          console.info("signup denied", { reason: eligibility.reason, email: normalizedEmail });
+          logInfo("auth.signup_denied", { reason: eligibility.reason });
           return false;
         }
 
@@ -96,13 +97,13 @@ export const authOptions: NextAuthOptions = {
 
         const reserved = await reserveSignupSlot(normalizedEmail);
         if (!reserved.reserved) {
-          console.info("signup denied", { reason: reserved.reason, email: normalizedEmail });
+          logInfo("auth.signup_denied", { reason: reserved.reason });
           return false;
         }
 
         return true;
       } catch (error) {
-        console.error("email signIn guard failed", error);
+        logError("auth.email_signin_guard_failed", error);
         return false;
       }
     },

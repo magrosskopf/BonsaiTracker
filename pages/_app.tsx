@@ -5,7 +5,13 @@ import Analytics from "../components/Analytics";
 import CookieBanner from "../components/CookieBanner";
 import LegalFooter from "../components/LegalFooter";
 import Navigation from "../components/Navigation";
-import { readAnalyticsConsent, type AnalyticsConsent, writeAnalyticsConsent } from "../lib/consent";
+import {
+  enableAnalyticsTracking,
+  readAnalyticsConsent,
+  revokeAnalyticsConsent,
+  type AnalyticsConsent,
+  writeAnalyticsConsent,
+} from "../lib/consent";
 import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -14,18 +20,26 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const storedConsent = readAnalyticsConsent();
+    if (storedConsent === "accepted") {
+      enableAnalyticsTracking();
+    }
+    if (storedConsent === "rejected") {
+      revokeAnalyticsConsent();
+    }
     setConsent(storedConsent);
     setBannerOpen(storedConsent === "unset");
   }, []);
 
   function handleAcceptAnalytics() {
     writeAnalyticsConsent("accepted");
+    enableAnalyticsTracking();
     setConsent("accepted");
     setBannerOpen(false);
   }
 
   function handleRejectAnalytics() {
     writeAnalyticsConsent("rejected");
+    revokeAnalyticsConsent();
     setConsent("rejected");
     setBannerOpen(false);
   }
