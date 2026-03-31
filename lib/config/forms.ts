@@ -51,7 +51,7 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
   {
     id: "grunddaten",
     title: "Grunddaten",
-    description: "Identitaet, Art und Standort des Bonsai.",
+    description: "Identität, Art und Standort des Bonsai.",
     sectionTitle: "Grunddaten",
     fields: [
       { key: "name", label: "Name", type: "text", required: true },
@@ -75,7 +75,7 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     sectionTitle: "Masse und Gestaltung",
     fields: [
       { key: "age", label: "Alter in Jahren", type: "number", required: true, min: 0, max: 200 },
-      { key: "heightCm", label: "Hoehe in cm", type: "number", min: 0, max: 500 },
+      { key: "heightCm", label: "Höhe in cm", type: "number", min: 0, max: 500 },
       { key: "widthCm", label: "Breite in cm", type: "number", min: 0, max: 500 },
       { key: "trunkDiameterMm", label: "Stammdurchmesser in mm", type: "number", min: 0, max: 1000 },
       {
@@ -118,7 +118,7 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
         options: asOptions(DEVELOPMENT_STAGE_OPTIONS, DEVELOPMENT_STAGE_LABELS),
       },
       { key: "lastRepotDate", label: "Letztes Umtopfen", type: "date" },
-      { key: "nextRepotDue", label: "Naechstes Umtopfen", type: "date" },
+      { key: "nextRepotDue", label: "Nächstes Umtopfen", type: "date" },
     ],
   },
   {
@@ -129,20 +129,20 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     fields: [
       {
         key: "winterHardiness",
-        label: "Winterhaerte",
+        label: "Winterhärte",
         type: "select",
-        options: [{ value: "", label: "Bitte waehlen" }, ...asOptions(WINTER_HARDINESS_OPTIONS, WINTER_HARDINESS_LABELS)],
+        options: [{ value: "", label: "Bitte wählen" }, ...asOptions(WINTER_HARDINESS_OPTIONS, WINTER_HARDINESS_LABELS)],
       },
       {
         key: "sunExposure",
         label: "Sonneneinstrahlung",
         type: "select",
-        options: [{ value: "", label: "Bitte waehlen" }, ...asOptions(SUN_EXPOSURE_OPTIONS, SUN_EXPOSURE_LABELS)],
+        options: [{ value: "", label: "Bitte wählen" }, ...asOptions(SUN_EXPOSURE_OPTIONS, SUN_EXPOSURE_LABELS)],
       },
       { key: "potType", label: "Topfart", type: "text" },
       { key: "potColor", label: "Topffarbe", type: "text" },
-      { key: "wateringNotes", label: "Bewaesserung", type: "textarea" },
-      { key: "fertilizingNotes", label: "Duengung", type: "textarea" },
+      { key: "wateringNotes", label: "Bewässerung", type: "textarea" },
+      { key: "fertilizingNotes", label: "Düngung", type: "textarea" },
       { key: "pruningNotes", label: "Schnitt", type: "textarea" },
       { key: "wiringNotes", label: "Drahten", type: "textarea" },
     ],
@@ -150,7 +150,7 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
   {
     id: "notizen",
     title: "Notizen",
-    description: "Freitext und finale Pruefung vor dem Speichern.",
+    description: "Freitext und finale Prüfung vor dem Speichern.",
     sectionTitle: "Freitextnotizen",
     fields: [
       { key: "notes", label: "Notizen", type: "textarea" },

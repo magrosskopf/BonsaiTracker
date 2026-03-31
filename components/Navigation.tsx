@@ -31,7 +31,7 @@ export default function Navigation() {
   }
 
   return (
-    <nav aria-label="Primaere Navigation" className="bonsai-dock">
+    <nav aria-label="Primäre Navigation" className="bonsai-dock">
       {navigationItems.map((item) => {
         const active = router.pathname === item.href || router.asPath.startsWith(`${item.href}/`);
         return (

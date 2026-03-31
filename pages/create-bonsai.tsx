@@ -104,7 +104,7 @@ export default function CreateBonsaiPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h2 className="card-title">Bilder</h2>
             <label className="btn btn-secondary">
-              {uploading ? "Laedt..." : "Bilder hochladen"}
+              {uploading ? "Lädt..." : "Bilder hochladen"}
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"

@@ -25,7 +25,7 @@ test("waitlist page exposes stable marketing content blocks", () => {
 test("waitlist page exports stable seo and cta copy", () => {
   assert.equal(WAITLIST_PAGE_TITLE, "Bonsai Tracker Warteliste");
   assert.match(WAITLIST_META_DESCRIPTION, /Bonsai Tracker/);
-  assert.equal(WAITLIST_FORM_TITLE, "Trag dich jetzt fuer den Launch ein");
+  assert.equal(WAITLIST_FORM_TITLE, "Setz dich auf die Warteliste");
   assert.equal(WAITLIST_LOGIN_LINK_LABEL, "Schon Beta-Zugang? Zum Login");
   assert.match(WAITLIST_HERO_TITLE, /Bonsai/);
   assert.match(WAITLIST_CTA_SUPPORT_COPY, /Kostenlos/);

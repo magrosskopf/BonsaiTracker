@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const includeDone = firstQueryValue(req.query.includeDone) === "true";
 
     if (status && !REMINDER_STATUS_OPTIONS.includes(status as ReminderStatusOption)) {
-      fail(res, "BAD_REQUEST", "Ungueltiger Reminder-Status.", 400);
+      fail(res, "BAD_REQUEST", "Ungültiger Reminder-Status.", 400);
       return;
     }
 
@@ -76,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     } catch (error) {
       if (error instanceof ZodError) {
-        const { details, message } = getZodErrorMessage(error, "Die Reminder-Daten sind ungueltig.");
+        const { details, message } = getZodErrorMessage(error, "Die Reminder-Daten sind ungültig.");
         fail(res, "VALIDATION_ERROR", message, 422, details);
         return;
       }

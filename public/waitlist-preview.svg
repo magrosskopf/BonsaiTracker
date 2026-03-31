@@ -1,6 +1,6 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">Bonsai Tracker Warteliste</title>
-  <desc id="desc">Share preview fuer die Bonsai Tracker Warteliste.</desc>
+  <desc id="desc">Share preview für die Bonsai Tracker Warteliste.</desc>
   <defs>
     <linearGradient id="bg" x1="140" y1="50" x2="1070" y2="610" gradientUnits="userSpaceOnUse">
       <stop stop-color="#F7F2E8"/>
@@ -42,7 +42,7 @@
       <tspan x="86" dy="72">Fortschritt an einem Ort.</tspan>
     </text>
     <text x="86" y="410" font-family="'Trebuchet MS', Arial, sans-serif" font-size="28" fill="#3D5642">
-      <tspan x="86" dy="0">Trag dich fuer die Warteliste ein und erfahre fruehzeitig,</tspan>
+      <tspan x="86" dy="0">Trag dich für die Warteliste ein und erfahre frühzeitig,</tspan>
       <tspan x="86" dy="40">wann Bonsai Tracker offiziell live geht.</tspan>
     </text>
   </g>

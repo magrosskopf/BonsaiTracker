@@ -53,7 +53,7 @@ export default function PublicProfilePage() {
             <section className="surface-card card border-dashed">
               <div className="card-body">
                 <h2 className="card-title">Noch keine Posts</h2>
-                <p>Dieses Profil hat noch nichts veroeffentlicht.</p>
+                <p>Dieses Profil hat noch nichts veröffentlicht.</p>
               </div>
             </section>
           ) : (
@@ -75,7 +75,7 @@ export default function PublicProfilePage() {
             </div>
           )}
 
-          <Link href="/feed" className="btn btn-outline w-fit">Zurueck zum Feed</Link>
+          <Link href="/feed" className="btn btn-outline w-fit">Zurück zum Feed</Link>
         </div>
       ) : null}
     </main>

@@ -113,7 +113,7 @@ export default function FeedPage() {
           throw new Error(feedJson.error?.message ?? "Der Feed konnte nicht geladen werden.");
         }
         if (!bonsaiResponse.ok || !bonsaiJson.ok || !bonsaiJson.data) {
-          throw new Error((bonsaiJson as { error?: { message?: string } }).error?.message ?? "Die Bonsais fuer den Composer konnten nicht geladen werden.");
+          throw new Error((bonsaiJson as { error?: { message?: string } }).error?.message ?? "Die Bonsais für den Composer konnten nicht geladen werden.");
         }
 
         setPosts(feedJson.data.items);
@@ -136,7 +136,7 @@ export default function FeedPage() {
       const response = await fetch(`/api/bonsais/${selectedBonsaiId}`);
       const json = (await response.json()) as { ok: boolean; data?: BonsaiDetail; error?: { message: string } };
       if (!response.ok || !json.ok || !json.data) {
-        setError(json.error?.message ?? "Der ausgewaehlte Bonsai konnte nicht geladen werden.");
+        setError(json.error?.message ?? "Der ausgewählte Bonsai konnte nicht geladen werden.");
         return;
       }
       setSelectedBonsai(json.data);
@@ -230,7 +230,7 @@ export default function FeedPage() {
   async function deletePost(postId: number) {
     const response = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
     if (!response.ok) {
-      setError("Der Post konnte nicht geloescht werden.");
+      setError("Der Post konnte nicht gelöscht werden.");
       return;
     }
     setPosts((current) => current.filter((post) => post.id !== postId));
@@ -249,7 +249,7 @@ export default function FeedPage() {
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-primary">Community Feed</p>
           <h1 className="text-3xl font-bold">Zeige Fortschritte oder frage die Community</h1>
-          <p className="mt-2 text-base-content/70">Posts und Profile sind innerhalb der geschlossenen Beta fuer alle eingeloggten Tester sichtbar.</p>
+          <p className="mt-2 text-base-content/70">Posts und Profile sind innerhalb der geschlossenen Beta für alle eingeloggten Tester sichtbar.</p>
         </div>
         <button className="btn btn-primary btn-sm md:btn-md" onClick={openComposer} disabled={bonsais.length === 0}>
           Beitrag erstellen
@@ -261,7 +261,7 @@ export default function FeedPage() {
       {bonsais.length === 0 ? (
         <section className="surface-card card border-dashed mb-6">
           <div className="card-body">
-            <h2 className="card-title">Noch keine Bonsais fuer Posts</h2>
+            <h2 className="card-title">Noch keine Bonsais für Posts</h2>
             <p>Lege zuerst einen Bonsai an. Danach kannst du jederzeit einen Beitrag im Feed erstellen.</p>
             <Link href="/create-bonsai" className="btn btn-primary w-fit">Bonsai anlegen</Link>
           </div>
@@ -272,7 +272,7 @@ export default function FeedPage() {
         <section className="surface-card card border-dashed">
           <div className="card-body">
             <h2 className="card-title">Noch keine Posts</h2>
-            <p>Veroeffentliche deinen ersten Fortschritt oder stelle eine Frage an die Community.</p>
+            <p>Veröffentliche deinen ersten Fortschritt oder stelle eine Frage an die Community.</p>
           </div>
         </section>
       ) : null}
@@ -305,7 +305,7 @@ export default function FeedPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold">{editingPostId ? "Post bearbeiten" : "Neuen Post erstellen"}</h2>
-              <p className="text-sm text-base-content/65">Erst nach Klick auf diesen Einstieg oeffnet sich der Wizard. Bilder sind optional.</p>
+              <p className="text-sm text-base-content/65">Erst nach Klick auf diesen Einstieg öffnet sich der Wizard. Bilder sind optional.</p>
             </div>
             <button className="btn btn-ghost btn-sm" onClick={closeComposer}>Schliessen</button>
           </div>
@@ -353,9 +353,9 @@ export default function FeedPage() {
           {composerStep === 1 ? (
             <section className="space-y-4">
               <div>
-                <h3 className="font-semibold">Bilder fuer diesen Post</h3>
+                <h3 className="font-semibold">Bilder für diesen Post</h3>
                 <p className="text-sm text-base-content/65">
-                  Optional. Du kannst bis zu 5 Bilder auswaehlen, musst aber kein Bild anhaengen.
+                  Optional. Du kannst bis zu 5 Bilder auswählen, musst aber kein Bild anhängen.
                 </p>
               </div>
               {availableImages.length > 0 ? (
@@ -386,7 +386,7 @@ export default function FeedPage() {
                             <span>{item.source}</span>
                           </div>
                           <p className="mt-1 font-medium">
-                            {isSelected ? "Ausgewaehlt" : effectiveImages.length >= 5 ? "Maximal 5 Bilder" : "Zum Auswaehlen klicken"}
+                            {isSelected ? "Ausgewählt" : effectiveImages.length >= 5 ? "Maximal 5 Bilder" : "Zum Auswählen klicken"}
                           </p>
                         </div>
                       </button>
@@ -399,7 +399,7 @@ export default function FeedPage() {
                 </div>
               )}
               <p className="text-sm text-base-content/70">
-                Aktuell ausgewaehlt: {effectiveImages.length} / 5 Bilder
+                Aktuell ausgewählt: {effectiveImages.length} / 5 Bilder
               </p>
             </section>
           ) : null}
@@ -407,8 +407,8 @@ export default function FeedPage() {
           {composerStep === 2 ? (
             <section className="space-y-4">
               <div>
-                <h3 className="font-semibold">Timeline-Eintraege als Kontext</h3>
-                <p className="text-sm text-base-content/65">Optional. Diese Eintraege geben deinem Post mehr Kontext, sind aber nicht noetig.</p>
+                <h3 className="font-semibold">Timeline-Einträge als Kontext</h3>
+                <p className="text-sm text-base-content/65">Optional. Diese Einträge geben deinem Post mehr Kontext, sind aber nicht nötig.</p>
               </div>
               {selectedBonsai?.subEntries.length ? (
                 <div className="space-y-2">
@@ -430,7 +430,7 @@ export default function FeedPage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-base-300 p-4 text-sm text-base-content/70">
-                  Noch keine Timeline-Eintraege vorhanden. Du kannst den Post trotzdem veroeffentlichen.
+                  Noch keine Timeline-Einträge vorhanden. Du kannst den Post trotzdem veröffentlichen.
                 </div>
               )}
             </section>
@@ -438,14 +438,14 @@ export default function FeedPage() {
 
           {!canSubmit ? (
             <div className="mt-6 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm text-base-content/80">
-              {!selectedBonsaiId ? "Bitte waehle zuerst einen Bonsai." : "Bitte ergaenze einen Text fuer den Post."}
+              {!selectedBonsaiId ? "Bitte wähle zuerst einen Bonsai." : "Bitte ergänze einen Text für den Post."}
             </div>
           ) : null}
 
           <div className="modal-action">
             <button className="btn btn-ghost" onClick={closeComposer}>Abbrechen</button>
             <button className="btn btn-outline" onClick={() => setComposerStep((current) => Math.max(0, current - 1))} disabled={composerStep === 0}>
-              Zurueck
+              Zurück
             </button>
             {composerStep < 2 ? (
               <button className="btn btn-outline" onClick={() => setComposerStep((current) => Math.min(2, current + 1))}>
@@ -453,7 +453,7 @@ export default function FeedPage() {
               </button>
             ) : (
               <button className="btn btn-primary" onClick={() => void handleCreateOrUpdatePost()} disabled={!canSubmit}>
-                {editingPostId ? "Post speichern" : "Post veroeffentlichen"}
+                {editingPostId ? "Post speichern" : "Post veröffentlichen"}
               </button>
             )}
           </div>
@@ -537,7 +537,7 @@ function PostCard({
                   Bearbeiten
                 </button>
                 <button className="btn btn-sm btn-error" onClick={() => void onDelete(post.id)}>
-                  Loeschen
+                  Löschen
                 </button>
               </>
             ) : null}

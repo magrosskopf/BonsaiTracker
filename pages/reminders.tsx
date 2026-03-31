@@ -96,8 +96,8 @@ export default function RemindersPage() {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="badge badge-outline mb-2">{REMINDER_STATUS_LABELS[item.status]}</div>
-                  <h2 className="card-title">{item.title ?? `Pflege fuer ${item.bonsaiName}`}</h2>
-                  <p className="text-sm text-base-content/70">Faellig am {new Date(item.reminderDate).toLocaleDateString("de-DE")}</p>
+                  <h2 className="card-title">{item.title ?? `Pflege für ${item.bonsaiName}`}</h2>
+                  <p className="text-sm text-base-content/70">Fällig am {new Date(item.reminderDate).toLocaleDateString("de-DE")}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button className="btn btn-success btn-sm" onClick={() => void updateReminder(item.id, { status: "DONE" })}>

@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     } catch (error) {
       if (error instanceof ZodError) {
-        const { details, message } = getZodErrorMessage(error, "Die Profil-Daten sind ungueltig.");
+        const { details, message } = getZodErrorMessage(error, "Die Profil-Daten sind ungültig.");
         fail(res, "VALIDATION_ERROR", message, 422, details);
         return;
       }

@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const profileId = parseId(req.query.id);
   if (!profileId) {
-    fail(res, "BAD_REQUEST", "Ungueltige Profil-ID.", 400);
+    fail(res, "BAD_REQUEST", "Ungültige Profil-ID.", 400);
     return;
   }
 

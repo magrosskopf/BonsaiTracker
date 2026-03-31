@@ -28,7 +28,7 @@ export default function CookieBanner({
           <p className="text-sm uppercase tracking-[0.2em] text-primary">Cookies & Datenschutz</p>
           <h2 className="text-xl font-semibold">Optionale Statistik nur mit Einwilligung</h2>
           <p className="text-sm text-base-content/75">
-            Wir nutzen nur technisch notwendige Funktionen standardmaessig. Google Analytics wird erst geladen, wenn du
+            Wir nutzen nur technisch notwendige Funktionen standardmäßig. Google Analytics wird erst geladen, wenn du
             dem Statistik-Tracking aktiv zustimmst.
           </p>
         </div>
@@ -49,4 +49,3 @@ export default function CookieBanner({
     </aside>
   );
 }
-

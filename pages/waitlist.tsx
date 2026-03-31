@@ -6,44 +6,44 @@ const DEFAULT_PUBLIC_APP_URL = "http://localhost:3000";
 
 export const WAITLIST_PAGE_TITLE = "Bonsai Tracker Warteliste";
 export const WAITLIST_META_DESCRIPTION =
-  "Trag dich fuer Bonsai Tracker ein und erfahre als eine der ersten Personen, wenn die App fuer deine Bonsai-Dokumentation live geht.";
-export const WAITLIST_FORM_TITLE = "Trag dich jetzt fuer den Launch ein";
+  "Trag dich für Bonsai Tracker ein und wir geben dir Bescheid, sobald du die App für deine Bonsai nutzen kannst.";
+export const WAITLIST_FORM_TITLE = "Setz dich auf die Warteliste";
 export const WAITLIST_LOGIN_LINK_LABEL = "Schon Beta-Zugang? Zum Login";
 export const WAITLIST_PREVIEW_IMAGE_PATH = "/waitlist-preview.svg";
 export const WAITLIST_HERO_EYEBROW = "Bonsai Tracker";
-export const WAITLIST_HERO_TITLE = "Behalte jeden Bonsai an einem Ort im Blick, bevor deine Notizen wieder ueberall verteilt liegen.";
+export const WAITLIST_HERO_TITLE = "Alles zu deinen Bonsai an einem Ort, statt verteilt in Notizen, Fotos und Erinnerungen.";
 export const WAITLIST_HERO_COPY =
-  "Dokumentiere Pflege, Fortschritt und Bilder strukturiert in einer App und lass dir zum Launch direkt Bescheid geben.";
+  "Halte Pflege, Entwicklung und Bilder übersichtlich fest und lass dir einfach Bescheid geben, sobald du loslegen kannst.";
 export const WAITLIST_PRIMARY_CTA_LABEL = "Jetzt auf die Warteliste";
-export const WAITLIST_CTA_SUPPORT_COPY = "Kostenlos, unverbindlich und nur fuer die Launch-Benachrichtigung.";
+export const WAITLIST_CTA_SUPPORT_COPY = "Kostenlos und unverbindlich. Wir schreiben dir nur, wenn es wirklich losgeht.";
 export const WAITLIST_NEXT_STEPS = [
-  "Du traegst deine E-Mail einmal ein.",
-  "Wir informieren dich, sobald Bonsai Tracker fuer weitere Nutzer live geht.",
-  "Dann entscheidest du in Ruhe, ob du direkt loslegen willst.",
+  "Du trägst deine E-Mail ein.",
+  "Wir melden uns, sobald wir weitere Plätze freischalten.",
+  "Dann kannst du in Ruhe entscheiden, ob du direkt starten möchtest.",
 ];
 export const WAITLIST_EXPECTATION_TITLE = "Was du nach der Anmeldung erwarten kannst";
 export const WAITLIST_EXPECTATION_COPY =
-  "Keine komplizierte Bewerbung und kein Marketing-Overload. Du bekommst vor allem eine klare Info, sobald Bonsai Tracker offiziell startet.";
+  "Keine Bewerbung, kein Spam und kein Druck. Du bekommst einfach eine kurze Nachricht, sobald es für dich losgehen kann.";
 
 export const WAITLIST_BENEFITS = [
   {
     title: "Pflege ohne Notizchaos",
-    description: "Halte Giessen, Duengen, Umtopfen, Schnitt und Beobachtungen nachvollziehbar fest, statt sie auf mehrere Orte zu verteilen.",
+    description: "Halte Gießen, Düngen, Umtopfen, Schnitt und Beobachtungen an einem Ort fest, damit später nichts verloren geht.",
   },
   {
     title: "Bilder mit echtem Verlauf",
-    description: "Verbinde Fotos direkt mit Eintraegen, damit Fortschritte nicht nur gespeichert, sondern spaeter auch wieder verstaendlich werden.",
+    description: "Ordne Fotos direkt deinen Einträgen zu, damit du Entwicklungen nicht nur sammelst, sondern später auch wirklich nachvollziehen kannst.",
   },
   {
     title: "Zum richtigen Zeitpunkt starten",
-    description: "Trag dich jetzt ein und erfahre fruehzeitig, wann Bonsai Tracker fuer weitere Nutzer verfuegbar ist.",
+    description: "Trag dich ein und wir sagen dir Bescheid, sobald Bonsai Tracker für weitere Nutzer geöffnet wird.",
   },
 ];
 
 export const WAITLIST_HIGHLIGHTS = [
-  "Ein Ort fuer Sammlung, Pflegehistorie und Bilder",
-  "Ideal fuer Bonsai-Fans, die ihre Entwicklung sauber dokumentieren wollen",
-  "Fruehzeitig informiert werden, sobald der Launch startet",
+  "Ein Ort für Pflege, Notizen und Bilder",
+  "Für alle, die ihre Bonsai nicht nur pflegen, sondern auch nachvollziehbar dokumentieren wollen",
+  "Eine kurze Nachricht, sobald du dabei sein kannst",
 ];
 
 export function getPublicAppUrl(): string {
@@ -111,8 +111,8 @@ export default function WaitlistPage() {
               <section id="waitlist-form" className="surface-section rounded-[2rem] p-6 md:p-8">
                 <WaitlistRequestForm
                   title={WAITLIST_FORM_TITLE}
-                  description="Wenn du zum Start informiert werden willst, trag dich jetzt ein. Wir melden uns, sobald Bonsai Tracker fuer weitere Nutzer verfuegbar ist."
-                  submitLabel="Launch-Platz vormerken"
+                  description="Wenn du beim Start dabei sein möchtest, trag dich hier ein. Wir melden uns, sobald wir weitere Nutzer freischalten."
+                  submitLabel="Auf Warteliste setzen"
                   variant="feature"
                 />
                 <div className="waitlist-form-footnote mt-5">
@@ -126,15 +126,15 @@ export default function WaitlistPage() {
         <section className="waitlist-story-grid mt-8 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           <article className="surface-section rounded-[2rem] p-6 md:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Warum jetzt?</p>
-            <h2 className="mt-3 text-2xl font-semibold md:text-3xl">Viele Bonsai-Notizen starten motiviert und verschwinden dann zwischen Fotos, Erinnerungen und losen Listen.</h2>
+            <h2 className="mt-3 text-2xl font-semibold md:text-3xl">Viele Bonsai-Notizen starten motiviert und landen am Ende doch wieder verteilt zwischen Fotos, Erinnerungen und losen Listen.</h2>
             <p className="mt-4 max-w-2xl text-base-content/74">
-              Bonsai Tracker ist dafuer gedacht, die Entwicklung deiner Baeume konsistent festzuhalten: von Pflegeintervallen ueber einzelne Schritte bis hin zu Bildverlaeufen und Notizen, die spaeter noch Sinn ergeben.
+              Bonsai Tracker soll dir helfen, die Entwicklung deiner Bäume sauber festzuhalten: von Pflegeintervallen über einzelne Maßnahmen bis hin zu Fotos und Notizen, die du auch Monate später noch einordnen kannst.
             </p>
           </article>
           <article className="surface-section waitlist-note rounded-[2rem] p-6 md:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Fuer wen?</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Für wen?</p>
             <p className="mt-4 text-lg leading-8 text-base-content/78">
-              Fuer alle, die ihre Bonsai nicht nur besitzen, sondern Entwicklung, Pflege und Entscheidungen sauber dokumentieren wollen.
+              Für alle, die bei ihren Bonsai nicht nur den aktuellen Stand sehen wollen, sondern auch den Weg dorthin.
             </p>
           </article>
         </section>

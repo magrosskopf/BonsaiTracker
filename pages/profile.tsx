@@ -71,7 +71,7 @@ export default function Profile() {
         <div className="hero-panel rounded-[2rem] p-6">
           <p className="text-sm uppercase tracking-[0.2em] text-primary">Profil</p>
           <h1 className="text-3xl font-bold">Dein Konto</h1>
-          <p className="mt-2 text-base-content/70">Name, Bio, Profilbild und deine veroeffentlichten Posts sind fuer andere eingeloggte Beta-Nutzer sichtbar. Deine E-Mail bleibt privat.</p>
+          <p className="mt-2 text-base-content/70">Name, Bio, Profilbild und deine veröffentlichten Posts sind für andere eingeloggte Beta-Nutzer sichtbar. Deine E-Mail bleibt privat.</p>
         </div>
 
         {error ? <div className="alert alert-error">{error}</div> : null}
@@ -99,7 +99,7 @@ export default function Profile() {
               </fieldset>
             </div>
             <div className="card-actions justify-between">
-              <Link href={`/profile/${session.user.id}`} className="btn btn-outline">Oeffentliches Profil</Link>
+              <Link href={`/profile/${session.user.id}`} className="btn btn-outline">Öffentliches Profil</Link>
               <div className="flex gap-2">
                 <button className="btn btn-primary" onClick={() => void saveProfile()}>
                   Speichern
@@ -127,7 +127,7 @@ export default function Profile() {
                 ))}
               </div>
             ) : (
-              <p className="text-base-content/70">Du hast noch keine Posts veroeffentlicht.</p>
+              <p className="text-base-content/70">Du hast noch keine Posts veröffentlicht.</p>
             )}
           </div>
         </section>

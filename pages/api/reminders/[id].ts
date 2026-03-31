@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const reminderId = parseId(req.query.id);
   if (!reminderId) {
-    fail(res, "BAD_REQUEST", "Ungueltige Reminder-ID.", 400);
+    fail(res, "BAD_REQUEST", "Ungültige Reminder-ID.", 400);
     return;
   }
 
@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     } catch (error) {
       if (error instanceof ZodError) {
-        const { details, message } = getZodErrorMessage(error, "Die Reminder-Daten sind ungueltig.");
+        const { details, message } = getZodErrorMessage(error, "Die Reminder-Daten sind ungültig.");
         fail(res, "VALIDATION_ERROR", message, 422, details);
         return;
       }

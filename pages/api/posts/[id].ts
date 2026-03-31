@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const postId = parseId(req.query.id);
   if (!postId) {
-    fail(res, "BAD_REQUEST", "Ungueltige Post-ID.", 400);
+    fail(res, "BAD_REQUEST", "Ungültige Post-ID.", 400);
     return;
   }
 
@@ -121,7 +121,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     } catch (error) {
       if (error instanceof ZodError) {
-        const { details, message } = getZodErrorMessage(error, "Die Post-Daten sind ungueltig.");
+        const { details, message } = getZodErrorMessage(error, "Die Post-Daten sind ungültig.");
         fail(res, "VALIDATION_ERROR", message, 422, details);
         return;
       }

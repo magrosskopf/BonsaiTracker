@@ -272,7 +272,7 @@ export default function BonsaiDetailPage() {
                     <h2 className="card-title">Slideshow</h2>
                     {slideshowImages.length > 1 ? (
                       <div className="join">
-                        <button className="btn btn-sm join-item" onClick={() => setSlideshowIndex((current) => Math.max(0, current - 1))}>Zurueck</button>
+                        <button className="btn btn-sm join-item" onClick={() => setSlideshowIndex((current) => Math.max(0, current - 1))}>Zurück</button>
                         <button className="btn btn-sm join-item" onClick={() => setSlideshowIndex((current) => Math.min(slideshowImages.length - 1, current + 1))}>Weiter</button>
                       </div>
                     ) : null}
@@ -285,7 +285,7 @@ export default function BonsaiDetailPage() {
                       </p>
                     </div>
                   ) : (
-                    <p className="text-base-content/60">Noch keine Bilder fuer die Entwicklungs-Slideshow vorhanden.</p>
+                    <p className="text-base-content/60">Noch keine Bilder für die Entwicklungs-Slideshow vorhanden.</p>
                   )}
                 </div>
               </div>
@@ -300,13 +300,13 @@ export default function BonsaiDetailPage() {
                     <div className="space-y-3">
                       {reminders.map((reminder) => (
                         <article key={reminder.id} className="rounded-2xl border border-base-300 bg-base-100/50 p-4">
-                          <p className="font-medium">{reminder.title ?? `Pflege fuer ${bonsai.name}`}</p>
+                          <p className="font-medium">{reminder.title ?? `Pflege für ${bonsai.name}`}</p>
                           <p className="text-sm text-base-content/60">{new Date(reminder.reminderDate).toLocaleDateString("de-DE")}</p>
                         </article>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-base-content/60">Fuer diesen Bonsai gibt es aktuell keine offenen Reminder.</p>
+                    <p className="text-base-content/60">Für diesen Bonsai gibt es aktuell keine offenen Reminder.</p>
                   )}
                 </div>
               </div>
