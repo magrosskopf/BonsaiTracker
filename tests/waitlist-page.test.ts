@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { getWaitlistFormContainerClasses } from "@/components/WaitlistRequestForm";
 import {
@@ -15,6 +16,8 @@ import {
   getWaitlistPageUrl,
   getWaitlistPreviewImageUrl,
 } from "@/pages/waitlist";
+
+const globalStyles = readFileSync(new URL("../styles/globals.css", import.meta.url), "utf8");
 
 test("waitlist page exposes stable marketing content blocks", () => {
   assert.equal(WAITLIST_BENEFITS.length, 3);
@@ -41,4 +44,15 @@ test("waitlist metadata helpers build absolute urls with fallback", () => {
   assert.equal(getWaitlistPageUrl(), "http://localhost:3000/waitlist");
   assert.equal(WAITLIST_PREVIEW_IMAGE_PATH, "/waitlist-preview.svg");
   assert.equal(getWaitlistPreviewImageUrl(), "http://localhost:3000/waitlist-preview.svg");
+});
+
+test("waitlist hero stacks on narrow screens and keeps a desktop grid", () => {
+  assert.match(globalStyles, /\.waitlist-hero__grid\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*column;[^}]*align-items:\s*stretch;[^}]*gap:\s*1\.25rem;/s);
+  assert.match(globalStyles, /\.waitlist-hero__copy,\s*\.waitlist-hero__form\s*\{[^}]*min-width:\s*0;[^}]*width:\s*100%;[^}]*\}/s);
+  assert.match(globalStyles, /\.waitlist-hero__copy\s*\{[^}]*order:\s*1;[^}]*\}/s);
+  assert.match(globalStyles, /\.waitlist-hero__form\s*\{[^}]*order:\s*2;[^}]*\}/s);
+  assert.match(
+    globalStyles,
+    /@media \(min-width: 1280px\)\s*\{\s*@layer components \{\s*\.waitlist-hero__grid\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1\.15fr\) minmax\(22rem, 0\.85fr\);[^}]*align-items:\s*start;/s,
+  );
 });

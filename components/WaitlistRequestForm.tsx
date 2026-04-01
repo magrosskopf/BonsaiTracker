@@ -78,16 +78,22 @@ export default function WaitlistRequestForm({
   return (
     <div className={getWaitlistFormContainerClasses(variant)}>
       <div className="space-y-2">
-        <h2 className={variant === "feature" ? "text-3xl font-semibold" : "text-xl font-semibold"}>{title}</h2>
+        {variant === "feature" ? (
+          <div className="waitlist-form__meta" aria-label="Formularhinweise">
+            <span className="waitlist-form__meta-item">Dauert unter 10 Sekunden</span>
+            <span className="waitlist-form__meta-item">Nur deine E-Mail</span>
+          </div>
+        ) : null}
+        <h2 className={variant === "feature" ? "text-[1.9rem] font-semibold leading-tight md:text-3xl" : "text-xl font-semibold"}>{title}</h2>
         {description ? <p className="text-base-content/72">{description}</p> : null}
       </div>
-      {message ? <div className="alert alert-success">{message}</div> : null}
-      {error ? <div className="alert alert-error">{error}</div> : null}
+      {message ? <div className="alert alert-success waitlist-form__message">{message}</div> : null}
+      {error ? <div className="alert alert-error waitlist-form__message">{error}</div> : null}
       <form className="space-y-4" onSubmit={handleSubmit}>
         <fieldset className="fieldset gap-2">
           <legend className="fieldset-legend text-sm font-medium">{fieldLabel}</legend>
           <input
-            className="input input-bordered w-full"
+            className={`input input-bordered w-full ${variant === "feature" ? "waitlist-form__input" : ""}`}
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -96,7 +102,10 @@ export default function WaitlistRequestForm({
             required
           />
         </fieldset>
-        <button className={`btn w-full ${variant === "feature" ? "btn-primary" : "btn-outline"}`} disabled={submitting || !email}>
+        <button
+          className={`btn w-full ${variant === "feature" ? "btn-primary waitlist-form__submit" : "btn-outline"}`}
+          disabled={submitting || !email}
+        >
           {submitting ? <span className="loading loading-spinner loading-sm" /> : null}
           {submitLabel}
         </button>

@@ -16,6 +16,7 @@ export const WAITLIST_HERO_COPY =
   "Halte Pflege, Entwicklung und Bilder übersichtlich fest und lass dir einfach Bescheid geben, sobald du loslegen kannst.";
 export const WAITLIST_PRIMARY_CTA_LABEL = "Jetzt auf die Warteliste";
 export const WAITLIST_CTA_SUPPORT_COPY = "Kostenlos und unverbindlich. Wir schreiben dir nur, wenn es wirklich losgeht.";
+export const WAITLIST_QUICK_FACTS = ["1 E-Mail reicht", "Kostenlos", "Kein Spam"];
 export const WAITLIST_NEXT_STEPS = [
   "Du trägst deine E-Mail ein.",
   "Wir melden uns, sobald wir weitere Plätze freischalten.",
@@ -80,22 +81,24 @@ export default function WaitlistPage() {
         <meta name="twitter:image" content={previewImageUrl} />
       </Head>
       <main className="page-shell mx-auto min-h-screen max-w-6xl px-4 py-6 md:px-6 md:py-10">
-        <section className="waitlist-hero hero-panel overflow-hidden rounded-[2.5rem] px-6 py-8 md:px-10 md:py-12">
-          <div className="waitlist-hero__grid">
-            <div className="waitlist-hero__copy space-y-6">
-              <div className="badge badge-outline px-4 py-3 text-primary">Vor dem Launch</div>
-              <div className="space-y-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">{WAITLIST_HERO_EYEBROW}</p>
-                <h1 className="text-4xl font-bold leading-tight md:text-6xl">{WAITLIST_HERO_TITLE}</h1>
-                <p className="max-w-2xl text-lg text-base-content/74 md:text-xl">{WAITLIST_HERO_COPY}</p>
+        <section className="waitlist-hero hero-panel overflow-hidden rounded-[2.15rem] px-5 py-6 md:rounded-[2.5rem] md:px-10 md:py-12 ">
+          <div className="waitlist-hero">
+            <div className="waitlist-hero__copy">
+              <div className="waitlist-hero__topline">
+                <div className="badge badge-outline px-4 py-3 text-primary">Vor dem Launch</div>
+                <ul className="waitlist-quick-facts" aria-label="Wartelisten-Vorteile">
+                  {WAITLIST_QUICK_FACTS.map((item) => (
+                    <li key={item} className="waitlist-quick-facts__item">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="waitlist-highlight-list">
-                {WAITLIST_HIGHLIGHTS.map((item) => (
-                  <li key={item} className="waitlist-highlight-list__item">
-                    {item}
-                  </li>
-                ))}
-              </ul>
+              <div className="space-y-3 md:space-y-4">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">{WAITLIST_HERO_EYEBROW}</p>
+                <h1 className="text-[2.35rem] font-bold leading-[1.05] sm:text-[2.9rem] md:text-6xl">{WAITLIST_HERO_TITLE}</h1>
+                <p className="max-w-xl text-base text-base-content/74 sm:text-lg md:max-w-2xl md:text-xl">{WAITLIST_HERO_COPY}</p>
+              </div>
               <div className="waitlist-cta-cluster">
                 <Link href="#waitlist-form" className="btn btn-primary">
                   {WAITLIST_PRIMARY_CTA_LABEL}
@@ -108,7 +111,7 @@ export default function WaitlistPage() {
             </div>
 
             <div className="waitlist-hero__form">
-              <section id="waitlist-form" className="surface-section rounded-[2rem] p-6 md:p-8">
+              <section id="waitlist-form" className="waitlist-hero__form-panel surface-section rounded-[1.9rem] p-5 md:rounded-[2rem] md:p-8">
                 <WaitlistRequestForm
                   title={WAITLIST_FORM_TITLE}
                   description="Wenn du beim Start dabei sein möchtest, trag dich hier ein. Wir melden uns, sobald wir weitere Nutzer freischalten."
@@ -121,9 +124,36 @@ export default function WaitlistPage() {
               </section>
             </div>
           </div>
+          <div className="waitlist-hero__proof">
+            <ul className="waitlist-highlight-list">
+              {WAITLIST_HIGHLIGHTS.map((item) => (
+                <li key={item} className="waitlist-highlight-list__item">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
 
-        <section className="waitlist-story-grid mt-8 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="mt-6 grid gap-4 lg:mt-8 lg:grid-cols-[0.95fr_1.05fr]">
+          <article className="surface-section rounded-[1.85rem] p-5 md:rounded-[2rem] md:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Was passiert nach der Anmeldung?</p>
+            <h2 className="mt-3 text-2xl font-semibold leading-tight md:text-3xl">{WAITLIST_EXPECTATION_TITLE}</h2>
+            <p className="mt-4 text-base-content/74">{WAITLIST_EXPECTATION_COPY}</p>
+          </article>
+          <article className="surface-section rounded-[1.85rem] p-5 md:rounded-[2rem] md:p-8">
+            <ol className="waitlist-step-list">
+              {WAITLIST_NEXT_STEPS.map((step, index) => (
+                <li key={step} className="waitlist-step-list__item">
+                  <span className="waitlist-step-list__index">0{index + 1}</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </article>
+        </section>
+
+        <section className="waitlist-story-grid mt-6 grid gap-4 lg:mt-8 lg:grid-cols-[1.1fr_0.9fr]">
           <article className="surface-section rounded-[2rem] p-6 md:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Warum jetzt?</p>
             <h2 className="mt-3 text-2xl font-semibold md:text-3xl">Viele Bonsai-Notizen starten motiviert und landen am Ende doch wieder verteilt zwischen Fotos, Erinnerungen und losen Listen.</h2>
@@ -139,32 +169,14 @@ export default function WaitlistPage() {
           </article>
         </section>
 
-        <section className="mt-8 grid gap-4 md:grid-cols-3">
+        <section className="mt-6 grid gap-4 md:mt-8 md:grid-cols-3">
           {WAITLIST_BENEFITS.map((benefit) => (
-            <article key={benefit.title} className="surface-section rounded-[2rem] p-6">
+            <article key={benefit.title} className="surface-section rounded-[1.85rem] p-5 md:rounded-[2rem] md:p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Feature</p>
-              <h2 className="mt-3 text-2xl font-semibold">{benefit.title}</h2>
-              <p className="mt-4 text-base-content/74">{benefit.description}</p>
+              <h2 className="mt-3 text-[1.65rem] font-semibold leading-tight md:text-2xl">{benefit.title}</h2>
+              <p className="mt-3 text-base-content/74">{benefit.description}</p>
             </article>
           ))}
-        </section>
-
-        <section className="mt-8 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-          <article className="surface-section rounded-[2rem] p-6 md:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Was passiert nach der Anmeldung?</p>
-            <h2 className="mt-3 text-2xl font-semibold md:text-3xl">{WAITLIST_EXPECTATION_TITLE}</h2>
-            <p className="mt-4 text-base-content/74">{WAITLIST_EXPECTATION_COPY}</p>
-          </article>
-          <article className="surface-section rounded-[2rem] p-6 md:p-8">
-            <ol className="waitlist-step-list">
-              {WAITLIST_NEXT_STEPS.map((step, index) => (
-                <li key={step} className="waitlist-step-list__item">
-                  <span className="waitlist-step-list__index">0{index + 1}</span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </article>
         </section>
       </main>
     </>

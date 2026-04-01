@@ -1,4 +1,5 @@
 import type { AppProps } from "next/app";
+import Head from "next/head";
 import { useEffect, useState } from "react";
 import { SessionProvider } from "next-auth/react";
 import Analytics from "../components/Analytics";
@@ -46,6 +47,9 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <SessionProvider session={pageProps.session}>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
       <Analytics enabled={consent === "accepted"} />
       <div data-theme="bonsai" className="app-shell min-h-screen">
         <Component {...pageProps} />
