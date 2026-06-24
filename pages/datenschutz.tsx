@@ -33,12 +33,17 @@ export default function DatenschutzPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">Anmeldung per Magic Link und Authentifizierung</h2>
+            <h2 className="text-xl font-semibold">Anmeldung und Authentifizierung</h2>
             <p>
-              Wenn Sie sich anmelden möchten, verarbeiten wir Ihre E-Mail-Adresse, um einen Login-Link zu erzeugen und
-              an Sie zu versenden. Für den Versand nutzen wir den E-Mail-Dienstleister Resend. Im Rahmen der Anmeldung
-              werden außerdem technische Authentifizierungsdaten, temporäre Verifikationsdaten und für die Sitzung
-              erforderliche Informationen verarbeitet.
+              Für die Anmeldung kann ein Social-Login über Google angeboten werden. Dabei werden die für die
+              Authentifizierung erforderlichen Kontodaten, insbesondere E-Mail-Adresse, Name, technische
+              Authentifizierungsdaten und Sitzungsinformationen, verarbeitet. Die Anmeldung wird über den Dienstleister
+              Google vermittelt; dabei kann Google eigene Daten über den Anmeldevorgang verarbeiten.
+            </p>
+            <p>
+              Für technische oder betriebliche Ausnahmefälle kann zusätzlich eine Anmeldung per Magic Link per E-Mail
+              bereitgestellt werden. In diesem Fall verarbeiten wir Ihre E-Mail-Adresse, um einen Login-Link zu erzeugen
+              und zu versenden. Für den Versand kann der E-Mail-Dienstleister Resend eingesetzt werden.
             </p>
             <p>
               Die Verarbeitung erfolgt zur Durchführung der angeforderten Anmeldung und zur Bereitstellung Ihres
@@ -138,8 +143,9 @@ export default function DatenschutzPage() {
             <p>
               Personenbezogene Daten werden nur an solche Empfänger weitergegeben, die für den Betrieb der Anwendung
               erforderlich sind. Dazu können insbesondere technische Hosting- und Infrastruktur-Dienstleister,
-              E-Mail-Versanddienstleister für Login-Links, gegebenenfalls Speicherdienstleister für Medien sowie im Fall
-              einer gesonderten Einwilligung Google als Analytics-Anbieter gehören.
+              Authentifizierungsdienstleister wie Google für Social Login, E-Mail-Versanddienstleister für Login-Links,
+              gegebenenfalls Speicherdienstleister für Medien sowie im Fall einer gesonderten Einwilligung Google als
+              Analytics-Anbieter gehören.
             </p>
             <p>
               Eine darüber hinausgehende Weitergabe erfolgt nur, wenn hierfür eine gesetzliche Pflicht besteht oder sie

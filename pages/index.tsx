@@ -4,6 +4,32 @@ import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import WaitlistRequestForm from "@/components/WaitlistRequestForm";
 
+export const GOOGLE_LOGIN_LABEL = "Mit Google anmelden";
+export const EMAIL_FALLBACK_LOGIN_LABEL = "Login-Link senden";
+
+const isEmailFallbackEnabled = process.env.NEXT_PUBLIC_AUTH_EMAIL_FALLBACK_ENABLED === "true";
+
+export function getAuthErrorMessage(error: string | string[] | undefined): string | null {
+  const code = Array.isArray(error) ? error[0] : error;
+  if (!code) {
+    return null;
+  }
+
+  if (code === "AccessDenied") {
+    return "Dieser Account ist noch nicht für die geschlossene Beta freigeschaltet. Nutze bitte die Warteliste.";
+  }
+
+  if (code === "OAuthAccountNotLinked") {
+    return "Für diese E-Mail existiert bereits ein Zugang. Bitte melde dich mit der ursprünglich genutzten Methode an oder kontaktiere den Support.";
+  }
+
+  if (code === "Configuration") {
+    return "Der Google-Login ist aktuell nicht vollständig konfiguriert.";
+  }
+
+  return "Der Login konnte nicht abgeschlossen werden.";
+}
+
 export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -57,6 +83,23 @@ export default function Home() {
     }
   }
 
+  async function handleGoogleLogin() {
+    setError(null);
+    setMessage(null);
+    setSubmitting(true);
+
+    try {
+      await signIn("google", {
+        callbackUrl: "/dashboard",
+      });
+    } catch {
+      setError("Der Google-Login konnte nicht gestartet werden.");
+      setSubmitting(false);
+    }
+  }
+
+  const authError = getAuthErrorMessage(router.query.error);
+
   return (
     <main className="page-shell mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-8 px-6 py-10 lg:flex-row lg:items-center">
       <section className="landing-copy max-w-xl space-y-6">
@@ -88,27 +131,35 @@ export default function Home() {
       <section className="surface-card card w-full max-w-lg">
         <div className="card-body">
           <h2 className="card-title text-2xl">Login und Beta-Zugang</h2>
-          <p className="text-base-content/70">Du hast schon einen Zugang? Dann fordere hier deinen Login-Link an. Wenn du neu bist, kannst du dich für die Warteliste eintragen.</p>
-          {router.query.error ? <div className="alert alert-error">Der Login konnte nicht abgeschlossen werden.</div> : null}
+          <p className="text-base-content/70">Du hast schon einen Zugang? Dann melde dich mit deinem Google-Konto an. Wenn du neu bist, kannst du dich für die Warteliste eintragen.</p>
+          {authError ? <div className="alert alert-error">{authError}</div> : null}
           {message ? <div className="alert alert-success">{message}</div> : null}
           {error ? <div className="alert alert-error">{error}</div> : null}
-          <form className="space-y-4 border-b border-base-300 pb-6" onSubmit={handleLogin}>
-            <fieldset className="fieldset gap-2">
-              <legend className="fieldset-legend text-sm font-medium">Bestehender Account</legend>
-              <input
-                className="input input-bordered"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="du@example.com"
-                required
-              />
-            </fieldset>
-            <button className="btn btn-primary w-full" disabled={submitting || !email}>
-              {submitting ? <span className="loading loading-spinner loading-sm" /> : null}
-              Magic Link senden
+          <div className="space-y-4 border-b border-base-300 pb-6">
+            <button className="btn btn-primary w-full" disabled={submitting} onClick={handleGoogleLogin} type="button">
+              {submitting ? <span className="loading loading-spinner loading-sm" /> : <span aria-hidden="true">G</span>}
+              {GOOGLE_LOGIN_LABEL}
             </button>
-          </form>
+            {isEmailFallbackEnabled ? (
+              <form className="space-y-4 pt-2" onSubmit={handleLogin}>
+                <fieldset className="fieldset gap-2">
+                  <legend className="fieldset-legend text-sm font-medium">Fallback per E-Mail</legend>
+                  <input
+                    className="input input-bordered"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="du@example.com"
+                    required
+                  />
+                </fieldset>
+                <button className="btn btn-outline w-full" disabled={submitting || !email}>
+                  {submitting ? <span className="loading loading-spinner loading-sm" /> : null}
+                  {EMAIL_FALLBACK_LOGIN_LABEL}
+                </button>
+              </form>
+            ) : null}
+          </div>
           <div className="border-t border-base-300 pt-6">
             <WaitlistRequestForm
               title="Neu hier? Zugang anfragen"
