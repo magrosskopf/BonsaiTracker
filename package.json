@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "prisma": "npx prisma",
+    "sandcastle": "npx tsx .sandcastle/main.mts",
     "test": "tsx --test tests/*.test.ts",
     "approve-waitlist": "node scripts/approve-waitlist.js"
   },
@@ -36,6 +37,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@ai-hero/sandcastle": "^0.12.0",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.15.24",
     "@types/react": "19.1.6",

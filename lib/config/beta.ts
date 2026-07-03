@@ -2,6 +2,10 @@ export type UploadStorageMode = "local" | "supabase";
 
 const DEFAULT_LOCAL_UPLOADS_DIR = ".runtime/uploads";
 
+function isProductionEnv(env: NodeJS.ProcessEnv): boolean {
+  return env.NODE_ENV?.trim().toLowerCase() === "production";
+}
+
 function parseBooleanEnv(value: string | undefined, fallback: boolean): boolean {
   if (!value) {
     return fallback;
@@ -24,6 +28,12 @@ export function isHealthcheckEnabled(env: NodeJS.ProcessEnv = process.env): bool
 export function getUploadStorageMode(env: NodeJS.ProcessEnv = process.env): UploadStorageMode {
   const value = env.UPLOAD_STORAGE_MODE?.trim().toLowerCase();
   if (value === "supabase") {
+    return "supabase";
+  }
+  if (value === "local") {
+    return "local";
+  }
+  if (isProductionEnv(env)) {
     return "supabase";
   }
   return "local";
@@ -52,6 +62,20 @@ function parsePositiveInteger(value: string | undefined, fallback: number): numb
   return parsed;
 }
 
+function parseJwtRole(token: string): string | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as { role?: unknown };
+    return typeof payload.role === "string" ? payload.role : null;
+  } catch {
+    return null;
+  }
+}
+
 export function getSupabaseStorageConfig(env: NodeJS.ProcessEnv = process.env): SupabaseStorageConfig {
   const url = env.SUPABASE_URL?.trim();
   const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
@@ -59,6 +83,11 @@ export function getSupabaseStorageConfig(env: NodeJS.ProcessEnv = process.env): 
 
   if (!url || !serviceRoleKey || !bucket) {
     throw new Error("Supabase Storage ist nicht vollständig konfiguriert.");
+  }
+
+  const serviceRole = parseJwtRole(serviceRoleKey);
+  if (serviceRole && serviceRole !== "service_role") {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY ist kein Service-Role-Schlüssel.");
   }
 
   return {

@@ -27,3 +27,4 @@ node scripts/approve-waitlist.js --email <email>
 - [Support and incident process](docs/support-incident-process.md)
 - [Community privacy](docs/community-privacy.md)
 - [Manual beta smoke checklist](docs/manual-beta-smoke-checklist.md)
+- [Sandcastle GitHub issues](docs/sandcastle-github-issues.md)
