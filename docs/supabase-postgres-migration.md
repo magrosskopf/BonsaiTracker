@@ -79,6 +79,24 @@ npm run prisma -- db seed
 
 Das Seed ist nicht Teil der reinen Schema-Initialisierung, kann aber fuer lokale Smoke-Tests hilfreich sein.
 
+## Baseline-Daten aus dem Seed
+
+Wenn du `PRISMA_SEED=1 bash scripts/init-local-supabase-db.sh` oder `npm run prisma -- db seed` verwendest, legt das Repo nur lokale, nicht-sensitive Baseline-Daten an.
+
+Der Seed ist fuer wiederholte lokale Ausfuehrung gedacht und setzt den Demo-Bestand stabil auf denselben Zustand zurueck.
+
+Enthalten sind aktuell:
+
+1. Der bestehende Demo-Benutzer `demo@example.com`
+2. Ein zweiter Community-Benutzer `community@example.com`
+3. Ein freigegebener Signup-Allowlist-Eintrag `approved@example.com`
+4. Eine lokale Waitlist-Anfrage `waitlist@example.com`
+5. Ein Demo-Bonsai mit einem zugehoerigen SubEntry
+6. Ein offener Reminder fuer den Demo-Bonsai
+7. Mindestens ein Community-Feed-Post plus soziale Interaktion fuer den lokalen Feed
+
+Diese Baseline-Daten sollen lokale Smoke-Tests beschleunigen, damit Dashboard, Reminder, Feed und Signup-/Waitlist-Pfade nicht auf einer komplett leeren Datenbank getestet werden muessen.
+
 ## Verifikation fuer dieses Repo
 
 Pruefe nach der Initialisierung:
@@ -95,13 +113,13 @@ Pruefe nach der Initialisierung:
 1. `npm test`
 2. `npm run typecheck`
 3. `npm run dev`
-4. Login oder Auth-Konfiguration plausibilisieren
-5. Dashboard laden
-6. Bonsai lesen oder anlegen
-7. Subentry lesen oder anlegen
-8. Reminder lesen oder anlegen
-9. Feed/Post-Funktion plausibilisieren
-10. Waitlist/Signup-Gating pruefen
+4. Optional fuer Baseline-Daten: `PRISMA_SEED=1 bash scripts/init-local-supabase-db.sh` ausfuehren
+5. Login oder Auth-Konfiguration plausibilisieren; der Seed stellt dafuer `demo@example.com` als bestehende lokale Testidentitaet bereit
+6. Dashboard laden und den Demo-Bonsai sehen
+7. Bonsai-Detail und SubEntry des Demo-Bonsai pruefen
+8. Reminder-Liste laden und den offenen Demo-Reminder sehen
+9. Feed/Post-Funktion plausibilisieren und den Demo-/Community-Bestand sehen
+10. Waitlist/Signup-Gating mit `approved@example.com` und `waitlist@example.com` plausibilisieren
 
 ## Rueckstellung
 
