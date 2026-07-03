@@ -5,7 +5,7 @@ Last Modified: 2026-07-03
 
 ## Overview
 
-Das Issue wird als absichtlicher No-op behandelt. Die Implementierung besteht aus der dokumentierten Verifikation, dass kein Produktchange erforderlich ist, und aus dem Nachweis ueber die Projektchecks.
+Das Issue wird als absichtlicher No-op fuer Produktverhalten behandelt. Die Implementierung besteht aus der dokumentierten Verifikation, dass kein Produktchange erforderlich ist, plus einem minimalen test-only Fix, damit die verpflichtenden Projektchecks fuer dieses Issue wieder gruen laufen.
 
 ## Reference
 
@@ -17,9 +17,12 @@ Zu erstellen:
 - `/home/agent/workspace/dev/features/2026-07-03_issue-1-test-issue/spec.md`
 - `/home/agent/workspace/dev/features/2026-07-03_issue-1-test-issue/implementation.md`
 
+Zu aendern:
+- `/home/agent/workspace/tests/community-api.test.ts`
+
 Unveraendert:
 - Produktcode unter `pages/`, `components/`, `lib/`, `prisma/`
-- Tests unter `tests/`
+- Alle anderen Tests unter `tests/`
 
 ## Implementation Steps
 
@@ -42,7 +45,17 @@ Arbeiten:
 Ergebnis:
 - Der erforderliche Workflow-Artefaktpfad ist vollstaendig
 
-### Step 3: Verifikation
+### Step 3: Verifikationsblocker beseitigen
+
+Arbeiten:
+- den bestehenden TypeScript-Fehler in `tests/community-api.test.ts` analysieren
+- den Mock-Datensatz an die aktuelle `ProfileRecord`-Form angleichen
+- sicherstellen, dass nur Testdaten und kein Runtime-Code geaendert werden
+
+Ergebnis:
+- Die Verifikation scheitert nicht mehr an einer testinternen Typabweichung
+
+### Step 4: Verifikation
 
 Arbeiten:
 - `npm test`
@@ -54,8 +67,9 @@ Ergebnis:
 ## Technical Decisions
 
 1. Keine Produktaenderung, weil das Issue explizit kein Verhalten aendern will.
-2. Kein `npm run build`, weil weder Runtime-Code noch Build-relevante Dateien angefasst werden.
-3. Kein Issue-Kommentar, sofern die Aufgabe vollstaendig abgeschlossen wird.
+2. Der einzige Codechange bleibt auf einen Test-Mock begrenzt, damit die Verifikation an der aktuellen Typdefinition ausgerichtet ist.
+3. Kein `npm run build`, weil weder Runtime-Code noch Build-relevante Dateien angefasst werden.
+4. Kein Issue-Kommentar, sofern die Aufgabe vollstaendig abgeschlossen wird.
 
 ## Validation Checklist
 

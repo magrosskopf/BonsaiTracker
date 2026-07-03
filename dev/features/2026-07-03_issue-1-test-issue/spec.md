@@ -13,7 +13,8 @@ Das Issue soll verifizieren, dass der Sandcastle-Issue-Workflow fuer ein einzeln
 2. Der Issue-Inhalt wird per `gh issue view 1` geprueft.
 3. Wenn kein Parent-PRD verknuepft ist, werden keine weiteren Tickets oder Anforderungen bearbeitet.
 4. Es werden keine Anwendungslogik-, UI-, API- oder Datenmodell-Aenderungen vorgenommen, weil das Issue explizit keine Produktaenderung verlangt.
-5. Die Arbeit endet mit einem Commit auf Branch `sandcastle/issue-1`.
+5. Wenn die Verifikation nur an einer bestehenden Test-Typabweichung scheitert, ist ein minimaler test-only Fix innerhalb von Issue `#1` erlaubt.
+6. Die Arbeit endet mit einem Commit auf Branch `sandcastle/issue-1`.
 
 ## Technical Constraints
 
@@ -31,5 +32,6 @@ Das Issue soll verifizieren, dass der Sandcastle-Issue-Workflow fuer ein einzeln
 ## Out-of-Scope
 
 1. Produktfeatures oder Bugfixes ausserhalb von Issue `#1`
-2. Aenderungen an `pages/`, `components/`, `lib/`, `tests/` oder `prisma/`
-3. Schliessen des Issues
+2. Aenderungen an `pages/`, `components/`, `lib/` oder `prisma/`
+3. Tests ausserhalb des minimal notwendigen Verifikationsfixes fuer `tests/community-api.test.ts`
+4. Schliessen des Issues
