@@ -13,6 +13,20 @@ const migrationDocRequirements = [
   /Vor der Umstellung den bisherigen lokalen `DATABASE_URL`-Wert ausserhalb von Git sichern\./,
   /`DATABASE_URL` wieder auf den zuvor gesicherten lokalen Wert setzen\./,
   /Keine `.env`, `.env\.local` oder echte Passwoerter committen\./,
+  /Das Repo-Skript `scripts\/init-local-supabase-db\.sh` fuehrt Prisma-Validierung, Migration und Statuspruefung aus\./,
+  /Optional kann anschliessend `PRISMA_SEED=1 bash scripts\/init-local-supabase-db\.sh` verwendet werden\./,
+  /Alternativ koennen die Prisma-Kommandos auch manuell ausgefuehrt werden: `npm run prisma -- validate`, `npm run prisma -- migrate deploy`, `npm run prisma -- migrate status`\./,
+];
+const initScriptRequirements = [
+  /set -euo pipefail/,
+  /DATABASE_URL must be set/,
+  /prisma\+postgres:\/\//,
+  /ALLOW_NON_LOCAL_DATABASE/,
+  /npm run prisma -- validate/,
+  /npm run prisma -- migrate deploy/,
+  /npm run prisma -- migrate status/,
+  /PRISMA_SEED/,
+  /npm run prisma -- db seed/,
 ];
 
 function readRepoFile(relativePath: string) {
@@ -31,5 +45,13 @@ test("migration runbook documents Prisma-only local usage and reversible rollbac
 
   for (const requirement of migrationDocRequirements) {
     assert.match(migrationDoc, requirement);
+  }
+});
+
+test("repo includes a guarded local Supabase initialization script based on Prisma migrations", () => {
+  const initScript = readRepoFile("scripts/init-local-supabase-db.sh");
+
+  for (const requirement of initScriptRequirements) {
+    assert.match(initScript, requirement);
   }
 });

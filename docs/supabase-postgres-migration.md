@@ -2,7 +2,7 @@
 
 ## Ziel dieses Dokuments
 
-Dieses Runbook dokumentiert nur die lokale Zielumgebung fuer die Supabase-Postgres-Migration.
+Dieses Runbook dokumentiert die lokale Zielumgebung und die Initialisierung einer leeren lokalen Supabase-Postgres-Datenbank aus den committed Prisma-Migrationen.
 
 Die lokale relationale Ziel-Datenbank ist ein direkt erreichbares Supabase-Postgres unter Prisma. Prisma bleibt die relationale Datenzugriffsschicht. Prisma Accelerate wird fuer dieses lokale Ziel nicht verwendet.
 
@@ -38,19 +38,70 @@ Hinweise:
 ## Lokale Umstellung
 
 1. `DATABASE_URL` lokal auf das direkte Supabase-Postgres-Ziel setzen.
-2. Prisma-Kommandos gegen diese direkte Postgres-URL ausfuehren.
-3. Bestehende App-Konfiguration fuer NextAuth, Mail und Storage nur dann lokal anpassen, wenn sie fuer spaetere Smoke-Tests gebraucht wird.
+2. Das Repo-Skript `scripts/init-local-supabase-db.sh` fuehrt Prisma-Validierung, Migration und Statuspruefung aus.
+3. Alternativ koennen die Prisma-Kommandos auch manuell ausgefuehrt werden: `npm run prisma -- validate`, `npm run prisma -- migrate deploy`, `npm run prisma -- migrate status`.
+4. Optional kann anschliessend `PRISMA_SEED=1 bash scripts/init-local-supabase-db.sh` verwendet werden.
+5. Bestehende App-Konfiguration fuer NextAuth, Mail und Storage nur dann lokal anpassen, wenn sie fuer spaetere Smoke-Tests gebraucht wird.
+
+### Bevorzugter Repo-Flow
+
+```bash
+bash scripts/init-local-supabase-db.sh
+```
+
+Das Skript erwartet:
+
+1. Eine gesetzte direkte `postgresql://`- oder `postgres://`-`DATABASE_URL`
+2. Kein `prisma+postgres://`
+3. Standardmaessig ein lokales Ziel unter `127.0.0.1` oder `localhost`
+
+Wenn du bewusst gegen ein anderes Ziel pruefen willst, musst du dies explizit mit `ALLOW_NON_LOCAL_DATABASE=1` uebersteuern.
+
+### Manueller Prisma-Flow
+
+```bash
+npm run prisma -- validate
+npm run prisma -- migrate deploy
+npm run prisma -- migrate status
+```
+
+Optionales Seed fuer leere lokale Testdaten:
+
+```bash
+PRISMA_SEED=1 bash scripts/init-local-supabase-db.sh
+```
+
+Oder direkt:
+
+```bash
+npm run prisma -- db seed
+```
+
+Das Seed ist nicht Teil der reinen Schema-Initialisierung, kann aber fuer lokale Smoke-Tests hilfreich sein.
 
 ## Verifikation fuer dieses Repo
 
-Dieses Issue dokumentiert nur den Zielwert und die Rueckstellbarkeit. Die eigentliche Schema-Initialisierung und Laufzeitverifikation folgen in spaeteren Issues.
-
-Pruefe fuer diesen Stand:
+Pruefe nach der Initialisierung:
 
 1. `.env.example` zeigt eine direkte lokale Supabase-Postgres-URL.
 2. Dieses Dokument beschreibt Prisma als Datenzugriffsschicht.
 3. Dieses Dokument beschreibt, dass Prisma Accelerate lokal nicht verwendet wird.
-4. Dieses Dokument beschreibt die Rueckstellung auf die vorherige lokale Datenbankkonfiguration.
+4. `scripts/init-local-supabase-db.sh` laeuft mit gesetzter lokaler `DATABASE_URL` durch Prisma-Validierung, Migration und Statuspruefung.
+5. Optionales Seed ist fuer leere lokale Baseline-Daten verfuegbar.
+6. Dieses Dokument beschreibt die Rueckstellung auf die vorherige lokale Datenbankkonfiguration.
+
+## Lokaler Smoke-Test nach erfolgreicher Initialisierung
+
+1. `npm test`
+2. `npm run typecheck`
+3. `npm run dev`
+4. Login oder Auth-Konfiguration plausibilisieren
+5. Dashboard laden
+6. Bonsai lesen oder anlegen
+7. Subentry lesen oder anlegen
+8. Reminder lesen oder anlegen
+9. Feed/Post-Funktion plausibilisieren
+10. Waitlist/Signup-Gating pruefen
 
 ## Rueckstellung
 
@@ -64,4 +115,4 @@ Pruefe fuer diesen Stand:
 1. Wechsel von Prisma auf direkte Supabase-Client-Zugriffe.
 2. Einfuehrung von Row Level Security als primaeres App-Sicherheitsmodell.
 3. Migration von NextAuth zu Supabase Auth.
-4. Schema-Migrationen, Seed-Lauf oder produktionsnahe Datenimporte.
+4. Produktionsnahe Datenimporte oder produktiver Cutover.
