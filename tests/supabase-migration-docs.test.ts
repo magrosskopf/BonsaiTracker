@@ -24,6 +24,21 @@ const baselineRunbookRequirements = [
   /Reminder/,
   /Feed/,
 ];
+const coreFlowRunbookRequirements = [
+  /## Kernfluss-Checklist fuer lokale Supabase-Smoke-Tests/,
+  /`GET \/api\/health`/,
+  /`\/dashboard`/,
+  /`\/create-bonsai`/,
+  /`\/bonsai\/\[id\]`/,
+  /`\/bonsai\/\[id\]\/subentries`/,
+  /`\/reminders`/,
+  /`\/feed`/,
+  /`POST \/api\/access-requests`/,
+  /`\/api\/media\/`/,
+  /Wenn lokales OAuth oder E-Mail-Login nicht konfiguriert ist, den Login-Schritt als `skip` mit konkretem Grund dokumentieren\./,
+  /Wenn lokaler Upload-Storage oder Supabase-Storage nicht verfuegbar ist, den Media-Schritt als `skip` mit Grund dokumentieren\./,
+  /Jeden Schritt mit `pass`, `skip` oder `fail` notieren\./,
+];
 const initScriptGuardrailRequirements = [
   /set -euo pipefail/,
   /DATABASE_URL must be set/,
@@ -73,6 +88,12 @@ test("migration runbook documents seeded baseline data for local app smoke tests
   const migrationDoc = readRepoFile("docs/supabase-postgres-migration.md");
 
   assertMatchesAll(migrationDoc, baselineRunbookRequirements);
+});
+
+test("migration runbook documents the local Supabase core app flow smoke checklist", () => {
+  const migrationDoc = readRepoFile("docs/supabase-postgres-migration.md");
+
+  assertMatchesAll(migrationDoc, coreFlowRunbookRequirements);
 });
 
 test("repo includes a guarded local Supabase initialization script based on Prisma migrations", () => {

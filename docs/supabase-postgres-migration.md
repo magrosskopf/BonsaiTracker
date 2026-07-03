@@ -121,6 +121,50 @@ Pruefe nach der Initialisierung:
 9. Feed/Post-Funktion plausibilisieren und den Demo-/Community-Bestand sehen
 10. Waitlist/Signup-Gating mit `approved@example.com` und `waitlist@example.com` plausibilisieren
 
+## Kernfluss-Checklist fuer lokale Supabase-Smoke-Tests
+
+Notiere jeden Schritt mit `pass`, `skip` oder `fail`.
+
+Jeden Schritt mit `pass`, `skip` oder `fail` notieren.
+
+Wenn lokales OAuth oder E-Mail-Login nicht konfiguriert ist, den Login-Schritt als `skip` mit konkretem Grund dokumentieren.
+
+Wenn lokaler Upload-Storage oder Supabase-Storage nicht verfuegbar ist, den Media-Schritt als `skip` mit Grund dokumentieren.
+
+1. Login und Session
+   - Ziel: Startseite `/` und anschliessend Session fuer geschuetzte Routen
+   - Erwartung: bestehender lokaler Testnutzer kann sich anmelden oder der Schritt wird als `skip` mit fehlender lokaler Auth-Konfiguration dokumentiert
+2. Healthcheck
+   - Ziel: `GET /api/health`
+   - Erwartung: JSON-Antwort mit `ok`, `database: "ok"` und dem aktiven Upload-Storage
+3. Dashboard
+   - Ziel: `/dashboard`
+   - Erwartung: der seeded Demo-Bonsai erscheint ohne Datenbankfehler
+4. Bonsai create/read oder edit/read
+   - Ziel: `/create-bonsai` und anschliessend `/bonsai/[id]`
+   - Erwartung: ein neuer Bonsai kann angelegt werden oder ein bestehender Demo-Bonsai laesst sich bearbeiten und direkt wieder lesen
+5. SubEntry create/read oder read
+   - Ziel: `/bonsai/[id]/subentries`
+   - Erwartung: vorhandene SubEntries des Demo-Bonsai laden oder ein neuer SubEntry kann angelegt und direkt wieder angezeigt werden
+6. Reminder create/read oder status update
+   - Ziel: `/reminders`
+   - Erwartung: der offene Demo-Reminder laedt oder ein Reminder kann erstellt bzw. aktualisiert werden
+7. Feed und Posts
+   - Ziel: `/feed`
+   - Erwartung: der seeded Demo-/Community-Bestand laedt und ein Post-Read oder Post-Write funktioniert, sofern die lokale Session verfuegbar ist
+8. Waitlist und Signup-Gating
+   - Ziel: `POST /api/access-requests`
+   - Erwartung: eine lokale Waitlist-Anfrage kann gespeichert werden und die Seed-Identitaeten fuer Allowlist/Waitlist bleiben nachvollziehbar
+9. Media-Pfade
+   - Ziel: Bilder ueber `/api/media/` oder den aktiven Upload-Flow pruefen
+   - Erwartung: bestehende Bilder werden ueber den App-Media-Pfad ausgeloest oder der Schritt wird als `skip` mit fehlender lokaler Storage-Konfiguration dokumentiert
+
+Empfohlene Notizform pro Schritt:
+
+- `pass`: was konkret funktioniert hat
+- `skip`: welche lokale Voraussetzung fehlte
+- `fail`: welcher Pfad oder Endpunkt mit welcher Fehlermeldung gebrochen ist
+
 ## Rueckstellung
 
 1. Lokalen Dev-Server stoppen.

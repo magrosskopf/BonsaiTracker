@@ -17,3 +17,8 @@
 - Magic Link bleibt vorerst nur als technischer Fallback vorgesehen und wird aus der primären Login-UI entfernt.
 - Supabase Postgres ist das bevorzugte Ziel für eine spätere Datenbank-Konsolidierung; Prisma bleibt zunächst die Datenzugriffsschicht.
 - Supabase Free ist für MVP/frühe Beta akzeptiert, benötigt aber dokumentierte Keepalive- und Export-Prozesse.
+
+## Lokale Supabase-Grenze in dieser Arbeitsumgebung
+- Die aktuelle Arbeitsumgebung enthält weder `supabase`-CLI noch Docker und hat keine lokale `.env.local` mit echter `DATABASE_URL`.
+- Deshalb wurde Issue `#5` in diesem Repo-Slice über eine reproduzierbare Kernfluss-Checklist und Regressionstests abgesichert, nicht über eine live ausgeführte lokale Supabase-Smoke-Session.
+- Eine spätere interaktive Verifikation gegen echte lokale Supabase-Postgres-Laufzeit soll die Runbook-Checklist mit konkreten `pass`-/`skip`-/`fail`-Notizen ergänzen.
