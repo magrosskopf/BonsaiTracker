@@ -2,10 +2,28 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const DEMO_EMAIL = "demo@example.com";
-const COMMUNITY_EMAIL = "community@example.com";
-const APPROVED_EMAIL = "approved@example.com";
-const WAITLIST_EMAIL = "waitlist@example.com";
+const seedIdentity = {
+  demo: {
+    email: "demo@example.com",
+    name: "Demo Benutzer",
+  },
+  community: {
+    email: "community@example.com",
+    name: "Community Tester",
+  },
+  approved: {
+    email: "approved@example.com",
+    note: "Lokale Baseline-Freigabe fuer Signup-Gating-Smoketests.",
+  },
+  waitlist: {
+    email: "waitlist@example.com",
+    status: "PENDING" as const,
+    sourceIp: "127.0.0.1",
+    userAgent: "local-seed",
+  },
+} as const;
+
+const demoReminderDate = new Date("2030-07-10T09:00:00.000Z");
 
 async function upsertSeedUser(email: string, name: string) {
   return prisma.user.upsert({
@@ -20,42 +38,145 @@ async function upsertSeedUser(email: string, name: string) {
   });
 }
 
+function createDemoBonsaiData(userId: number) {
+  return {
+    userId,
+    name: "Katsura",
+    species: "Ficus microcarpa",
+    latinName: "Ficus microcarpa",
+    location: "Suedfenster im Wohnzimmer",
+    indoorOutdoor: "INDOOR" as const,
+    age: 8,
+    heightCm: 34,
+    widthCm: 24,
+    trunkDiameterMm: 28,
+    style: "Moyogi",
+    ownedSince: new Date("2024-03-15T00:00:00.000Z"),
+    acquiredFrom: "Lokale Gärtnerei",
+    purchasePriceCents: 4900,
+    healthStatus: "GUT" as const,
+    developmentStage: "VERFEINERUNG" as const,
+    lastRepotDate: new Date("2025-03-02T00:00:00.000Z"),
+    nextRepotDue: new Date("2027-03-02T00:00:00.000Z"),
+    winterHardiness: "NICHT_WINTERHART" as const,
+    sunExposure: "HALBSCHATTEN" as const,
+    wateringNotes: "Im Sommer alle 2 bis 3 Tage pruefen.",
+    fertilizingNotes: "Von Maerz bis September alle 2 Wochen duengen.",
+    pruningNotes:
+      "Neue Triebe nach 6 bis 8 Blaettern auf 2 Blaetter zuruecknehmen.",
+    notes: "Lokaler Demo-Bonsai fuer Dashboard-, Detail- und Feed-Smoke-Tests.",
+  };
+}
+
+function createCommunityBonsaiData(userId: number) {
+  return {
+    userId,
+    name: "Aoi",
+    species: "Juniperus procumbens",
+    latinName: "Juniperus procumbens",
+    location: "Balkon Ostseite",
+    indoorOutdoor: "OUTDOOR" as const,
+    age: 11,
+    heightCm: 29,
+    widthCm: 32,
+    trunkDiameterMm: 22,
+    style: "Shakan",
+    ownedSince: new Date("2023-04-09T00:00:00.000Z"),
+    healthStatus: "SEHR_GUT" as const,
+    developmentStage: "IN_GESTALTUNG" as const,
+    sunExposure: "VOLLE_SONNE" as const,
+    wateringNotes: "Nur giessen, wenn die obere Schicht anzieht.",
+    notes: "Community-Gegenstueck fuer Feed- und Profil-Smoketests.",
+  };
+}
+
+function createDemoSubEntryData(bonsaiId: number) {
+  return {
+    bonsaiId,
+    date: new Date("2026-06-15T00:00:00.000Z"),
+    entryType: "KONTROLLE" as const,
+    healthObservation: "GUT" as const,
+    performedActions: ["Gegossen", "Gedreht"],
+    nextAction: "In einer Woche erneut auf neue Triebe pruefen.",
+    reminderDate: demoReminderDate,
+    notes: "Krone ist kompakt, neue Knospen sichtbar.",
+  };
+}
+
+function createDemoReminderData(
+  userId: number,
+  bonsaiId: number,
+  subEntryId: number,
+) {
+  return {
+    userId,
+    bonsaiId,
+    subEntryId,
+    title: "Wochencheck fuer Katsura",
+    reminderDate: demoReminderDate,
+    status: "PENDING" as const,
+  };
+}
+
+function createPostData(
+  userId: number,
+  bonsaiId: number,
+  snapshotName: string,
+  snapshotSpecies: string,
+  text: string,
+  postType: "SHOWCASE" | "HELP",
+) {
+  return {
+    userId,
+    bonsaiId,
+    text,
+    postType,
+    snapshotName,
+    snapshotSpecies,
+  };
+}
+
 async function main() {
   const [demoUser, communityUser] = await Promise.all([
-    upsertSeedUser(DEMO_EMAIL, "Demo Benutzer"),
-    upsertSeedUser(COMMUNITY_EMAIL, "Community Tester"),
+    upsertSeedUser(seedIdentity.demo.email, seedIdentity.demo.name),
+    upsertSeedUser(seedIdentity.community.email, seedIdentity.community.name),
   ]);
 
   await prisma.signupAllowlist.upsert({
-    where: { email: APPROVED_EMAIL },
+    where: { email: seedIdentity.approved.email },
     create: {
-      email: APPROVED_EMAIL,
-      note: "Lokale Baseline-Freigabe fuer Signup-Gating-Smoketests.",
+      email: seedIdentity.approved.email,
+      note: seedIdentity.approved.note,
     },
     update: {
-      note: "Lokale Baseline-Freigabe fuer Signup-Gating-Smoketests.",
+      note: seedIdentity.approved.note,
     },
   });
 
   await prisma.waitlistRequest.upsert({
-    where: { email: WAITLIST_EMAIL },
+    where: { email: seedIdentity.waitlist.email },
     create: {
-      email: WAITLIST_EMAIL,
-      status: "PENDING",
-      sourceIp: "127.0.0.1",
-      userAgent: "local-seed",
+      email: seedIdentity.waitlist.email,
+      status: seedIdentity.waitlist.status,
+      sourceIp: seedIdentity.waitlist.sourceIp,
+      userAgent: seedIdentity.waitlist.userAgent,
     },
     update: {
-      status: "PENDING",
-      sourceIp: "127.0.0.1",
-      userAgent: "local-seed",
+      status: seedIdentity.waitlist.status,
+      sourceIp: seedIdentity.waitlist.sourceIp,
+      userAgent: seedIdentity.waitlist.userAgent,
     },
   });
 
   await prisma.signupSlot.updateMany({
     where: {
       email: {
-        in: [DEMO_EMAIL, COMMUNITY_EMAIL, APPROVED_EMAIL, WAITLIST_EMAIL],
+        in: [
+          seedIdentity.demo.email,
+          seedIdentity.community.email,
+          seedIdentity.approved.email,
+          seedIdentity.waitlist.email,
+        ],
       },
     },
     data: {
@@ -73,100 +194,41 @@ async function main() {
   });
 
   const demoBonsai = await prisma.bonsai.create({
-    data: {
-      userId: demoUser.id,
-      name: "Katsura",
-      species: "Ficus microcarpa",
-      latinName: "Ficus microcarpa",
-      location: "Suedfenster im Wohnzimmer",
-      indoorOutdoor: "INDOOR",
-      age: 8,
-      heightCm: 34,
-      widthCm: 24,
-      trunkDiameterMm: 28,
-      style: "Moyogi",
-      ownedSince: new Date("2024-03-15T00:00:00.000Z"),
-      acquiredFrom: "Lokale Gärtnerei",
-      purchasePriceCents: 4900,
-      healthStatus: "GUT",
-      developmentStage: "VERFEINERUNG",
-      lastRepotDate: new Date("2025-03-02T00:00:00.000Z"),
-      nextRepotDue: new Date("2027-03-02T00:00:00.000Z"),
-      winterHardiness: "NICHT_WINTERHART",
-      sunExposure: "HALBSCHATTEN",
-      wateringNotes: "Im Sommer alle 2 bis 3 Tage pruefen.",
-      fertilizingNotes: "Von Maerz bis September alle 2 Wochen duengen.",
-      pruningNotes: "Neue Triebe nach 6 bis 8 Blaettern auf 2 Blaetter zuruecknehmen.",
-      notes: "Lokaler Demo-Bonsai fuer Dashboard-, Detail- und Feed-Smoke-Tests.",
-    },
+    data: createDemoBonsaiData(demoUser.id),
   });
 
   const demoSubEntry = await prisma.subEntry.create({
-    data: {
-      bonsaiId: demoBonsai.id,
-      date: new Date("2026-06-15T00:00:00.000Z"),
-      entryType: "KONTROLLE",
-      healthObservation: "GUT",
-      performedActions: ["Gegossen", "Gedreht"],
-      nextAction: "In einer Woche erneut auf neue Triebe pruefen.",
-      reminderDate: new Date("2030-07-10T09:00:00.000Z"),
-      notes: "Krone ist kompakt, neue Knospen sichtbar.",
-    },
+    data: createDemoSubEntryData(demoBonsai.id),
   });
 
   await prisma.reminder.create({
-    data: {
-      userId: demoUser.id,
-      bonsaiId: demoBonsai.id,
-      subEntryId: demoSubEntry.id,
-      title: "Wochencheck fuer Katsura",
-      reminderDate: new Date("2030-07-10T09:00:00.000Z"),
-      status: "PENDING",
-    },
+    data: createDemoReminderData(demoUser.id, demoBonsai.id, demoSubEntry.id),
   });
 
   const demoPost = await prisma.post.create({
-    data: {
-      userId: demoUser.id,
-      bonsaiId: demoBonsai.id,
-      text: "Der Ficus treibt nach dem Rueckschnitt wieder sauber aus. Feedback zur naechsten Astwahl ist willkommen.",
-      postType: "SHOWCASE",
-      snapshotName: demoBonsai.name,
-      snapshotSpecies: demoBonsai.species,
-    },
+    data: createPostData(
+      demoUser.id,
+      demoBonsai.id,
+      demoBonsai.name,
+      demoBonsai.species,
+      "Der Ficus treibt nach dem Rueckschnitt wieder sauber aus. Feedback zur naechsten Astwahl ist willkommen.",
+      "SHOWCASE",
+    ),
   });
 
   const communityBonsai = await prisma.bonsai.create({
-    data: {
-      userId: communityUser.id,
-      name: "Aoi",
-      species: "Juniperus procumbens",
-      latinName: "Juniperus procumbens",
-      location: "Balkon Ostseite",
-      indoorOutdoor: "OUTDOOR",
-      age: 11,
-      heightCm: 29,
-      widthCm: 32,
-      trunkDiameterMm: 22,
-      style: "Shakan",
-      ownedSince: new Date("2023-04-09T00:00:00.000Z"),
-      healthStatus: "SEHR_GUT",
-      developmentStage: "IN_GESTALTUNG",
-      sunExposure: "VOLLE_SONNE",
-      wateringNotes: "Nur giessen, wenn die obere Schicht anzieht.",
-      notes: "Community-Gegenstueck fuer Feed- und Profil-Smoketests.",
-    },
+    data: createCommunityBonsaiData(communityUser.id),
   });
 
   await prisma.post.create({
-    data: {
-      userId: communityUser.id,
-      bonsaiId: communityBonsai.id,
-      text: "Aoi steht seit drei Wochen draussen und reagiert stabil auf mehr Sonne.",
-      postType: "HELP",
-      snapshotName: communityBonsai.name,
-      snapshotSpecies: communityBonsai.species,
-    },
+    data: createPostData(
+      communityUser.id,
+      communityBonsai.id,
+      communityBonsai.name,
+      communityBonsai.species,
+      "Aoi steht seit drei Wochen draussen und reagiert stabil auf mehr Sonne.",
+      "HELP",
+    ),
   });
 
   await prisma.postLike.create({
