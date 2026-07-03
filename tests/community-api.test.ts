@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mapPublicProfileToDto, mapSelfProfileToDto } from "@/lib/mappers";
+import { mapPublicProfileToDto, mapSelfProfileToDto, type ProfileRecord } from "@/lib/mappers";
 
-function buildProfileRecord() {
-  const createdAt = new Date("2025-03-01T12:00:00.000Z");
+type ProfileUserRecord = ProfileRecord["posts"][number]["user"];
 
+function buildProfileUserRecord(): ProfileUserRecord {
   return {
     id: 7,
     email: "private@example.com",
@@ -13,6 +13,15 @@ function buildProfileRecord() {
     bio: "Pflegt japanische Ahorne.",
     profileImageUrl: "/api/media/local/profile/avatar.webp",
     emailVerified: null,
+  };
+}
+
+function buildProfileRecord() {
+  const createdAt = new Date("2025-03-01T12:00:00.000Z");
+  const user = buildProfileUserRecord();
+
+  return {
+    ...user,
     posts: [
       {
         id: 10,
@@ -26,21 +35,13 @@ function buildProfileRecord() {
         archivedAt: null,
         createdAt,
         updatedAt: createdAt,
-        user: {
-          id: 7,
-          email: "private@example.com",
-          name: "Maius",
-          image: null,
-          bio: "Pflegt japanische Ahorne.",
-          profileImageUrl: "/api/media/local/profile/avatar.webp",
-          emailVerified: null,
-        },
+        user,
         likes: [{ userId: 7 }],
         comments: [],
         entryReferences: [{ id: 99, postId: 10, subEntryId: 42, createdAt }],
       },
     ],
-  } as Parameters<typeof mapPublicProfileToDto>[0];
+  } as ProfileRecord;
 }
 
 test("public profile dto omits private email field", () => {
