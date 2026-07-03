@@ -24,7 +24,7 @@ const baselineRunbookRequirements = [
   /Reminder/,
   /Feed/,
 ];
-const coreFlowRunbookRequirements = [
+const coreFlowSmokeChecklistRequirements = [
   /## Kernfluss-Checklist fuer lokale Supabase-Smoke-Tests/,
   /`GET \/api\/health`/,
   /`\/dashboard`/,
@@ -37,7 +37,7 @@ const coreFlowRunbookRequirements = [
   /`\/api\/media\/`/,
   /Wenn lokales OAuth oder E-Mail-Login nicht konfiguriert ist, den Login-Schritt als `skip` mit konkretem Grund dokumentieren\./,
   /Wenn lokaler Upload-Storage oder Supabase-Storage nicht verfuegbar ist, den Media-Schritt als `skip` mit Grund dokumentieren\./,
-  /Jeden Schritt mit `pass`, `skip` oder `fail` notieren\./,
+  /Notiere jeden Schritt mit `pass`, `skip` oder `fail`\./,
 ];
 const initScriptGuardrailRequirements = [
   /set -euo pipefail/,
@@ -71,6 +71,10 @@ function assertMatchesAll(content: string, requirements: RegExp[]) {
   }
 }
 
+function assertRepoFileMatchesAll(relativePath: string, requirements: RegExp[]) {
+  assertMatchesAll(readRepoFile(relativePath), requirements);
+}
+
 test("env example documents a direct local Supabase Postgres database target", () => {
   const envExample = readRepoFile(".env.example");
 
@@ -79,31 +83,33 @@ test("env example documents a direct local Supabase Postgres database target", (
 });
 
 test("migration runbook documents Prisma-only local usage and reversible rollback", () => {
-  const migrationDoc = readRepoFile("docs/supabase-postgres-migration.md");
-
-  assertMatchesAll(migrationDoc, migrationRunbookRequirements);
+  assertRepoFileMatchesAll(
+    "docs/supabase-postgres-migration.md",
+    migrationRunbookRequirements,
+  );
 });
 
 test("migration runbook documents seeded baseline data for local app smoke tests", () => {
-  const migrationDoc = readRepoFile("docs/supabase-postgres-migration.md");
-
-  assertMatchesAll(migrationDoc, baselineRunbookRequirements);
+  assertRepoFileMatchesAll(
+    "docs/supabase-postgres-migration.md",
+    baselineRunbookRequirements,
+  );
 });
 
 test("migration runbook documents the local Supabase core app flow smoke checklist", () => {
-  const migrationDoc = readRepoFile("docs/supabase-postgres-migration.md");
-
-  assertMatchesAll(migrationDoc, coreFlowRunbookRequirements);
+  assertRepoFileMatchesAll(
+    "docs/supabase-postgres-migration.md",
+    coreFlowSmokeChecklistRequirements,
+  );
 });
 
 test("repo includes a guarded local Supabase initialization script based on Prisma migrations", () => {
-  const initScript = readRepoFile("scripts/init-local-supabase-db.sh");
-
-  assertMatchesAll(initScript, initScriptGuardrailRequirements);
+  assertRepoFileMatchesAll(
+    "scripts/init-local-supabase-db.sh",
+    initScriptGuardrailRequirements,
+  );
 });
 
 test("prisma seed defines deterministic local baseline data for the seeded Supabase flow", () => {
-  const seedFile = readRepoFile("prisma/seed.ts");
-
-  assertMatchesAll(seedFile, seedFileRequirements);
+  assertRepoFileMatchesAll("prisma/seed.ts", seedFileRequirements);
 });

@@ -28,7 +28,7 @@ Issue `#5` soll den lokalen Supabase-Postgres-Flow bis zur nachvollziehbaren Ker
 
 1. `docs/supabase-postgres-migration.md` enthaelt eine konkrete Kernfluss-Checklist fuer lokale Supabase-Smoke-Tests.
 2. Die Checklist nennt fuer jeden Kernfluss den Zielpfad oder Endpunkt und die erwartete Beobachtung.
-3. Die Checklist nennt explizite `pass`-/`skip`-Regeln fuer Auth-, Mail- und Media-abhängige Schritte.
+3. Die Checklist nennt explizite `pass`-/`skip`-Regeln fuer Auth-, Mail- und Media-abhaengige Schritte.
 4. `docs/IMPLEMENTATION_NOTES.md` oder das Supabase-Runbook halten fest, dass die echte lokale Supabase-Ausfuehrung in dieser Repo-Umgebung nicht stattgefunden hat, weil die dafuer benoetigten lokalen Tools fehlen.
 5. `tests/supabase-migration-docs.test.ts` deckt die Kernfluss-Dokumentation als Regressionstest ab.
 6. `npm test`, `npm run typecheck` und `npm run build` laufen erfolgreich.

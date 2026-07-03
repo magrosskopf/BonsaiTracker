@@ -125,8 +125,6 @@ Pruefe nach der Initialisierung:
 
 Notiere jeden Schritt mit `pass`, `skip` oder `fail`.
 
-Jeden Schritt mit `pass`, `skip` oder `fail` notieren.
-
 Wenn lokales OAuth oder E-Mail-Login nicht konfiguriert ist, den Login-Schritt als `skip` mit konkretem Grund dokumentieren.
 
 Wenn lokaler Upload-Storage oder Supabase-Storage nicht verfuegbar ist, den Media-Schritt als `skip` mit Grund dokumentieren.
