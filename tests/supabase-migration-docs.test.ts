@@ -60,6 +60,27 @@ const seedFileRequirements = [
   /reminder\.create/,
   /post\.create/,
 ];
+const automatedValidationRunbookRequirements = [
+  /## Automatisierte Validierung auf lokalem Supabase Postgres/,
+  /`bash scripts\/validate-local-supabase-checks\.sh`/,
+  /`npm test`/,
+  /`npm run typecheck`/,
+  /`npm run build`/,
+  /`npm run prisma -- migrate status`/,
+  /Wenn `migrate status` wegen fehlender lokaler Supabase-Erreichbarkeit fehlschlaegt, den Lauf als lokalen Supabase-Blocker dokumentieren\./,
+  /Allgemeine Repo-Fehler aus `test`, `typecheck` oder `build` nicht als Supabase-Migrationsproblem umetikettieren\./,
+];
+const automatedValidationScriptRequirements = [
+  /set -euo pipefail/,
+  /DATABASE_URL must be set/,
+  /prisma\+postgres:\/\//,
+  /ALLOW_NON_LOCAL_DATABASE/,
+  /npm test/,
+  /npm run typecheck/,
+  /npm run build/,
+  /npm run prisma -- migrate status/,
+  /Unable to reach the configured local Supabase Postgres target during `prisma migrate status`\./,
+];
 
 function readRepoFile(relativePath: string) {
   return readFileSync(path.join(repoRoot, relativePath), "utf8");
@@ -112,4 +133,18 @@ test("repo includes a guarded local Supabase initialization script based on Pris
 
 test("prisma seed defines deterministic local baseline data for the seeded Supabase flow", () => {
   assertRepoFileMatchesAll("prisma/seed.ts", seedFileRequirements);
+});
+
+test("migration runbook documents the automated validation path for local Supabase Postgres", () => {
+  assertRepoFileMatchesAll(
+    "docs/supabase-postgres-migration.md",
+    automatedValidationRunbookRequirements,
+  );
+});
+
+test("repo includes a guarded validation script for local Supabase automated checks", () => {
+  assertRepoFileMatchesAll(
+    "scripts/validate-local-supabase-checks.sh",
+    automatedValidationScriptRequirements,
+  );
 });

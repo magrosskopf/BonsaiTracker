@@ -121,6 +121,43 @@ Pruefe nach der Initialisierung:
 9. Feed/Post-Funktion plausibilisieren und den Demo-/Community-Bestand sehen
 10. Waitlist/Signup-Gating mit `approved@example.com` und `waitlist@example.com` plausibilisieren
 
+## Automatisierte Validierung auf lokalem Supabase Postgres
+
+Wenn die lokale App-Konfiguration bereits auf direktes Supabase Postgres zeigt, verwende fuer die Standardchecks bevorzugt:
+
+Bevorzugter Repo-Befehl: `bash scripts/validate-local-supabase-checks.sh`.
+
+```bash
+bash scripts/validate-local-supabase-checks.sh
+```
+
+Das Repo-Skript fuehrt in dieser Reihenfolge aus:
+
+1. `npm test`
+2. `npm run typecheck`
+3. `npm run build`
+4. `npm run prisma -- migrate status`
+
+Der Guardrail entspricht dem Initialisierungspfad:
+
+1. `DATABASE_URL` muss gesetzt sein.
+2. `DATABASE_URL` muss eine direkte `postgres://`- oder `postgresql://`-URL sein.
+3. `prisma+postgres://` ist fuer diese lokale Validierung nicht erlaubt.
+4. Standardmaessig wird nur ein lokales Ziel unter `127.0.0.1` oder `localhost` akzeptiert.
+
+Wenn `migrate status` wegen fehlender lokaler Supabase-Erreichbarkeit fehlschlaegt, den Lauf als lokalen Supabase-Blocker dokumentieren.
+
+Allgemeine Repo-Fehler aus `test`, `typecheck` oder `build` nicht als Supabase-Migrationsproblem umetikettieren.
+
+Falls du das Skript nicht verwenden willst, koennen dieselben Checks auch einzeln ausgefuehrt werden:
+
+```bash
+npm test
+npm run typecheck
+npm run build
+npm run prisma -- migrate status
+```
+
 ## Kernfluss-Checklist fuer lokale Supabase-Smoke-Tests
 
 Notiere jeden Schritt mit `pass`, `skip` oder `fail`.
