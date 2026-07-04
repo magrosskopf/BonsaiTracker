@@ -2,11 +2,11 @@
 
 **Status**: COMPLETE  
 **Created**: 2026-07-03  
-**Last Modified**: 2026-07-03
+**Last Modified**: 2026-07-04
 
 ## Overview
 
-Dieses Issue verankert einen reproduzierbaren Repo-Check fuer die lokale Supabase-Postgres-Umgebung: ein eigenes Validierungsskript, ein aktualisiertes Runbook mit klarer Blocker-Kommunikation und einen Regressionstest, der beide Repo-Vertraege festhaelt.
+Dieses Issue verankert einen reproduzierbaren Repo-Check fuer die lokale Supabase-Postgres-Umgebung: ein Guardrail-Skript fuer die eigentlichen Checks, einen selbststartenden Repo-Einstiegspunkt fuer fehlende lokale Laufzeit, ein aktualisiertes Runbook und einen Regressionstest, der diese Repo-Vertraege festhaelt.
 
 ## Reference
 
@@ -14,6 +14,7 @@ Dieses Issue verankert einen reproduzierbaren Repo-Check fuer die lokale Supabas
 - **Key acceptance criteria**:
   - Runbook-Sektion fuer automatisierte Validierung vorhanden
   - Repo-Skript deckt Test, Typecheck, Build und `migrate status` ab
+  - Bevorzugter Repo-Einstiegspunkt kann die benoetigte lokale DB bei Bedarf selbst bereitstellen
   - Lokale Guardrails und Blocker-Kommunikation sind explizit
   - Regressionstest deckt Doku und Skript ab
 
@@ -23,12 +24,14 @@ Dieses Issue verankert einen reproduzierbaren Repo-Check fuer die lokale Supabas
 
 - `dev/features/2026-07-03_issue-6-supabase-automated-validation/spec.md`
 - `dev/features/2026-07-03_issue-6-supabase-automated-validation/implementation.md`
+- `scripts/run-local-supabase-validation.ts`
 - `scripts/validate-local-supabase-checks.sh`
 
 ### Files to Modify
 
 - `tests/supabase-migration-docs.test.ts`
 - `docs/supabase-postgres-migration.md`
+- `package.json`
 
 ## Implementation Steps
 
@@ -41,15 +44,16 @@ Actions:
 1. `tests/supabase-migration-docs.test.ts` um Anforderungen fuer die automatisierte Supabase-Validierung erweitern.
 2. Doku- und Skriptanforderungen auf konkrete Check-Kommandos, Guardrails und Blocker-Hinweise formulieren.
 
-### Step 2: Add Repo Validation Script
+### Step 2: Add Repo Validation Entrypoints
 
-Goal: Ein einziger Repo-Einstiegspunkt fuehrt die geforderten Checks gegen die lokale Supabase-Konfiguration aus.
+Goal: Ein einziger Repo-Einstiegspunkt fuehrt die geforderten Checks gegen die lokale Supabase-Konfiguration aus, auch wenn noch keine lokale DB lauscht.
 
 Actions:
 
 1. `scripts/validate-local-supabase-checks.sh` mit direkten Postgres-/Localhost-Guardrails anlegen.
-2. Reihenfolge festlegen: `npm test`, `npm run typecheck`, `npm run build`, `npm run prisma -- migrate status`.
-3. Bei fehlender DB-Erreichbarkeit eine konkrete Fehlermeldung fuer den lokalen Supabase-Blocker ausgeben.
+2. `scripts/run-local-supabase-validation.ts` als bevorzugten Repo-Einstiegspunkt anlegen, der bei Bedarf ein lokales Embedded-Postgres unter der dokumentierten Zieladresse startet.
+3. Reihenfolge festlegen: Initialisierung, dann `npm test`, `npm run typecheck`, `npm run build`, `npm run prisma -- migrate status`.
+4. Bei fehlender DB-Erreichbarkeit im Guardrail-Skript eine konkrete Fehlermeldung fuer den lokalen Supabase-Blocker ausgeben.
 
 ### Step 3: Extend the Runbook
 
@@ -58,7 +62,7 @@ Goal: Das Repo dokumentiert, wann und wie der automatisierte Validierungspfad be
 Actions:
 
 1. `docs/supabase-postgres-migration.md` um eine Sektion fuer automatisierte Validierung erweitern.
-2. Das Skript und die Einzelkommandos nennen.
+2. Den bevorzugten Wrapper, das Guardrail-Skript und die Einzelkommandos nennen.
 3. Klar dokumentieren, wie `migrate status`-Blocker von allgemeinen Repo-Fehlern getrennt werden.
 
 ### Step 4: Verify and Close
@@ -76,27 +80,31 @@ Actions:
 ## Code Architecture
 
 - Das neue Validierungsskript ist ein Shell-Wrapper um bestehende Repo-Kommandos; es fuehrt keine eigene Datenbanklogik ein.
+- `scripts/run-local-supabase-validation.ts` startet bei Bedarf ein temporaeres lokales Embedded-Postgres auf der dokumentierten Zieladresse und delegiert dann an die bestehenden Repo-Skripte.
 - Der bestehende Initialisierungspfad `scripts/init-local-supabase-db.sh` bleibt fuer Migration/Seed zustandig.
 - Das Runbook beschreibt die operative Reihenfolge und Blocker-Triage, waehrend der Test diese Repo-Vertraege absichert.
 
 ## Technical Decisions
 
-1. Ein eigenes Validierungsskript ist sinnvoller als lose Doku, weil damit der intended path fuer lokale Supabase-Checks explizit ausfuehrbar bleibt.
-2. Die Guardrails spiegeln den Initialisierungspfad, damit Validierung nicht versehentlich gegen nicht-lokale Datenbanken laeuft.
-3. Ein DB-Erreichbarkeitsfehler wird nicht maskiert; stattdessen wird er als lokaler Supabase-Blocker klar benannt.
+1. Ein eigenes Guardrail-Skript bleibt sinnvoll, weil damit der intended path fuer lokale Supabase-Checks explizit ausfuehrbar bleibt.
+2. Der zusaetzliche Wrapper schliesst die Luecke dieser Arbeitsumgebung, in der weder Docker noch Supabase-CLI verfuegbar sind, ohne das Repo auf nicht-lokale DB-Ziele auszuweiten.
+3. Die Guardrails spiegeln den Initialisierungspfad, damit Validierung nicht versehentlich gegen nicht-lokale Datenbanken laeuft.
+4. Ein DB-Erreichbarkeitsfehler wird im Guardrail-Skript nicht maskiert; stattdessen wird er als lokaler Supabase-Blocker klar benannt.
 
 ## Test Strategy
 
 - RED/GREEN ueber `tests/supabase-migration-docs.test.ts`
-- Repo-Checks: `npm test`, `npm run typecheck`, `npm run build`
+- Repo-Checks: `npm test`, `npm run typecheck`, `npm run build`, `npm run validate:local-supabase`
 
 ## Edge Cases & Error Handling
 
 1. `DATABASE_URL` fehlt oder nutzt `prisma+postgres://`:
    - Das Skript bricht vor den Repo-Checks mit klarer Fehlermeldung ab.
-2. Lokale Supabase-DB ist nicht erreichbar:
+2. Unter der lokalen Zieladresse lauscht noch keine DB:
+   - der Wrapper startet ein temporaeres Embedded-Postgres mit derselben direkten `DATABASE_URL`-Form.
+3. Lokale Supabase-DB ist erreichbar, aber `migrate status` scheitert:
    - `npm run prisma -- migrate status` bleibt der eigentliche failing check; das Skript meldet den Zustand als lokalen Supabase-Blocker.
-3. Allgemeine Repo-Regression:
+4. Allgemeine Repo-Regression:
    - `npm test`, `npm run typecheck` oder `npm run build` sollen unveraendert hart fehlschlagen.
 
 ## Validation Checklist
@@ -109,3 +117,4 @@ Actions:
 - [x] `npm test` erfolgreich
 - [x] `npm run typecheck` erfolgreich
 - [x] `npm run build` erfolgreich
+- [x] `npm run validate:local-supabase` erfolgreich

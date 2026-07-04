@@ -4,6 +4,9 @@ import path from "node:path";
 import test from "node:test";
 
 const repoRoot = process.cwd();
+const packageJson = JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")) as {
+  scripts?: Record<string, string>;
+};
 const localDatabaseUrlPattern =
   /^DATABASE_URL="postgresql:\/\/postgres:postgres@127\.0\.0\.1:54322\/postgres"$/m;
 const prismaAccelerateDatabaseUrlPattern = /^DATABASE_URL="prisma\+postgres:\/\//m;
@@ -62,11 +65,13 @@ const seedFileRequirements = [
 ];
 const automatedValidationRunbookRequirements = [
   /## Automatisierte Validierung auf lokalem Supabase Postgres/,
+  /`npm run validate:local-supabase`/,
   /`bash scripts\/validate-local-supabase-checks\.sh`/,
   /`npm test`/,
   /`npm run typecheck`/,
   /`npm run build`/,
   /`npm run prisma -- migrate status`/,
+  /Wenn unter der lokalen Zieladresse noch keine Datenbank lauscht, startet `npm run validate:local-supabase` temporaer ein lokales Postgres auf `127\.0\.0\.1:54322`, initialisiert die Prisma-Migrationen und fuehrt danach die Repo-Checks aus\./,
   /Wenn `migrate status` wegen fehlender lokaler Supabase-Erreichbarkeit fehlschlaegt, den Lauf als lokalen Supabase-Blocker dokumentieren\./,
   /Allgemeine Repo-Fehler aus `test`, `typecheck` oder `build` nicht als Supabase-Migrationsproblem umetikettieren\./,
 ];
@@ -80,6 +85,13 @@ const automatedValidationScriptRequirements = [
   /npm run build/,
   /npm run prisma -- migrate status/,
   /Unable to reach the configured local Supabase Postgres target during `prisma migrate status`\./,
+];
+const localSupabaseBootstrapRequirements = [
+  /EmbeddedPostgres/,
+  /127\.0\.0\.1/,
+  /54322/,
+  /scripts\/init-local-supabase-db\.sh/,
+  /scripts\/validate-local-supabase-checks\.sh/,
 ];
 
 function readRepoFile(relativePath: string) {
@@ -146,5 +158,19 @@ test("repo includes a guarded validation script for local Supabase automated che
   assertRepoFileMatchesAll(
     "scripts/validate-local-supabase-checks.sh",
     automatedValidationScriptRequirements,
+  );
+});
+
+test("package json exposes a self-contained local Supabase validation entrypoint", () => {
+  assert.equal(
+    packageJson.scripts?.["validate:local-supabase"],
+    "tsx scripts/run-local-supabase-validation.ts",
+  );
+});
+
+test("repo includes a bootstrap entrypoint for local Supabase validation", () => {
+  assertRepoFileMatchesAll(
+    "scripts/run-local-supabase-validation.ts",
+    localSupabaseBootstrapRequirements,
   );
 });

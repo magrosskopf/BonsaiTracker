@@ -12,6 +12,7 @@
     "prisma": "npx prisma",
     "sandcastle": "npx tsx .sandcastle/main.mts",
     "test": "tsx --test tests/*.test.ts",
+    "validate:local-supabase": "tsx scripts/run-local-supabase-validation.ts",
     "approve-waitlist": "node scripts/approve-waitlist.js"
   },
   "prisma": {
@@ -44,6 +45,7 @@
     "@types/swiper": "^6.0.0",
     "autoprefixer": "^10.0.0",
     "daisyui": "^5.0.54",
+    "embedded-postgres": "^18.4.0-beta.17",
     "postcss": "^8.0.0",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",

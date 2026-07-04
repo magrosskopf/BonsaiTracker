@@ -125,7 +125,15 @@ Pruefe nach der Initialisierung:
 
 Wenn die lokale App-Konfiguration bereits auf direktes Supabase Postgres zeigt, verwende fuer die Standardchecks bevorzugt:
 
-Bevorzugter Repo-Befehl: `bash scripts/validate-local-supabase-checks.sh`.
+Bevorzugter Repo-Befehl: `npm run validate:local-supabase`.
+
+```bash
+npm run validate:local-supabase
+```
+
+Wenn unter der lokalen Zieladresse noch keine Datenbank lauscht, startet `npm run validate:local-supabase` temporaer ein lokales Postgres auf `127.0.0.1:54322`, initialisiert die Prisma-Migrationen und fuehrt danach die Repo-Checks aus.
+
+Der Wrapper ruft danach weiterhin das niedrigere Repo-Skript `bash scripts/validate-local-supabase-checks.sh` auf.
 
 ```bash
 bash scripts/validate-local-supabase-checks.sh
