@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 
 const repoRoot = process.cwd();
+const migrationRunbookPath = "docs/supabase-postgres-migration.md";
 const packageJson = JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")) as {
   scripts?: Record<string, string>;
 };
@@ -121,6 +122,10 @@ function assertRepoFileMatchesAll(relativePath: string, requirements: RegExp[]) 
   assertMatchesAll(readRepoFile(relativePath), requirements);
 }
 
+function assertMigrationRunbookMatchesAll(requirements: RegExp[]) {
+  assertRepoFileMatchesAll(migrationRunbookPath, requirements);
+}
+
 test("env example documents a direct local Supabase Postgres database target", () => {
   const envExample = readRepoFile(".env.example");
 
@@ -129,24 +134,15 @@ test("env example documents a direct local Supabase Postgres database target", (
 });
 
 test("migration runbook documents Prisma-only local usage and reversible rollback", () => {
-  assertRepoFileMatchesAll(
-    "docs/supabase-postgres-migration.md",
-    migrationRunbookRequirements,
-  );
+  assertMigrationRunbookMatchesAll(migrationRunbookRequirements);
 });
 
 test("migration runbook documents seeded baseline data for local app smoke tests", () => {
-  assertRepoFileMatchesAll(
-    "docs/supabase-postgres-migration.md",
-    baselineRunbookRequirements,
-  );
+  assertMigrationRunbookMatchesAll(baselineRunbookRequirements);
 });
 
 test("migration runbook documents the local Supabase core app flow smoke checklist", () => {
-  assertRepoFileMatchesAll(
-    "docs/supabase-postgres-migration.md",
-    coreFlowSmokeChecklistRequirements,
-  );
+  assertMigrationRunbookMatchesAll(coreFlowSmokeChecklistRequirements);
 });
 
 test("repo includes a guarded local Supabase initialization script based on Prisma migrations", () => {
@@ -161,17 +157,11 @@ test("prisma seed defines deterministic local baseline data for the seeded Supab
 });
 
 test("migration runbook documents the automated validation path for local Supabase Postgres", () => {
-  assertRepoFileMatchesAll(
-    "docs/supabase-postgres-migration.md",
-    automatedValidationRunbookRequirements,
-  );
+  assertMigrationRunbookMatchesAll(automatedValidationRunbookRequirements);
 });
 
 test("migration runbook captures the completed issue-7 operating notes", () => {
-  assertRepoFileMatchesAll(
-    "docs/supabase-postgres-migration.md",
-    issueSevenRunbookCompletionRequirements,
-  );
+  assertMigrationRunbookMatchesAll(issueSevenRunbookCompletionRequirements);
 });
 
 test("repo includes a guarded validation script for local Supabase automated checks", () => {
