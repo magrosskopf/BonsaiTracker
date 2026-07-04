@@ -75,6 +75,19 @@ const automatedValidationRunbookRequirements = [
   /Wenn `migrate status` wegen fehlender lokaler Supabase-Erreichbarkeit fehlschlaegt, den Lauf als lokalen Supabase-Blocker dokumentieren\./,
   /Allgemeine Repo-Fehler aus `test`, `typecheck` oder `build` nicht als Supabase-Migrationsproblem umetikettieren\./,
 ];
+const issueSevenRunbookCompletionRequirements = [
+  /## Beobachtete lokale Ausfuehrung in diesem Repo-Slice/,
+  /Am 2026-07-04 wurde `npm run validate:local-supabase` in dieser Repo-Umgebung erfolgreich ausgefuehrt\./,
+  /Dabei wurde mangels bestehendem Listener temporaer ein lokales Postgres auf `127\.0\.0\.1:54322` gestartet\./,
+  /`npm run prisma -- validate`, `npm run prisma -- migrate deploy` und `npm run prisma -- migrate status` liefen gegen dasselbe lokale Ziel erfolgreich durch\./,
+  /## Dokumentierte Skip- und Caveat-Notizen/,
+  /`skip` Login und Session: in dieser Repo-Umgebung wurde kein lokales OAuth-, Magic-Link- oder SMTP-Setup mit realen Secrets hinterlegt\./,
+  /`skip` Interaktive App-Smoke-Session: der erfolgreiche Wrapper-Lauf beendet das temporaere Embedded-Postgres nach den Repo-Checks wieder, daher wurde hier keine dauerhafte manuelle Browser-Session offengehalten\./,
+  /`skip` Media-Pfade mit produktionsnahem Supabase-Storage: `.env.example` zeigt weiterhin Platzhalter fuer `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY`, daher wurde in diesem Slice kein echter lokaler Storage-Zugriff verifiziert\./,
+  /## Spaeter separat zu bearbeiten/,
+  /Echte lokale Supabase-CLI-\/Docker-Beobachtungen fuer ein dauerhaft laufendes Self-Hosted-Setup/,
+  /Produktions-Cutover, produktive Secrets oder nicht-lokale Datenbankziele/,
+];
 const automatedValidationScriptRequirements = [
   /set -euo pipefail/,
   /DATABASE_URL must be set/,
@@ -151,6 +164,13 @@ test("migration runbook documents the automated validation path for local Supaba
   assertRepoFileMatchesAll(
     "docs/supabase-postgres-migration.md",
     automatedValidationRunbookRequirements,
+  );
+});
+
+test("migration runbook captures the completed issue-7 operating notes", () => {
+  assertRepoFileMatchesAll(
+    "docs/supabase-postgres-migration.md",
+    issueSevenRunbookCompletionRequirements,
   );
 });
 

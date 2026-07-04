@@ -22,3 +22,5 @@
 - Die aktuelle Arbeitsumgebung enthält weder `supabase`-CLI noch Docker und hat keine lokale `.env.local` mit echter `DATABASE_URL`.
 - Deshalb wurde Issue `#5` in diesem Repo-Slice über eine reproduzierbare Kernfluss-Checklist und Regressionstests abgesichert, nicht über eine live ausgeführte lokale Supabase-Smoke-Session.
 - Eine spätere interaktive Verifikation gegen echte lokale Supabase-Postgres-Laufzeit soll die Runbook-Checklist mit konkreten `pass`-/`skip`-/`fail`-Notizen ergänzen.
+- Issue `#7` hat in derselben Arbeitsumgebung erfolgreich `npm run validate:local-supabase` gegen ein temporaer gebootstrapptes lokales Postgres auf `127.0.0.1:54322` ausgefuehrt.
+- Interaktive Browser-, Auth- und produktionsnahe Storage-Schritte bleiben hier weiterhin bewusst offen, bis eine echte lokale Self-Hosted-Supabase-Session mit passenden Secrets verfuegbar ist.

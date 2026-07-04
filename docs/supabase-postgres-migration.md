@@ -166,6 +166,25 @@ npm run build
 npm run prisma -- migrate status
 ```
 
+## Beobachtete lokale Ausfuehrung in diesem Repo-Slice
+
+Am 2026-07-04 wurde `npm run validate:local-supabase` in dieser Repo-Umgebung erfolgreich ausgefuehrt.
+
+Dabei wurde mangels bestehendem Listener temporaer ein lokales Postgres auf `127.0.0.1:54322` gestartet.
+
+`npm run prisma -- validate`, `npm run prisma -- migrate deploy` und `npm run prisma -- migrate status` liefen gegen dasselbe lokale Ziel erfolgreich durch.
+
+Der erfolgreiche Lauf umfasste danach ebenfalls `npm test`, `npm run typecheck` und `npm run build`, bevor der temporaere Listener wieder beendet wurde.
+
+Wenn du in einer anderen lokalen Umgebung eine echte Supabase-CLI- oder Docker-Instanz bereits laufen hast, darf `npm run validate:local-supabase` stattdessen den vorhandenen lokalen Listener verwenden. Die Guardrails fuer direkte lokale Postgres-URLs bleiben gleich.
+
+## Dokumentierte Skip- und Caveat-Notizen
+
+- `skip` Login und Session: in dieser Repo-Umgebung wurde kein lokales OAuth-, Magic-Link- oder SMTP-Setup mit realen Secrets hinterlegt.
+- `skip` Interaktive App-Smoke-Session: der erfolgreiche Wrapper-Lauf beendet das temporaere Embedded-Postgres nach den Repo-Checks wieder, daher wurde hier keine dauerhafte manuelle Browser-Session offengehalten.
+- `skip` Media-Pfade mit produktionsnahem Supabase-Storage: `.env.example` zeigt weiterhin Platzhalter fuer `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY`, daher wurde in diesem Slice kein echter lokaler Storage-Zugriff verifiziert.
+- `caveat` Seed-basierte UI-Smoke-Tests bleiben fuer eine spaetere interaktive Session vorgesehen, falls ein dauerhaft laufendes lokales Supabase-Setup mit den noetigen Auth-/Storage-Voraussetzungen bereitsteht.
+
 ## Kernfluss-Checklist fuer lokale Supabase-Smoke-Tests
 
 Notiere jeden Schritt mit `pass`, `skip` oder `fail`.
@@ -214,6 +233,13 @@ Empfohlene Notizform pro Schritt:
 2. `DATABASE_URL` wieder auf den zuvor gesicherten lokalen Wert setzen.
 3. Dev-Server und spaetere Prisma-Kommandos erneut mit der alten lokalen Konfiguration starten.
 4. Ursache analysieren, bevor der Supabase-Zielwert erneut gesetzt wird.
+
+## Spaeter separat zu bearbeiten
+
+1. Echte lokale Supabase-CLI-/Docker-Beobachtungen fuer ein dauerhaft laufendes Self-Hosted-Setup
+2. Seed-basierte Browser-Smoke-Tests mit lokaler Auth- und Storage-Konfiguration
+3. Produktions-Cutover, produktive Secrets oder nicht-lokale Datenbankziele
+4. Zusetzliche Self-Hosted-Supabase-Betriebsschritte, die ueber dieses lokale Repo-Runbook hinausgehen
 
 ## Nicht enthalten
 
