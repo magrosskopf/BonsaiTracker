@@ -7,6 +7,18 @@ export interface BonsaiTimelineImage {
   source: string;
 }
 
+function toTimestamp(value: string): number {
+  return new Date(value).getTime();
+}
+
+function compareTimelineImages(left: BonsaiTimelineImage, right: BonsaiTimelineImage): number {
+  if (left.date !== right.date) {
+    return toTimestamp(left.date) - toTimestamp(right.date);
+  }
+
+  return toTimestamp(left.createdAt) - toTimestamp(right.createdAt);
+}
+
 export function collectBonsaiTimelineImages(bonsai: BonsaiDetail | null): BonsaiTimelineImage[] {
   if (!bonsai) {
     return [];
@@ -27,11 +39,5 @@ export function collectBonsaiTimelineImages(bonsai: BonsaiDetail | null): Bonsai
         source: entry.entryType,
       })),
     ),
-  ].sort((left, right) => {
-    if (left.date !== right.date) {
-      return new Date(left.date).getTime() - new Date(right.date).getTime();
-    }
-
-    return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-  });
+  ].sort(compareTimelineImages);
 }

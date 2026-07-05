@@ -1,4 +1,9 @@
 const UNKNOWN_DISPLAY_VALUES = new Set(["unbekannt"]);
+const BONSAI_DATE_FORMATTER = new Intl.DateTimeFormat("de-DE", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
 
 function normalizeDisplayValue(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? "";
@@ -25,11 +30,5 @@ export function formatBonsaiDate(
   fallback = "Nicht angegeben",
 ): string {
   const normalized = normalizeDisplayValue(value);
-  return normalized
-    ? new Intl.DateTimeFormat("de-DE", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }).format(new Date(normalized))
-    : fallback;
+  return normalized ? BONSAI_DATE_FORMATTER.format(new Date(normalized)) : fallback;
 }
