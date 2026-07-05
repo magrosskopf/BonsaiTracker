@@ -7,7 +7,6 @@ export interface ValidationErrorDetails {
 
 const BONSAI_FIELD_LABELS: Record<string, string> = {
   name: "Name",
-  nickname: "Rufname",
   species: "Art",
   latinName: "Botanischer Name",
   location: "Standort",

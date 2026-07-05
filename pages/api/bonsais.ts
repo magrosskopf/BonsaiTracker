@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/authz";
 import { decodeCursor, encodeCursor } from "@/lib/api/cursor";
 import { firstQueryValue } from "@/lib/api/request";
 import { fail, ok } from "@/lib/api/response";
+import { buildBonsaiSearchOr } from "@/lib/search/bonsais";
 import { getZodErrorMessage } from "@/lib/api/validation";
 import { mapBonsaiSummary } from "@/lib/mappers";
 import { bonsaiCreateSchema } from "@/lib/validators/bonsai";
@@ -83,15 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ...(search
             ? [
                 {
-                  OR: [
-                    { name: { contains: search, mode: "insensitive" as const } },
-                    { nickname: { contains: search, mode: "insensitive" as const } },
-                    { species: { contains: search, mode: "insensitive" as const } },
-                    { latinName: { contains: search, mode: "insensitive" as const } },
-                    { location: { contains: search, mode: "insensitive" as const } },
-                    { notes: { contains: search, mode: "insensitive" as const } },
-                    { customStyle: { contains: search, mode: "insensitive" as const } },
-                  ],
+                  OR: buildBonsaiSearchOr(search),
                 },
               ]
             : []),

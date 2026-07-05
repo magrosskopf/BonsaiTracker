@@ -147,7 +147,6 @@ export default function Dashboard() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="card-title">{bonsai.name}</h2>
-                  {bonsai.nickname ? <p className="text-sm text-base-content/60">{bonsai.nickname}</p> : null}
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <span className="badge badge-outline">{bonsai.style}</span>

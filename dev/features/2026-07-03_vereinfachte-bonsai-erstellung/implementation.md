@@ -16,6 +16,10 @@ Keine Umsetzung erfolgt vor Plan-Freigabe.
   - umgesetzt: Backend-Validatoren setzen Defaults fuer Minimal-Payloads und akzeptieren `age = null`, `ownedSince = null`, `developmentStage = UNBEKANNT` sowie `style = Unbekannt`.
   - umgesetzt: Mapper/Form-Helfer sowie Detail-, Feed- und Subentry-Seiten tolerieren `ownedSince = null` mit `createdAt`-Fallback.
   - offen fuer spaetere Slices: Wizard-/Create-UI vereinfachen, weitere `Unbekannt`-/`Nicht angegeben`-Darstellung in allen Ansichten harmonisieren, `nickname` vollstaendig entfernen.
+- 2026-07-05, Issue #9:
+  - umgesetzt: `nickname` aus Bonsai-Formwerten, Feldkonfiguration, DTO-Mapping sowie Dashboard- und Detailanzeige entfernt.
+  - umgesetzt: Bonsai-Suche nutzt nur noch Name, Art, botanischen Namen, Standort, Notizen und `customStyle`, nicht mehr alte `nickname`-Werte.
+  - umgesetzt: Tests decken DTO-/Form-Contracts ohne `nickname` und die Suchfeldliste ab.
 
 ## Reference
 

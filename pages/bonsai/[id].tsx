@@ -159,7 +159,6 @@ export default function BonsaiDetailPage() {
             <div>
               <p className="text-sm uppercase tracking-[0.2em] text-primary">Bonsai Detail</p>
               <h1 className="text-3xl font-bold">{bonsai.name}</h1>
-              {bonsai.nickname ? <p className="mt-1 text-base-content/70">{bonsai.nickname}</p> : null}
             </div>
             <div className="flex flex-wrap gap-2">
               {bonsai.deletedAt ? (

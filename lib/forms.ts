@@ -3,7 +3,6 @@ import type { BonsaiFormValues } from "@/types/forms";
 
 export const emptyBonsaiFormValues: BonsaiFormValues = {
   name: "",
-  nickname: "",
   species: "",
   latinName: "",
   location: "",
@@ -39,7 +38,6 @@ function asString(value: number | string | null | undefined): string {
 export function bonsaiDetailToFormValues(detail: BonsaiDetail): BonsaiFormValues {
   return {
     name: detail.name,
-    nickname: detail.nickname ?? "",
     species: detail.species,
     latinName: detail.latinName ?? "",
     location: detail.location,
@@ -87,7 +85,6 @@ function nullableDate(value: string): string | null {
 export function bonsaiFormValuesToPayload(values: BonsaiFormValues) {
   return {
     name: values.name,
-    nickname: nullableString(values.nickname),
     species: values.species,
     latinName: nullableString(values.latinName),
     location: values.location,

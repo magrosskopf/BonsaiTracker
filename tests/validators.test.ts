@@ -7,7 +7,6 @@ import { validateImageFile } from "@/lib/validators/upload";
 test("bonsai validator normalizes dates and enforces customStyle", () => {
   const parsed = bonsaiCreateSchema.safeParse({
     name: "Acer",
-    nickname: "",
     species: "Acer palmatum",
     latinName: "",
     location: "Terrasse",
@@ -39,6 +38,7 @@ test("bonsai validator normalizes dates and enforces customStyle", () => {
 
   assert.equal(parsed.success, true);
   if (parsed.success) {
+    assert.equal("nickname" in parsed.data, false);
     assert.ok(parsed.data.ownedSince);
     assert.equal(parsed.data.ownedSince.toISOString(), "2024-05-29T00:00:00.000Z");
     assert.equal(parsed.data.customStyle, "Freiform");

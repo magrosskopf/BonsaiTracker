@@ -28,7 +28,6 @@ export function mapBonsaiSummary(bonsai: BonsaiWithCount): BonsaiSummary {
   return {
     id: bonsai.id,
     name: bonsai.name,
-    nickname: bonsai.nickname,
     species: bonsai.species,
     latinName: bonsai.latinName,
     location: bonsai.location,
@@ -59,7 +58,6 @@ export function mapBonsaiDetail(bonsai: BonsaiDetailRecord): BonsaiDetail {
   return {
     id: bonsai.id,
     name: bonsai.name,
-    nickname: bonsai.nickname,
     species: bonsai.species,
     latinName: bonsai.latinName,
     location: bonsai.location,

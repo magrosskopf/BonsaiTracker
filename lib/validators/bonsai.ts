@@ -55,7 +55,6 @@ const optionalNullEnum = <T extends readonly [string, ...string[]]>(values: T) =
 
 const bonsaiCreateObjectSchema = z.object({
   name: requiredTrimmedString(2, 80),
-  nickname: defaultNullString(80),
   species: defaultedTrimmedString("Unbekannt", 2, 80),
   latinName: defaultNullString(120, 2),
   location: defaultedTrimmedString("Unbekannt", 2, 120),
@@ -87,7 +86,6 @@ const bonsaiCreateObjectSchema = z.object({
 
 const bonsaiPatchObjectSchema = z.object({
   name: requiredTrimmedString(2, 80).optional(),
-  nickname: optionalNullString(80),
   species: defaultedTrimmedString("Unbekannt", 2, 80).optional(),
   latinName: optionalNullString(120, 2),
   location: defaultedTrimmedString("Unbekannt", 2, 120).optional(),

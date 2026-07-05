@@ -12,7 +12,6 @@ import type {
 export interface BonsaiSummary {
   id: number;
   name: string;
-  nickname: string | null;
   species: string;
   latinName: string | null;
   location: string;
@@ -50,7 +49,6 @@ export interface SubEntryDto {
 export interface BonsaiDetail {
   id: number;
   name: string;
-  nickname: string | null;
   species: string;
   latinName: string | null;
   location: string;
