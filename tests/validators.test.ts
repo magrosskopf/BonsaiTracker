@@ -39,9 +39,56 @@ test("bonsai validator normalizes dates and enforces customStyle", () => {
 
   assert.equal(parsed.success, true);
   if (parsed.success) {
+    assert.ok(parsed.data.ownedSince);
     assert.equal(parsed.data.ownedSince.toISOString(), "2024-05-29T00:00:00.000Z");
     assert.equal(parsed.data.customStyle, "Freiform");
   }
+});
+
+test("bonsai validator accepts a minimal payload and applies backend defaults", () => {
+  const parsed = bonsaiCreateSchema.safeParse({
+    name: "Acer",
+  });
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) {
+    assert.equal(parsed.data.species, "Unbekannt");
+    assert.equal(parsed.data.location, "Unbekannt");
+    assert.equal(parsed.data.indoorOutdoor, "OUTDOOR");
+    assert.equal(parsed.data.age, null);
+    assert.equal(parsed.data.style, "Unbekannt");
+    assert.equal(parsed.data.customStyle, null);
+    assert.equal(parsed.data.ownedSince, null);
+    assert.equal(parsed.data.healthStatus, "UNBEKANNT");
+    assert.equal(parsed.data.developmentStage, "UNBEKANNT");
+    assert.deepEqual(parsed.data.images, []);
+  }
+});
+
+test("bonsai validator accepts nullable age and ownedSince plus developmentStage UNBEKANNT", () => {
+  const parsed = bonsaiCreateSchema.safeParse({
+    name: "Acer",
+    age: null,
+    ownedSince: null,
+    developmentStage: "UNBEKANNT",
+  });
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) {
+    assert.equal(parsed.data.age, null);
+    assert.equal(parsed.data.ownedSince, null);
+    assert.equal(parsed.data.developmentStage, "UNBEKANNT");
+  }
+});
+
+test("bonsai validator rejects customStyle when style is Unbekannt", () => {
+  const parsed = bonsaiCreateSchema.safeParse({
+    name: "Acer",
+    style: "Unbekannt",
+    customStyle: "Freiform",
+  });
+
+  assert.equal(parsed.success, false);
 });
 
 test("subentry validator rejects reminder dates before the entry date", () => {

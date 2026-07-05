@@ -1,4 +1,5 @@
 export const STYLE_OPTIONS = [
+  "Unbekannt",
   "Chokkan",
   "Moyogi",
   "Shakan",
@@ -17,7 +18,7 @@ export const STYLE_OPTIONS = [
 
 export const INDOOR_OUTDOOR_OPTIONS = ["INDOOR", "OUTDOOR", "BEIDES"] as const;
 export const HEALTH_STATUS_OPTIONS = ["UNBEKANNT", "SEHR_GUT", "GUT", "BEOBACHTEN", "KRITISCH"] as const;
-export const DEVELOPMENT_STAGE_OPTIONS = ["ROHLING", "IN_GESTALTUNG", "VERFEINERUNG", "REIF"] as const;
+export const DEVELOPMENT_STAGE_OPTIONS = ["UNBEKANNT", "ROHLING", "IN_GESTALTUNG", "VERFEINERUNG", "REIF"] as const;
 export const WINTER_HARDINESS_OPTIONS = ["NICHT_WINTERHART", "BEDINGT_WINTERHART", "WINTERHART"] as const;
 export const SUN_EXPOSURE_OPTIONS = ["VOLLE_SONNE", "HALBSCHATTEN", "SCHATTEN"] as const;
 export const ENTRY_TYPE_OPTIONS = ["GIESSEN", "DUENGEN", "SCHNEIDEN", "DRAHTEN", "UMTOPFEN", "KONTROLLE", "FOTO_UPDATE", "SONSTIGES"] as const;
@@ -49,6 +50,7 @@ export const HEALTH_STATUS_LABELS: Record<HealthStatusOption, string> = {
 };
 
 export const DEVELOPMENT_STAGE_LABELS: Record<DevelopmentStageOption, string> = {
+  UNBEKANNT: "Unbekannt",
   ROHLING: "Rohling",
   IN_GESTALTUNG: "In Gestaltung",
   VERFEINERUNG: "Verfeinerung",

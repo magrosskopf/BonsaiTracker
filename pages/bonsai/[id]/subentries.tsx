@@ -122,7 +122,7 @@ export default function BonsaiSubEntriesPage() {
 
       setBonsai(detail);
       setEntries(entriesJson.data.items);
-      setCreateForm((current) => ({ ...current, date: detail.ownedSince.slice(0, 10) }));
+      setCreateForm((current) => ({ ...current, date: (detail.ownedSince ?? detail.createdAt).slice(0, 10) }));
     })();
   }, [bonsaiId, status]);
 

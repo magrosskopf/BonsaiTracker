@@ -62,13 +62,13 @@ model Bonsai {
   latinName          String?
   location           String
   indoorOutdoor      IndoorOutdoorEnum
-  age                Int
+  age                Int?
   heightCm           Int?
   widthCm            Int?
   trunkDiameterMm    Int?
   style              String
   customStyle        String?
-  ownedSince         DateTime
+  ownedSince         DateTime?
   acquiredFrom      String?
   purchasePriceCents Int?
   healthStatus      HealthStatusEnum
@@ -261,6 +261,7 @@ enum HealthStatusEnum {
 }
 
 enum DevelopmentStageEnum {
+  UNBEKANNT
   ROHLING
   IN_GESTALTUNG
   VERFEINERUNG

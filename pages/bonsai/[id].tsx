@@ -87,7 +87,7 @@ export default function BonsaiDetailPage() {
     const images = [
       ...bonsai.images.map((image) => ({
         image,
-        date: bonsai.ownedSince,
+        date: bonsai.ownedSince ?? bonsai.createdAt,
         createdAt: bonsai.createdAt,
       })),
       ...bonsai.subEntries.flatMap((entry) =>
@@ -206,7 +206,7 @@ export default function BonsaiDetailPage() {
                 <div className="card-body">
                   <h2 className="card-title">Maße und Stil</h2>
                   <dl className="grid gap-4 md:grid-cols-2">
-                    <InfoRow label="Alter" value={`${bonsai.age} Jahre`} />
+                    <InfoRow label="Alter" value={bonsai.age !== null ? `${bonsai.age} Jahre` : null} />
                     <InfoRow label="Höhe" value={bonsai.heightCm !== null ? `${bonsai.heightCm} cm` : null} />
                     <InfoRow label="Breite" value={bonsai.widthCm !== null ? `${bonsai.widthCm} cm` : null} />
                     <InfoRow label="Stammdurchmesser" value={bonsai.trunkDiameterMm !== null ? `${bonsai.trunkDiameterMm} mm` : null} />
@@ -242,7 +242,7 @@ export default function BonsaiDetailPage() {
                 <div className="card-body">
                   <h2 className="card-title">Herkunft und Anschaffung</h2>
                   <dl className="grid gap-4 md:grid-cols-2">
-                    <InfoRow label="Besitz seit" value={new Date(bonsai.ownedSince).toLocaleDateString("de-DE")} />
+                    <InfoRow label="Besitz seit" value={bonsai.ownedSince ? new Date(bonsai.ownedSince).toLocaleDateString("de-DE") : null} />
                     <InfoRow label="Herkunft" value={bonsai.acquiredFrom} />
                     <InfoRow label="Kaufpreis" value={bonsai.purchasePriceCents !== null ? `${(bonsai.purchasePriceCents / 100).toFixed(2)} EUR` : null} />
                     <InfoRow label="Aktualisiert" value={new Date(bonsai.updatedAt).toLocaleString("de-DE")} />

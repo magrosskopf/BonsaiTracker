@@ -36,7 +36,7 @@ function collectComposerImages(bonsai: BonsaiDetail | null): ComposerImage[] {
   return [
     ...bonsai.images.map((image) => ({
       image,
-      date: bonsai.ownedSince,
+      date: bonsai.ownedSince ?? bonsai.createdAt,
       createdAt: bonsai.createdAt,
       source: "Bonsai",
     })),
