@@ -20,6 +20,10 @@ Keine Umsetzung erfolgt vor Plan-Freigabe.
   - umgesetzt: `nickname` aus Bonsai-Formwerten, Feldkonfiguration, DTO-Mapping sowie Dashboard- und Detailanzeige entfernt.
   - umgesetzt: Bonsai-Suche nutzt nur noch Name, Art, botanischen Namen, Standort, Notizen und `customStyle`, nicht mehr alte `nickname`-Werte.
   - umgesetzt: Tests decken DTO-/Form-Contracts ohne `nickname` und die Suchfeldliste ab.
+- 2026-07-05, Issue #12:
+  - umgesetzt: zentraler Anzeige-Helper behandelt `null`, Leerwerte sowie `Unbekannt`/`UNBEKANNT` konsistent als fehlende Angabe.
+  - umgesetzt: Dashboard- und Detailansichten rendern technische Platzhalter nicht mehr als echte Fachwerte.
+  - umgesetzt: Bild-Timeline fuer Feed-Composer und Detail-Slideshow nutzt gemeinsame Sortierung mit `ownedSince ?? createdAt`.
 
 ## Reference
 

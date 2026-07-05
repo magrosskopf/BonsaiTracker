@@ -2,6 +2,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { formatBonsaiDisplayText } from "@/lib/bonsai-display";
+import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
 import type { BonsaiDetail, BonsaiSummary, PostCommentDto, PostDto } from "@/types/dto";
 import { POST_TYPE_LABELS, POST_TYPE_OPTIONS } from "@/types/domain";
 
@@ -29,33 +31,7 @@ interface ComposerImage {
 }
 
 function collectComposerImages(bonsai: BonsaiDetail | null): ComposerImage[] {
-  if (!bonsai) {
-    return [];
-  }
-
-  return [
-    ...bonsai.images.map((image) => ({
-      image,
-      date: bonsai.ownedSince ?? bonsai.createdAt,
-      createdAt: bonsai.createdAt,
-      source: "Bonsai",
-    })),
-    ...bonsai.subEntries.flatMap((entry) =>
-      entry.images.map((image) => ({
-        image,
-        date: entry.date,
-        createdAt: entry.createdAt,
-        source: entry.entryType,
-      })),
-    ),
-  ]
-    .sort((left, right) => {
-      if (left.date !== right.date) {
-        return new Date(left.date).getTime() - new Date(right.date).getTime();
-      }
-      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-    })
-    .map(({ image, date, source }) => ({ image, date, source }));
+  return collectBonsaiTimelineImages(bonsai).map(({ image, date, source }) => ({ image, date, source }));
 }
 
 export default function FeedPage() {
@@ -507,7 +483,7 @@ function PostCard({
               <Link href={`/profile/${post.userId}`} className="link link-hover">{post.userName ?? "Unbekannt"}</Link>
             </h2>
             <p className="text-sm text-base-content/70">
-              {post.snapshotName} · {post.snapshotSpecies} · {new Date(post.createdAt).toLocaleDateString("de-DE")}
+              {post.snapshotName} · {formatBonsaiDisplayText(post.snapshotSpecies)} · {new Date(post.createdAt).toLocaleDateString("de-DE")}
             </p>
           </div>
           <span className="text-sm text-base-content/60">{post.commentCount} Kommentare</span>

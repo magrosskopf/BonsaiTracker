@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { formatBonsaiDisplayText } from "@/lib/bonsai-display";
 import type { BonsaiSummary } from "@/types/dto";
 import { HEALTH_STATUS_LABELS, INDOOR_OUTDOOR_LABELS } from "@/types/domain";
 
@@ -149,14 +150,14 @@ export default function Dashboard() {
                   <h2 className="card-title">{bonsai.name}</h2>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <span className="badge badge-outline">{bonsai.style}</span>
+                  <span className="badge badge-outline">{formatBonsaiDisplayText(bonsai.style, "-")}</span>
                   {bonsai.deletedAt ? <span className="badge badge-warning">Archiviert</span> : null}
                 </div>
               </div>
               <div className="space-y-1 text-sm text-base-content/75">
-                <p>Art: {bonsai.species}</p>
-                <p>Standort: {bonsai.location}</p>
-                <p>Status: {HEALTH_STATUS_LABELS[bonsai.healthStatus]}</p>
+                <p>Art: {formatBonsaiDisplayText(bonsai.species)}</p>
+                <p>Standort: {formatBonsaiDisplayText(bonsai.location)}</p>
+                <p>Status: {formatBonsaiDisplayText(HEALTH_STATUS_LABELS[bonsai.healthStatus])}</p>
                 <p>Haltung: {INDOOR_OUTDOOR_LABELS[bonsai.indoorOutdoor]}</p>
                 <p>Letztes Update: {new Date(bonsai.updatedAt).toLocaleDateString("de-DE")}</p>
               </div>
