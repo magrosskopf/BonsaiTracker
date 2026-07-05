@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { bonsaiCreateSchema } from "@/lib/validators/bonsai";
+import { bonsaiCreateSchema, bonsaiPatchSchema } from "@/lib/validators/bonsai";
 import { subEntryCreateSchema } from "@/lib/validators/subentry";
 import { validateImageFile } from "@/lib/validators/upload";
 
@@ -89,6 +89,42 @@ test("bonsai validator rejects customStyle when style is Unbekannt", () => {
   });
 
   assert.equal(parsed.success, false);
+});
+
+test("bonsai patch validator keeps omitted nullable fields undefined and normalizes blank strings to null", () => {
+  const parsed = bonsaiPatchSchema.safeParse({
+    latinName: "",
+    acquiredFrom: "",
+  });
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) {
+    assert.equal(parsed.data.latinName, null);
+    assert.equal(parsed.data.acquiredFrom, null);
+    assert.equal("nickname" in parsed.data, false);
+    assert.equal("potType" in parsed.data, false);
+  }
+});
+
+test("bonsai patch validator applies explicit fallback values for blank defaulted fields", () => {
+  const parsed = bonsaiPatchSchema.safeParse({
+    species: "   ",
+    location: "",
+    style: "",
+    indoorOutdoor: "",
+    healthStatus: "",
+    developmentStage: "",
+  });
+
+  assert.equal(parsed.success, true);
+  if (parsed.success) {
+    assert.equal(parsed.data.species, "Unbekannt");
+    assert.equal(parsed.data.location, "Unbekannt");
+    assert.equal(parsed.data.style, "Unbekannt");
+    assert.equal(parsed.data.indoorOutdoor, "OUTDOOR");
+    assert.equal(parsed.data.healthStatus, "UNBEKANNT");
+    assert.equal(parsed.data.developmentStage, "UNBEKANNT");
+  }
 });
 
 test("subentry validator rejects reminder dates before the entry date", () => {
