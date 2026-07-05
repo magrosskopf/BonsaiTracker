@@ -1,10 +1,18 @@
-export function buildBonsaiSearchOr(search: string) {
+import type { Prisma } from "@prisma/client";
+
+const SEARCH_MODE = "insensitive" as const;
+
+function buildContainsFilter(search: string) {
+  return { contains: search, mode: SEARCH_MODE };
+}
+
+export function buildBonsaiSearchOr(search: string): NonNullable<Prisma.BonsaiWhereInput["OR"]> {
   return [
-    { name: { contains: search, mode: "insensitive" as const } },
-    { species: { contains: search, mode: "insensitive" as const } },
-    { latinName: { contains: search, mode: "insensitive" as const } },
-    { location: { contains: search, mode: "insensitive" as const } },
-    { notes: { contains: search, mode: "insensitive" as const } },
-    { customStyle: { contains: search, mode: "insensitive" as const } },
+    { name: buildContainsFilter(search) },
+    { species: buildContainsFilter(search) },
+    { latinName: buildContainsFilter(search) },
+    { location: buildContainsFilter(search) },
+    { notes: buildContainsFilter(search) },
+    { customStyle: buildContainsFilter(search) },
   ];
 }
