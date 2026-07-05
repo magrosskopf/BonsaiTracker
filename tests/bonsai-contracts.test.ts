@@ -76,25 +76,35 @@ test("bonsai search helper excludes legacy nickname field", () => {
 test("bonsai form mappings support euro prices and nullable detail fields", () => {
   const detail = mapBonsaiDetail(buildBonsaiRecord());
   const formValues = bonsaiDetailToFormValues(detail);
-  const payload = bonsaiFormValuesToPayload({
+  const commaPricePayload = bonsaiFormValuesToPayload({
     ...emptyBonsaiFormValues,
     name: "Deshojo",
     age: "",
     ownedSince: "",
     purchasePriceCents: "12,50",
   });
+  const dotPricePayload = bonsaiFormValuesToPayload({
+    ...emptyBonsaiFormValues,
+    name: "Deshojo",
+    purchasePriceCents: "12.50",
+  });
   const blankPricePayload = bonsaiFormValuesToPayload({
     ...emptyBonsaiFormValues,
     name: "Deshojo",
     purchasePriceCents: "",
   });
+  const pricedFormValues = bonsaiDetailToFormValues(
+    mapBonsaiDetail({ ...buildBonsaiRecord(), purchasePriceCents: 1250 }),
+  );
 
   assert.equal(formValues.age, "");
   assert.equal(formValues.ownedSince, "");
   assert.equal(formValues.purchasePriceCents, "");
-  assert.equal(payload.age, null);
-  assert.equal(payload.ownedSince, null);
-  assert.equal(payload.purchasePriceCents, 1250);
+  assert.equal(pricedFormValues.purchasePriceCents, "12,50");
+  assert.equal(commaPricePayload.age, null);
+  assert.equal(commaPricePayload.ownedSince, null);
+  assert.equal(commaPricePayload.purchasePriceCents, 1250);
+  assert.equal(dotPricePayload.purchasePriceCents, 1250);
   assert.equal(blankPricePayload.purchasePriceCents, null);
 });
 
@@ -110,4 +120,6 @@ test("bonsai detail form config keeps selected fields optional and labels price 
   assert.equal(byKey.acquiredFrom.required, undefined);
   assert.equal(byKey.developmentStage.required, undefined);
   assert.equal(byKey.purchasePriceCents.label, "Kaufpreis in Euro");
+  assert.equal(byKey.purchasePriceCents.inputMode, "decimal");
+  assert.equal(byKey.purchasePriceCents.placeholder, "z. B. 12,50");
 });

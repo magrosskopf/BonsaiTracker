@@ -101,7 +101,13 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     fields: [
       { key: "ownedSince", label: "Besitz seit", type: "date" },
       { key: "acquiredFrom", label: "Herkunft / Kaufquelle", type: "text" },
-      { key: "purchasePriceCents", label: "Kaufpreis in Euro", type: "text", inputMode: "decimal", placeholder: "z. B. 12,50" },
+      {
+        key: "purchasePriceCents",
+        label: "Kaufpreis in Euro",
+        type: "text",
+        inputMode: "decimal",
+        placeholder: "z. B. 12,50",
+      },
       {
         key: "healthStatus",
         label: "Gesundheitsstatus",
