@@ -61,10 +61,7 @@ export default function BonsaiForm({
 
   const isValid =
     values.name.trim().length >= 2 &&
-    values.species.trim().length >= 2 &&
     values.location.trim().length >= 2 &&
-    values.age !== "" &&
-    values.ownedSince !== "" &&
     (values.style !== "Sonstiger" || values.customStyle.trim().length >= 1);
 
   function update<K extends keyof BonsaiFormValues>(key: K, value: BonsaiFormValues[K]) {
@@ -92,6 +89,7 @@ export default function BonsaiForm({
             ? "select select-bordered w-full"
             : "input input-bordered w-full",
       value,
+      placeholder: field.placeholder,
       onChange: (
         event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
       ) => update(key, event.target.value as BonsaiFormValues[keyof BonsaiFormValues]),
@@ -135,13 +133,14 @@ export default function BonsaiForm({
     }
 
     return (
-      <Field key={field.key} label={field.label} required={field.required}>
-        <input
-          {...sharedProps}
-          type={field.type}
-          min={field.min}
-          max={field.max}
-        />
+        <Field key={field.key} label={field.label} required={field.required}>
+          <input
+            {...sharedProps}
+            type={field.type}
+            min={field.min}
+            max={field.max}
+            inputMode={field.inputMode}
+          />
       </Field>
     );
   }
@@ -152,11 +151,11 @@ export default function BonsaiForm({
     description: step.description,
     isValid:
       step.id === "grunddaten"
-        ? hasText(values.name, 2) && hasText(values.species, 2) && hasText(values.location, 2) && hasText(values.indoorOutdoor)
+        ? hasText(values.name, 2) && hasText(values.location, 2) && hasText(values.indoorOutdoor)
         : step.id === "gestaltung"
-          ? values.age !== "" && hasText(values.style) && (values.style !== "Sonstiger" || hasText(values.customStyle))
+          ? hasText(values.style) && (values.style !== "Sonstiger" || hasText(values.customStyle))
           : step.id === "herkunft"
-            ? hasText(values.ownedSince) && hasText(values.healthStatus) && hasText(values.developmentStage)
+            ? hasText(values.healthStatus) && hasText(values.developmentStage)
             : step.id === "notizen"
               ? isValid
               : true,

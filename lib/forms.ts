@@ -50,7 +50,7 @@ export function bonsaiDetailToFormValues(detail: BonsaiDetail): BonsaiFormValues
     customStyle: detail.customStyle ?? "",
     ownedSince: detail.ownedSince?.slice(0, 10) ?? "",
     acquiredFrom: detail.acquiredFrom ?? "",
-    purchasePriceCents: asString(detail.purchasePriceCents),
+    purchasePriceCents: centsToEuroString(detail.purchasePriceCents),
     healthStatus: detail.healthStatus,
     developmentStage: detail.developmentStage,
     lastRepotDate: detail.lastRepotDate?.slice(0, 10) ?? "",
@@ -77,6 +77,24 @@ function nullableNumber(value: string): number | null {
   return trimmed === "" ? null : Number(trimmed);
 }
 
+function euroToCents(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return null;
+  }
+
+  const normalized = trimmed.replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
+    return Number.NaN;
+  }
+
+  return Math.round(Number(normalized) * 100);
+}
+
+function centsToEuroString(value: number | null): string {
+  return value === null ? "" : (value / 100).toFixed(2).replace(".", ",");
+}
+
 function nullableDate(value: string): string | null {
   const trimmed = value.trim();
   return trimmed === "" ? null : trimmed;
@@ -97,7 +115,7 @@ export function bonsaiFormValuesToPayload(values: BonsaiFormValues) {
     customStyle: values.style === "Sonstiger" ? nullableString(values.customStyle) : null,
     ownedSince: nullableDate(values.ownedSince),
     acquiredFrom: nullableString(values.acquiredFrom),
-    purchasePriceCents: nullableNumber(values.purchasePriceCents),
+    purchasePriceCents: euroToCents(values.purchasePriceCents),
     healthStatus: values.healthStatus,
     developmentStage: values.developmentStage,
     lastRepotDate: nullableDate(values.lastRepotDate),

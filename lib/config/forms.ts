@@ -29,6 +29,7 @@ export interface FormFieldConfig {
   max?: number | string;
   options?: SelectOption[];
   placeholder?: string;
+  inputMode?: "text" | "decimal" | "numeric" | "tel" | "search" | "email" | "url";
   condition?: (values: BonsaiFormValues) => boolean;
 }
 
@@ -55,7 +56,7 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     sectionTitle: "Grunddaten",
     fields: [
       { key: "name", label: "Name", type: "text", required: true },
-      { key: "species", label: "Art", type: "text", required: true },
+      { key: "species", label: "Art", type: "text" },
       { key: "latinName", label: "Botanischer Name", type: "text" },
       { key: "location", label: "Standort", type: "text", required: true },
       {
@@ -73,7 +74,7 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     description: "Physische Masse und gestalterische Einordnung.",
     sectionTitle: "Masse und Gestaltung",
     fields: [
-      { key: "age", label: "Alter in Jahren", type: "number", required: true, min: 0, max: 200 },
+      { key: "age", label: "Alter in Jahren", type: "number", min: 0, max: 200 },
       { key: "heightCm", label: "Höhe in cm", type: "number", min: 0, max: 500 },
       { key: "widthCm", label: "Breite in cm", type: "number", min: 0, max: 500 },
       { key: "trunkDiameterMm", label: "Stammdurchmesser in mm", type: "number", min: 0, max: 1000 },
@@ -81,7 +82,6 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
         key: "style",
         label: "Stil",
         type: "select",
-        required: true,
         options: STYLE_OPTIONS.map((option) => ({ value: option, label: option })),
       },
       {
@@ -99,21 +99,19 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     description: "Besitz, Entwicklung und Historie.",
     sectionTitle: "Herkunft und Entwicklung",
     fields: [
-      { key: "ownedSince", label: "Besitz seit", type: "date", required: true },
+      { key: "ownedSince", label: "Besitz seit", type: "date" },
       { key: "acquiredFrom", label: "Herkunft / Kaufquelle", type: "text" },
-      { key: "purchasePriceCents", label: "Kaufpreis in Cent", type: "number", min: 0 },
+      { key: "purchasePriceCents", label: "Kaufpreis in Euro", type: "text", inputMode: "decimal", placeholder: "z. B. 12,50" },
       {
         key: "healthStatus",
         label: "Gesundheitsstatus",
         type: "select",
-        required: true,
         options: asOptions(HEALTH_STATUS_OPTIONS, HEALTH_STATUS_LABELS),
       },
       {
         key: "developmentStage",
         label: "Entwicklungsstand",
         type: "select",
-        required: true,
         options: asOptions(DEVELOPMENT_STAGE_OPTIONS, DEVELOPMENT_STAGE_LABELS),
       },
       { key: "lastRepotDate", label: "Letztes Umtopfen", type: "date" },

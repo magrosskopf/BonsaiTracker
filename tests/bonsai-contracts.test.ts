@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { bonsaiFormStepConfigs } from "@/lib/config/forms";
 import { mapBonsaiDetail, mapBonsaiSummary, type BonsaiDetailRecord } from "@/lib/mappers";
 import { buildBonsaiSearchOr } from "@/lib/search/bonsais";
 import { bonsaiDetailToFormValues, bonsaiFormValuesToPayload, emptyBonsaiFormValues } from "@/lib/forms";
@@ -70,4 +71,43 @@ test("bonsai search helper excludes legacy nickname field", () => {
     { notes: { contains: "rufname", mode: "insensitive" } },
     { customStyle: { contains: "rufname", mode: "insensitive" } },
   ]);
+});
+
+test("bonsai form mappings support euro prices and nullable detail fields", () => {
+  const detail = mapBonsaiDetail(buildBonsaiRecord());
+  const formValues = bonsaiDetailToFormValues(detail);
+  const payload = bonsaiFormValuesToPayload({
+    ...emptyBonsaiFormValues,
+    name: "Deshojo",
+    age: "",
+    ownedSince: "",
+    purchasePriceCents: "12,50",
+  });
+  const blankPricePayload = bonsaiFormValuesToPayload({
+    ...emptyBonsaiFormValues,
+    name: "Deshojo",
+    purchasePriceCents: "",
+  });
+
+  assert.equal(formValues.age, "");
+  assert.equal(formValues.ownedSince, "");
+  assert.equal(formValues.purchasePriceCents, "");
+  assert.equal(payload.age, null);
+  assert.equal(payload.ownedSince, null);
+  assert.equal(payload.purchasePriceCents, 1250);
+  assert.equal(blankPricePayload.purchasePriceCents, null);
+});
+
+test("bonsai detail form config keeps selected fields optional and labels price in euro", () => {
+  const fields = bonsaiFormStepConfigs.flatMap((step) => step.fields);
+  const byKey = Object.fromEntries(fields.map((field) => [field.key, field]));
+
+  assert.equal(byKey.species.required, undefined);
+  assert.equal(byKey.age.required, undefined);
+  assert.equal(byKey.style.required, undefined);
+  assert.equal(byKey.ownedSince.required, undefined);
+  assert.equal(byKey.healthStatus.required, undefined);
+  assert.equal(byKey.acquiredFrom.required, undefined);
+  assert.equal(byKey.developmentStage.required, undefined);
+  assert.equal(byKey.purchasePriceCents.label, "Kaufpreis in Euro");
 });

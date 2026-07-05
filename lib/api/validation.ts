@@ -19,7 +19,7 @@ const BONSAI_FIELD_LABELS: Record<string, string> = {
   customStyle: "Eigener Stil",
   ownedSince: "Besitz seit",
   acquiredFrom: "Herkunft / Kaufquelle",
-  purchasePriceCents: "Kaufpreis in Cent",
+  purchasePriceCents: "Kaufpreis in Euro",
   healthStatus: "Gesundheitsstatus",
   developmentStage: "Entwicklungsstand",
   lastRepotDate: "Letztes Umtopfen",

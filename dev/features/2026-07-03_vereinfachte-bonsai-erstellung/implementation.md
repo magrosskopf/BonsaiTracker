@@ -20,6 +20,10 @@ Keine Umsetzung erfolgt vor Plan-Freigabe.
   - umgesetzt: `nickname` aus Bonsai-Formwerten, Feldkonfiguration, DTO-Mapping sowie Dashboard- und Detailanzeige entfernt.
   - umgesetzt: Bonsai-Suche nutzt nur noch Name, Art, botanischen Namen, Standort, Notizen und `customStyle`, nicht mehr alte `nickname`-Werte.
   - umgesetzt: Tests decken DTO-/Form-Contracts ohne `nickname` und die Suchfeldliste ab.
+- 2026-07-05, Issue #11:
+  - umgesetzt: Detailformular markiert `species`, `age`, `style`, `ownedSince`, `healthStatus` und `developmentStage` nicht mehr als Pflichtfelder.
+  - umgesetzt: `purchasePriceCents` wird im Formular als Euro-Feld mit Dezimal-Eingabe (`12`, `12,50`, `12.50`) behandelt und beim Mapping cent-kompatibel persistiert.
+  - umgesetzt: `bonsaiDetailToFormValues` und `bonsaiFormValuesToPayload` behandeln nullable `age`, `ownedSince` und leeren Preis korrekt fuer Edit-PATCH und Form-Roundtrips.
 
 ## Reference
 
