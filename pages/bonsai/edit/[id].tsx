@@ -190,6 +190,7 @@ export default function EditBonsaiPage() {
       </section>
 
       <BonsaiForm
+        mode="edit"
         initialValues={bonsaiDetailToFormValues(bonsai)}
         submitLabel="Änderungen speichern"
         onSubmit={handleSubmit}

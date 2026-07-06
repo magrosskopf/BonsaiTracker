@@ -28,6 +28,12 @@ Keine Umsetzung erfolgt vor Plan-Freigabe.
   - umgesetzt: zentraler Anzeige-Helper behandelt `null`, Leerwerte sowie `Unbekannt`/`UNBEKANNT` konsistent als fehlende Angabe.
   - umgesetzt: Dashboard- und Detailansichten rendern technische Platzhalter nicht mehr als echte Fachwerte.
   - umgesetzt: Bild-Timeline fuer Feed-Composer und Detail-Slideshow nutzt gemeinsame Sortierung mit `ownedSince ?? createdAt`.
+- 2026-07-06, Issue #10:
+  - umgesetzt: `pages/create-bonsai.tsx` startet jetzt mit einem kompakten Schnellstart-Formular; der Bild-Upload liegt erst danach in einem klar optionalen Abschnitt.
+  - umgesetzt: `BonsaiForm` unterscheidet zwischen `create`-Schnellstart und bestehendem `edit`-Wizard; im Create-Modus ist nur `name` fuer den ersten Submit blockierend.
+  - umgesetzt: Render-Test deckt den initialen Schnellstart-Zustand ohne dominante Detailfelder/Wizard ab.
+  - verifiziert: `npm test` und `npm run typecheck` gruen.
+  - offen: `npm run build` wurde mehrfach gestartet, haengt in dieser Umgebung jedoch waehrend `next build` ohne Abschluss und braucht getrennte Nachverfolgung.
 
 ## Reference
 

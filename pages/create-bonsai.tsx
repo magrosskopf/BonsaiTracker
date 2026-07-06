@@ -98,11 +98,27 @@ export default function CreateBonsaiPage() {
       <div className="hero-panel mb-6 space-y-2 rounded-[2rem] p-6">
         <p className="text-sm uppercase tracking-[0.2em] text-primary">Neuer Bonsai</p>
         <h1 className="text-3xl font-bold">Bonsai anlegen</h1>
+        <p className="max-w-2xl text-sm text-base-content/75">
+          Starte mit dem Namen und speichere sofort. Bilder und weitere Details kannst du direkt optional ergänzen oder nach dem Anlegen pflegen.
+        </p>
       </div>
-      <section className="surface-card mb-6 card">
+      <BonsaiForm
+        mode="create"
+        initialValues={emptyBonsaiFormValues}
+        submitLabel="Bonsai speichern"
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        error={error}
+      />
+      <section className="surface-card mt-6 card">
         <div className="card-body gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h2 className="card-title">Bilder</h2>
+            <div>
+              <h2 className="card-title">Optionale Bilder</h2>
+              <p className="text-sm text-base-content/70">
+                Bilder bleiben freiwillig. Wenn du jetzt hochlädst, werden sie beim Speichern direkt diesem neuen Bonsai zugeordnet.
+              </p>
+            </div>
             <label className="btn btn-secondary">
               {uploading ? "Lädt..." : "Bilder hochladen"}
               <input
@@ -114,10 +130,6 @@ export default function CreateBonsaiPage() {
               />
             </label>
           </div>
-          <p className="text-sm text-base-content/70">
-            Uploads werden sofort in den Medien-Storage geladen. Mit <strong>Bonsai speichern</strong> werden sie
-            diesem neuen Bonsai zugeordnet. Entfernen nimmt ein Bild nur aus dieser Auswahlliste.
-          </p>
           {images.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
               {images.map((image) => (
@@ -130,17 +142,10 @@ export default function CreateBonsaiPage() {
               ))}
             </div>
           ) : (
-            <p className="text-base-content/70">Lade optional Bilder hoch, damit der Bonsai direkt mit Galerie und Slideshow startet.</p>
+            <p className="text-base-content/70">Ohne Bilder ist der Schnellstart sofort speicherbar.</p>
           )}
         </div>
       </section>
-      <BonsaiForm
-        initialValues={emptyBonsaiFormValues}
-        submitLabel="Bonsai speichern"
-        onSubmit={handleSubmit}
-        submitting={submitting}
-        error={error}
-      />
     </main>
   );
 }

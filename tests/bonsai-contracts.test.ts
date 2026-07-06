@@ -1,9 +1,17 @@
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import test from "node:test";
+import { createElement } from "react";
+import BonsaiForm from "@/components/BonsaiForm";
 import { bonsaiFormStepConfigs } from "@/lib/config/forms";
 import { mapBonsaiDetail, mapBonsaiSummary, type BonsaiDetailRecord } from "@/lib/mappers";
 import { buildBonsaiSearchOr } from "@/lib/search/bonsais";
 import { bonsaiDetailToFormValues, bonsaiFormValuesToPayload, emptyBonsaiFormValues } from "@/lib/forms";
+
+const require = createRequire(import.meta.url);
+const { renderToStaticMarkup } = require("react-dom/server") as {
+  renderToStaticMarkup: (element: ReturnType<typeof createElement>) => string;
+};
 
 function buildBonsaiRecord(): BonsaiDetailRecord {
   const now = new Date("2026-07-05T12:00:00.000Z");
@@ -125,4 +133,22 @@ test("bonsai detail form config keeps selected fields optional and labels price 
   assert.equal(byKey.purchasePriceCents.label, "Kaufpreis in Euro");
   assert.equal(byKey.purchasePriceCents.inputMode, "decimal");
   assert.equal(byKey.purchasePriceCents.placeholder, "z. B. 12,50");
+});
+
+test("bonsai create form starts in compact quickstart mode", () => {
+  const markup = renderToStaticMarkup(
+    createElement(BonsaiForm, {
+      mode: "create",
+      initialValues: emptyBonsaiFormValues,
+      submitLabel: "Bonsai speichern",
+      onSubmit: async () => {},
+    }),
+  );
+
+  assert.match(markup, /Schnellstart/);
+  assert.match(markup, /Weitere Details anzeigen/);
+  assert.match(markup, /Name \*/);
+  assert.doesNotMatch(markup, /Standort \*/);
+  assert.doesNotMatch(markup, /Indoor \/ Outdoor/);
+  assert.doesNotMatch(markup, /Wizard/);
 });

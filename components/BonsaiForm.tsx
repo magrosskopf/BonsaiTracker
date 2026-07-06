@@ -1,11 +1,11 @@
-import type { FormEvent, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import FormWizard, { type FormWizardStep } from "@/components/FormWizard";
 import { bonsaiFormStepConfigs } from "@/lib/config/forms";
 import { startOfTodayUtc, toDateInput } from "@/lib/date";
 import type { BonsaiFormValues } from "@/types/forms";
 
 interface BonsaiFormProps {
+  mode?: "create" | "edit";
   initialValues: BonsaiFormValues;
   submitLabel: string;
   onSubmit: (values: BonsaiFormValues) => Promise<void>;
@@ -44,6 +44,7 @@ function Field({
 }
 
 export default function BonsaiForm({
+  mode = "edit",
   initialValues,
   submitLabel,
   onSubmit,
@@ -59,10 +60,11 @@ export default function BonsaiForm({
     setCurrentStep(0);
   }, [initialValues]);
 
-  const isValid =
+  const hasCustomStyleError = values.style === "Sonstiger" && values.customStyle.trim().length < 1;
+  const canSubmit =
     values.name.trim().length >= 2 &&
-    values.location.trim().length >= 2 &&
-    (values.style !== "Sonstiger" || values.customStyle.trim().length >= 1);
+    (mode === "create" || values.location.trim().length >= 2) &&
+    !hasCustomStyleError;
 
   function update<K extends keyof BonsaiFormValues>(key: K, value: BonsaiFormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -73,6 +75,13 @@ export default function BonsaiForm({
   }
 
   const todayDate = toDateInput(startOfTodayUtc());
+  const createDetailSteps = bonsaiFormStepConfigs
+    .map((step) => ({
+      ...step,
+      fields: step.fields.filter((field) => field.key !== "name"),
+    }))
+    .filter((step) => step.fields.length > 0);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   function renderField(field: (typeof bonsaiFormStepConfigs)[number]["fields"][number]) {
     if (field.condition && !field.condition(values)) {
@@ -157,7 +166,7 @@ export default function BonsaiForm({
           : step.id === "herkunft"
             ? hasText(values.healthStatus) && hasText(values.developmentStage)
             : step.id === "notizen"
-              ? isValid
+              ? canSubmit
               : true,
     content: (
       <Section title={step.sectionTitle}>
@@ -183,7 +192,7 @@ export default function BonsaiForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isValid || submitting) {
+    if (!canSubmit || submitting) {
       return;
     }
     await onSubmit(values);
@@ -193,14 +202,69 @@ export default function BonsaiForm({
     <form className="space-y-6" onSubmit={handleSubmit}>
       {error ? <div className="alert alert-error">{error}</div> : null}
       {success ? <div className="alert alert-success">{success}</div> : null}
-      <FormWizard
-        steps={steps}
-        currentStep={currentStep}
-        onStepChange={handleStepChange}
-        submitLabel={submitLabel}
-        submitting={submitting}
-        canSubmit={isValid}
-      />
+      {mode === "create" ? (
+        <>
+          <section className="surface-section space-y-5 rounded-[1.75rem] p-5 md:p-6">
+            <div className="space-y-2">
+              <p className="text-sm uppercase tracking-[0.18em] text-primary">Schnellstart</p>
+              <h2 className="text-xl font-semibold">Erst speichern, Details später ergänzen</h2>
+              <p className="text-sm text-base-content/70">
+                Für den ersten Schritt reicht der Name. Weitere Angaben kannst du jetzt optional ergänzen oder nach dem Speichern auf der Detailseite nachziehen.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {renderField(bonsaiFormStepConfigs[0].fields[0])}
+            </div>
+            <div className="flex flex-col gap-3 rounded-[1.5rem] border border-base-300/70 bg-base-100/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium">Mehr Angaben sind optional</p>
+                <p className="text-sm text-base-content/70">
+                  Art, Standort, Bilder und Pflegeprofil können direkt mit erfasst werden, blockieren den Schnellstart aber nicht.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => setDetailsOpen((current) => !current)}
+                aria-expanded={detailsOpen}
+              >
+                {detailsOpen ? "Weitere Details ausblenden" : "Weitere Details anzeigen"}
+              </button>
+            </div>
+          </section>
+
+          {detailsOpen
+            ? createDetailSteps.map((step) => (
+                <Section key={step.id} title={step.sectionTitle}>
+                  {step.fields.map((field) =>
+                    step.id === "notizen" ? <div key={field.key} className="md:col-span-2">{renderField(field)}</div> : renderField(field),
+                  )}
+                </Section>
+              ))
+            : null}
+
+          <div className="surface-section flex flex-col gap-3 rounded-[1.75rem] p-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-base-content/70">
+              {detailsOpen
+                ? "Du kannst die zusätzlichen Felder leer lassen und trotzdem direkt speichern."
+                : "Der Bonsai wird mit Standardwerten angelegt und kann danach vollständig ergänzt werden."}
+            </p>
+            <button className="btn btn-primary" type="submit" disabled={!canSubmit || submitting}>
+              {submitting ? <span className="loading loading-spinner loading-sm" /> : null}
+              {submitLabel}
+            </button>
+          </div>
+        </>
+      ) : (
+        <FormWizard
+          steps={steps}
+          currentStep={currentStep}
+          onStepChange={handleStepChange}
+          submitLabel={submitLabel}
+          submitting={submitting}
+          canSubmit={canSubmit}
+        />
+      )}
     </form>
   );
 }
