@@ -152,3 +152,21 @@ test("bonsai create form starts in compact quickstart mode", () => {
   assert.doesNotMatch(markup, /Indoor \/ Outdoor/);
   assert.doesNotMatch(markup, /Wizard/);
 });
+
+test("bonsai edit form keeps wizard layout with required base fields", () => {
+  const markup = renderToStaticMarkup(
+    createElement(BonsaiForm, {
+      mode: "edit",
+      initialValues: emptyBonsaiFormValues,
+      submitLabel: "Änderungen speichern",
+      onSubmit: async () => {},
+    }),
+  );
+
+  assert.match(markup, /Wizard/);
+  assert.match(markup, /Grunddaten/);
+  assert.match(markup, /Standort \*/);
+  assert.match(markup, /Indoor \/ Outdoor \*/);
+  assert.doesNotMatch(markup, /Schnellstart/);
+  assert.doesNotMatch(markup, /Weitere Details anzeigen/);
+});

@@ -1,6 +1,6 @@
-import React, { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import React, { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import FormWizard, { type FormWizardStep } from "@/components/FormWizard";
-import { bonsaiFormStepConfigs } from "@/lib/config/forms";
+import { bonsaiFormStepConfigs, type FormFieldConfig, type FormStepConfig } from "@/lib/config/forms";
 import { startOfTodayUtc, toDateInput } from "@/lib/date";
 import type { BonsaiFormValues } from "@/types/forms";
 
@@ -12,6 +12,79 @@ interface BonsaiFormProps {
   submitting?: boolean;
   error?: string | null;
   success?: string | null;
+}
+
+function hasText(value: string, minLength = 1) {
+  return value.trim().length >= minLength;
+}
+
+function hasCustomStyleError(values: BonsaiFormValues) {
+  return values.style === "Sonstiger" && !hasText(values.customStyle);
+}
+
+function canSubmitForm(values: BonsaiFormValues, mode: "create" | "edit") {
+  return hasText(values.name, 2) && (mode === "create" || hasText(values.location, 2)) && !hasCustomStyleError(values);
+}
+
+function getCreateDetailSteps(steps: FormStepConfig[]) {
+  return steps
+    .map((step) => ({
+      ...step,
+      fields: step.fields.filter((field) => field.key !== "name"),
+    }))
+    .filter((step) => step.fields.length > 0);
+}
+
+function getQuickstartField() {
+  return bonsaiFormStepConfigs[0].fields.find((field) => field.key === "name") ?? bonsaiFormStepConfigs[0].fields[0];
+}
+
+function getFieldClassName(field: FormFieldConfig) {
+  if (field.type === "textarea") {
+    return field.key === "notes" ? "textarea textarea-bordered h-36 w-full" : "textarea textarea-bordered h-24 w-full";
+  }
+
+  if (field.type === "select") {
+    return "select select-bordered w-full";
+  }
+
+  return "input input-bordered w-full";
+}
+
+function getDateInputProps(field: FormFieldConfig, values: BonsaiFormValues, todayDate: string) {
+  if (field.key === "ownedSince" || field.key === "lastRepotDate") {
+    return { max: todayDate };
+  }
+
+  if (field.key === "nextRepotDue") {
+    return { min: values.lastRepotDate || undefined };
+  }
+
+  return {};
+}
+
+function isStepValid(stepId: FormStepConfig["id"], values: BonsaiFormValues, canSubmit: boolean) {
+  if (stepId === "grunddaten") {
+    return hasText(values.name, 2) && hasText(values.location, 2) && hasText(values.indoorOutdoor);
+  }
+
+  if (stepId === "gestaltung") {
+    return hasText(values.style) && (values.style !== "Sonstiger" || hasText(values.customStyle));
+  }
+
+  if (stepId === "herkunft") {
+    return hasText(values.healthStatus) && hasText(values.developmentStage);
+  }
+
+  if (stepId === "notizen") {
+    return canSubmit;
+  }
+
+  return true;
+}
+
+function isWideField(stepId: FormStepConfig["id"]) {
+  return stepId === "notizen";
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -54,60 +127,42 @@ export default function BonsaiForm({
 }: BonsaiFormProps) {
   const [values, setValues] = useState<BonsaiFormValues>(initialValues);
   const [currentStep, setCurrentStep] = useState(0);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const isCreateMode = mode === "create";
 
   useEffect(() => {
     setValues(initialValues);
     setCurrentStep(0);
+    setDetailsOpen(false);
   }, [initialValues]);
 
-  const hasCustomStyleError = values.style === "Sonstiger" && values.customStyle.trim().length < 1;
-  const canSubmit =
-    values.name.trim().length >= 2 &&
-    (mode === "create" || values.location.trim().length >= 2) &&
-    !hasCustomStyleError;
+  const canSubmit = canSubmitForm(values, mode);
 
-  function update<K extends keyof BonsaiFormValues>(key: K, value: BonsaiFormValues[K]) {
+  function update(key: keyof BonsaiFormValues, value: string) {
     setValues((current) => ({ ...current, [key]: value }));
   }
 
-  function hasText(value: string, minLength = 1) {
-    return value.trim().length >= minLength;
-  }
-
   const todayDate = toDateInput(startOfTodayUtc());
-  const createDetailSteps = bonsaiFormStepConfigs
-    .map((step) => ({
-      ...step,
-      fields: step.fields.filter((field) => field.key !== "name"),
-    }))
-    .filter((step) => step.fields.length > 0);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const quickstartField = getQuickstartField();
+  const createDetailSteps = getCreateDetailSteps(bonsaiFormStepConfigs);
 
-  function renderField(field: (typeof bonsaiFormStepConfigs)[number]["fields"][number]) {
+  function renderField(field: FormFieldConfig) {
     if (field.condition && !field.condition(values)) {
       return null;
     }
 
-    const key = field.key as keyof BonsaiFormValues;
-    const value = values[key];
+    const key = field.key;
     const sharedProps = {
-      className:
-        field.type === "textarea"
-          ? "textarea textarea-bordered h-24 w-full"
-          : field.type === "select"
-            ? "select select-bordered w-full"
-            : "input input-bordered w-full",
-      value,
+      className: getFieldClassName(field),
+      value: values[key],
       placeholder: field.placeholder,
-      onChange: (
-        event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-      ) => update(key, event.target.value as BonsaiFormValues[keyof BonsaiFormValues]),
+      onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => update(key, event.target.value),
     };
 
     if (field.type === "textarea") {
       return (
         <Field key={field.key} label={field.label} required={field.required}>
-          <textarea {...sharedProps} className={field.key === "notes" ? "textarea textarea-bordered h-36 w-full" : sharedProps.className} />
+          <textarea {...sharedProps} />
         </Field>
       );
     }
@@ -127,30 +182,29 @@ export default function BonsaiForm({
     }
 
     if (field.type === "date") {
-      const extraProps =
-        field.key === "ownedSince" || field.key === "lastRepotDate"
-          ? { max: todayDate }
-          : field.key === "nextRepotDue"
-            ? { min: values.lastRepotDate || undefined }
-            : {};
-
       return (
         <Field key={field.key} label={field.label} required={field.required}>
-          <input {...sharedProps} type="date" {...extraProps} />
+          <input {...sharedProps} type="date" {...getDateInputProps(field, values, todayDate)} />
         </Field>
       );
     }
 
     return (
-        <Field key={field.key} label={field.label} required={field.required}>
-          <input
-            {...sharedProps}
-            type={field.type}
-            min={field.min}
-            max={field.max}
-            inputMode={field.inputMode}
-          />
+      <Field key={field.key} label={field.label} required={field.required}>
+        <input
+          {...sharedProps}
+          type={field.type}
+          min={field.min}
+          max={field.max}
+          inputMode={field.inputMode}
+        />
       </Field>
+    );
+  }
+
+  function renderStepFields(step: FormStepConfig) {
+    return step.fields.map((field) =>
+      isWideField(step.id) ? <div key={field.key} className="md:col-span-2">{renderField(field)}</div> : renderField(field),
     );
   }
 
@@ -158,21 +212,10 @@ export default function BonsaiForm({
     id: step.id,
     title: step.title,
     description: step.description,
-    isValid:
-      step.id === "grunddaten"
-        ? hasText(values.name, 2) && hasText(values.location, 2) && hasText(values.indoorOutdoor)
-        : step.id === "gestaltung"
-          ? hasText(values.style) && (values.style !== "Sonstiger" || hasText(values.customStyle))
-          : step.id === "herkunft"
-            ? hasText(values.healthStatus) && hasText(values.developmentStage)
-            : step.id === "notizen"
-              ? canSubmit
-              : true,
+    isValid: isStepValid(step.id, values, canSubmit),
     content: (
       <Section title={step.sectionTitle}>
-        {step.fields.map((field) =>
-          step.id === "notizen" ? <div key={field.key} className="md:col-span-2">{renderField(field)}</div> : renderField(field),
-        )}
+        {renderStepFields(step)}
       </Section>
     ),
   }));
@@ -202,7 +245,7 @@ export default function BonsaiForm({
     <form className="space-y-6" onSubmit={handleSubmit}>
       {error ? <div className="alert alert-error">{error}</div> : null}
       {success ? <div className="alert alert-success">{success}</div> : null}
-      {mode === "create" ? (
+      {isCreateMode ? (
         <>
           <section className="surface-section space-y-5 rounded-[1.75rem] p-5 md:p-6">
             <div className="space-y-2">
@@ -213,7 +256,7 @@ export default function BonsaiForm({
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {renderField(bonsaiFormStepConfigs[0].fields[0])}
+              {renderField(quickstartField)}
             </div>
             <div className="flex flex-col gap-3 rounded-[1.5rem] border border-base-300/70 bg-base-100/60 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -236,9 +279,7 @@ export default function BonsaiForm({
           {detailsOpen
             ? createDetailSteps.map((step) => (
                 <Section key={step.id} title={step.sectionTitle}>
-                  {step.fields.map((field) =>
-                    step.id === "notizen" ? <div key={field.key} className="md:col-span-2">{renderField(field)}</div> : renderField(field),
-                  )}
+                  {renderStepFields(step)}
                 </Section>
               ))
             : null}
