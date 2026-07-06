@@ -32,8 +32,11 @@ Keine Umsetzung erfolgt vor Plan-Freigabe.
   - umgesetzt: `pages/create-bonsai.tsx` startet jetzt mit einem kompakten Schnellstart-Formular; der Bild-Upload liegt erst danach in einem klar optionalen Abschnitt.
   - umgesetzt: `BonsaiForm` unterscheidet zwischen `create`-Schnellstart und bestehendem `edit`-Wizard; im Create-Modus ist nur `name` fuer den ersten Submit blockierend.
   - umgesetzt: Render-Test deckt den initialen Schnellstart-Zustand ohne dominante Detailfelder/Wizard ab.
-  - verifiziert: `npm test` und `npm run typecheck` gruen.
-  - offen: `npm run build` wurde mehrfach gestartet, haengt in dieser Umgebung jedoch waehrend `next build` ohne Abschluss und braucht getrennte Nachverfolgung.
+  - verifiziert: `npm test`, `npm run typecheck` und `npm run build` gruen.
+- 2026-07-06, Issue #13:
+  - umgesetzt: Community-Post-Snapshots speichern `snapshotSpecies = Unbekannt` unveraendert weiter.
+  - umgesetzt: Feed- und Profil-Post-Metadaten blenden unbekannte Snapshot-Arten aus und zeigen nur konkrete Arten plus Post-Datum.
+  - umgesetzt: Post-Meta-Helper nutzt die bestehende Platzhalter-/Datumsformatierung und ist per Test fuer `snapshotSpecies = Unbekannt` abgedeckt.
 
 ## Reference
 

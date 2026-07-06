@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { formatBonsaiDisplayText } from "@/lib/bonsai-display";
+import { formatPostSnapshotMeta } from "@/lib/posts";
 import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
 import type { BonsaiDetail, BonsaiSummary, PostCommentDto, PostDto } from "@/types/dto";
 import { POST_TYPE_LABELS, POST_TYPE_OPTIONS } from "@/types/domain";
@@ -457,6 +457,7 @@ function PostCard({
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<PostCommentDto[]>([]);
   const [showComments, setShowComments] = useState(false);
+  const snapshotMeta = formatPostSnapshotMeta(post.snapshotSpecies, post.createdAt);
 
   useEffect(() => {
     if (!showComments) {
@@ -483,7 +484,7 @@ function PostCard({
               <Link href={`/profile/${post.userId}`} className="link link-hover">{post.userName ?? "Unbekannt"}</Link>
             </h2>
             <p className="text-sm text-base-content/70">
-              {post.snapshotName} · {formatBonsaiDisplayText(post.snapshotSpecies)} · {new Date(post.createdAt).toLocaleDateString("de-DE")}
+              {post.snapshotName} · {snapshotMeta}
             </p>
           </div>
           <span className="text-sm text-base-content/60">{post.commentCount} Kommentare</span>
