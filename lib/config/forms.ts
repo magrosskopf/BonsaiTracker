@@ -21,7 +21,7 @@ export interface SelectOption {
 }
 
 export interface FormFieldConfig {
-  key: string;
+  key: keyof BonsaiFormValues;
   label: string;
   type: "text" | "number" | "textarea" | "select" | "date";
   required?: boolean;
@@ -41,10 +41,10 @@ export interface FormStepConfig {
   fields: FormFieldConfig[];
 }
 
-function asOptions<T extends readonly string[]>(values: T, labels: Record<T[number], string>): SelectOption[] {
+function asOptions<T extends string>(values: readonly T[], labels: Record<T, string>): SelectOption[] {
   return values.map((value) => ({
     value,
-    label: (labels as Record<string, string>)[value],
+    label: labels[value],
   }));
 }
 

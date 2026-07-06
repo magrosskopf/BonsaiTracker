@@ -47,6 +47,10 @@ function buildBonsaiRecord(): BonsaiDetailRecord {
   };
 }
 
+function fieldConfigByKey() {
+  return Object.fromEntries(bonsaiFormStepConfigs.flatMap((step) => step.fields).map((field) => [field.key, field]));
+}
+
 test("bonsai dto mappers omit nickname and form mapping no longer expects it", () => {
   const record = buildBonsaiRecord();
   const summary = mapBonsaiSummary({ ...record, _count: { subEntries: 0 } });
@@ -109,8 +113,7 @@ test("bonsai form mappings support euro prices and nullable detail fields", () =
 });
 
 test("bonsai detail form config keeps selected fields optional and labels price in euro", () => {
-  const fields = bonsaiFormStepConfigs.flatMap((step) => step.fields);
-  const byKey = Object.fromEntries(fields.map((field) => [field.key, field]));
+  const byKey = fieldConfigByKey();
 
   assert.equal(byKey.species.required, undefined);
   assert.equal(byKey.age.required, undefined);
