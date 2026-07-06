@@ -1,5 +1,5 @@
-Status: APPROVED
-Last Modified: 2026-07-03
+Status: IMPLEMENTED
+Last Modified: 2026-07-06
 
 # Spec: Vereinfachte Bonsai-Erstellung
 
