@@ -1,4 +1,6 @@
-Status: DRAFT
+Status: COMPLETE
+
+Last Modified: 2026-07-06
 
 # Analysis
 
@@ -55,3 +57,9 @@ Status: DRAFT
 - Timeline ordering rules are expressed through named helpers instead of inline timestamp conversions.
 - Test behavior and public outputs remain unchanged.
 - Full test suite, typecheck, and build pass after the refactoring.
+
+## Outcome
+
+- Timeline image collection is now split into explicit initial-image and sub-entry-image helpers before sorting.
+- Helper tests use shared builders so the relevant ordering assertions are easier to scan and extend.
+- A dedicated null-input test now documents the existing empty-state behavior of the timeline helper.
