@@ -1,5 +1,5 @@
-Status: IN_REVIEW
-Last Modified: 2026-07-05
+Status: COMPLETE
+Last Modified: 2026-07-06
 
 # Implementation Plan: Vereinfachte Bonsai-Erstellung
 
@@ -453,21 +453,21 @@ Manual verification:
 
 ## Validation Checklist
 
-- [ ] Spec status is `APPROVED`.
-- [ ] Implementation plan status is approved before coding.
-- [ ] Prisma migration exists and is reviewed.
-- [ ] Prisma client regenerated.
-- [ ] `nickname` removed from Bonsai DTOs, UI and search.
-- [ ] Create flow accepts only name.
-- [ ] Full edit flow remains available.
-- [ ] `age` and `ownedSince` nullable across DB, DTO, mapper, forms and validators.
-- [ ] `DevelopmentStageEnum.UNBEKANNT` works in DB, domain types, filters and UI labels.
-- [ ] Euro price input maps correctly to `purchasePriceCents`.
-- [ ] Placeholder display covers null and `"Unbekannt"` values.
-- [ ] Slideshow handles `ownedSince = null`.
-- [ ] `npm test` passes.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run build` passes.
+- [x] Spec status is `APPROVED`.
+- [x] Implementation plan status is approved before coding.
+- [x] Prisma migration exists and is reviewed.
+- [x] Prisma client regenerated.
+- [x] `nickname` removed from Bonsai DTOs, UI and search.
+- [x] Create flow accepts only name.
+- [x] Full edit flow remains available.
+- [x] `age` and `ownedSince` nullable across DB, DTO, mapper, forms and validators.
+- [x] `DevelopmentStageEnum.UNBEKANNT` works in DB, domain types, filters and UI labels.
+- [x] Euro price input maps correctly to `purchasePriceCents`.
+- [x] Placeholder display covers null and `"Unbekannt"` values.
+- [x] Slideshow handles `ownedSince = null`.
+- [x] `npm test` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run build` passes.
 
 ## Non-Goals
 
