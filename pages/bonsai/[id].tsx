@@ -2,6 +2,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
+import { formatBonsaiAge, formatBonsaiDate, formatBonsaiDisplayText } from "@/lib/bonsai-display";
+import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
 import type { BonsaiDetail, ReminderDto } from "@/types/dto";
 import {
   DEVELOPMENT_STAGE_LABELS,
@@ -24,7 +26,7 @@ function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <dt className="text-sm text-base-content/60">{label}</dt>
-      <dd className="font-medium">{value ?? "-"}</dd>
+      <dd className="font-medium">{formatBonsaiDisplayText(value, "-")}</dd>
     </div>
   );
 }
@@ -80,31 +82,7 @@ export default function BonsaiDetailPage() {
   );
 
   const slideshowImages = useMemo(() => {
-    if (!bonsai) {
-      return [];
-    }
-
-    const images = [
-      ...bonsai.images.map((image) => ({
-        image,
-        date: bonsai.ownedSince ?? bonsai.createdAt,
-        createdAt: bonsai.createdAt,
-      })),
-      ...bonsai.subEntries.flatMap((entry) =>
-        entry.images.map((image) => ({
-          image,
-          date: entry.date,
-          createdAt: entry.createdAt,
-        })),
-      ),
-    ];
-
-    return images.sort((left, right) => {
-      if (left.date !== right.date) {
-        return new Date(left.date).getTime() - new Date(right.date).getTime();
-      }
-      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-    });
+    return collectBonsaiTimelineImages(bonsai);
   }, [bonsai]);
 
   async function handleDelete() {
@@ -205,7 +183,7 @@ export default function BonsaiDetailPage() {
                 <div className="card-body">
                   <h2 className="card-title">Maße und Stil</h2>
                   <dl className="grid gap-4 md:grid-cols-2">
-                    <InfoRow label="Alter" value={bonsai.age !== null ? `${bonsai.age} Jahre` : null} />
+                    <InfoRow label="Alter" value={formatBonsaiAge(bonsai.age, "-")} />
                     <InfoRow label="Höhe" value={bonsai.heightCm !== null ? `${bonsai.heightCm} cm` : null} />
                     <InfoRow label="Breite" value={bonsai.widthCm !== null ? `${bonsai.widthCm} cm` : null} />
                     <InfoRow label="Stammdurchmesser" value={bonsai.trunkDiameterMm !== null ? `${bonsai.trunkDiameterMm} mm` : null} />
@@ -241,7 +219,7 @@ export default function BonsaiDetailPage() {
                 <div className="card-body">
                   <h2 className="card-title">Herkunft und Anschaffung</h2>
                   <dl className="grid gap-4 md:grid-cols-2">
-                    <InfoRow label="Besitz seit" value={bonsai.ownedSince ? new Date(bonsai.ownedSince).toLocaleDateString("de-DE") : null} />
+                    <InfoRow label="Besitz seit" value={formatBonsaiDate(bonsai.ownedSince, "-")} />
                     <InfoRow label="Herkunft" value={bonsai.acquiredFrom} />
                     <InfoRow label="Kaufpreis" value={bonsai.purchasePriceCents !== null ? `${(bonsai.purchasePriceCents / 100).toFixed(2)} EUR` : null} />
                     <InfoRow label="Aktualisiert" value={new Date(bonsai.updatedAt).toLocaleString("de-DE")} />
@@ -280,7 +258,7 @@ export default function BonsaiDetailPage() {
                     <div className="space-y-3">
                       <img src={slideshowImages[slideshowIndex]?.image} alt={bonsai.name} className="h-72 w-full rounded-2xl object-cover" />
                       <p className="text-sm text-base-content/60">
-                        {slideshowIndex + 1} / {slideshowImages.length} · {new Date(slideshowImages[slideshowIndex]?.date).toLocaleDateString("de-DE")}
+                        {slideshowIndex + 1} / {slideshowImages.length} · {formatBonsaiDate(slideshowImages[slideshowIndex]?.date, "-")}
                       </p>
                     </div>
                   ) : (

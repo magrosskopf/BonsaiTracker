@@ -24,6 +24,10 @@ Keine Umsetzung erfolgt vor Plan-Freigabe.
   - umgesetzt: Detailformular markiert `species`, `age`, `style`, `ownedSince`, `healthStatus` und `developmentStage` nicht mehr als Pflichtfelder.
   - umgesetzt: `purchasePriceCents` wird im Formular als Euro-Feld mit Dezimal-Eingabe (`12`, `12,50`, `12.50`) behandelt und beim Mapping cent-kompatibel persistiert.
   - umgesetzt: `bonsaiDetailToFormValues` und `bonsaiFormValuesToPayload` behandeln nullable `age`, `ownedSince` und leeren Preis korrekt fuer Edit-PATCH und Form-Roundtrips.
+- 2026-07-05, Issue #12:
+  - umgesetzt: zentraler Anzeige-Helper behandelt `null`, Leerwerte sowie `Unbekannt`/`UNBEKANNT` konsistent als fehlende Angabe.
+  - umgesetzt: Dashboard- und Detailansichten rendern technische Platzhalter nicht mehr als echte Fachwerte.
+  - umgesetzt: Bild-Timeline fuer Feed-Composer und Detail-Slideshow nutzt gemeinsame Sortierung mit `ownedSince ?? createdAt`.
 
 ## Reference
 
