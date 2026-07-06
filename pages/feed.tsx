@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { buildPostSnapshotMeta } from "@/lib/posts";
+import { formatPostSnapshotMeta } from "@/lib/posts";
 import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
 import type { BonsaiDetail, BonsaiSummary, PostCommentDto, PostDto } from "@/types/dto";
 import { POST_TYPE_LABELS, POST_TYPE_OPTIONS } from "@/types/domain";
@@ -457,7 +457,7 @@ function PostCard({
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<PostCommentDto[]>([]);
   const [showComments, setShowComments] = useState(false);
-  const snapshotMeta = buildPostSnapshotMeta(post.snapshotSpecies, post.createdAt).join(" · ");
+  const snapshotMeta = formatPostSnapshotMeta(post.snapshotSpecies, post.createdAt);
 
   useEffect(() => {
     if (!showComments) {

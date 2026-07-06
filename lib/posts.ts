@@ -10,11 +10,9 @@ export function snapshotEntryReferenceIds(subEntries: SubEntry[], selectedEntryI
   return selectedEntryIds.filter((entryId) => validIds.has(entryId));
 }
 
-export function buildPostSnapshotMeta(snapshotSpecies: string | null | undefined, createdAt: string): string[] {
+export function formatPostSnapshotMeta(snapshotSpecies: string | null | undefined, createdAt: string): string {
   const species = normalizeBonsaiDisplayText(snapshotSpecies);
-  const segments = species ? [species] : [];
+  const postDate = formatBonsaiDate(createdAt);
 
-  segments.push(formatBonsaiDate(createdAt));
-
-  return segments;
+  return species ? `${species} · ${postDate}` : postDate;
 }

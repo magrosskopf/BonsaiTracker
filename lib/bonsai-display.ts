@@ -5,17 +5,13 @@ const BONSAI_DATE_FORMATTER = new Intl.DateTimeFormat("de-DE", {
   year: "numeric",
 });
 
-function normalizeDisplayValue(value: string | null | undefined): string | null {
+export function normalizeBonsaiDisplayText(value: string | null | undefined): string | null {
   const trimmed = value?.trim() ?? "";
   if (trimmed === "") {
     return null;
   }
 
   return UNKNOWN_DISPLAY_VALUES.has(trimmed.toLocaleLowerCase("de-DE")) ? null : trimmed;
-}
-
-export function normalizeBonsaiDisplayText(value: string | null | undefined): string | null {
-  return normalizeDisplayValue(value);
 }
 
 export function formatBonsaiDisplayText(
