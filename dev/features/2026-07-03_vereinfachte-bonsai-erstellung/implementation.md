@@ -28,6 +28,10 @@ Keine Umsetzung erfolgt vor Plan-Freigabe.
   - umgesetzt: zentraler Anzeige-Helper behandelt `null`, Leerwerte sowie `Unbekannt`/`UNBEKANNT` konsistent als fehlende Angabe.
   - umgesetzt: Dashboard- und Detailansichten rendern technische Platzhalter nicht mehr als echte Fachwerte.
   - umgesetzt: Bild-Timeline fuer Feed-Composer und Detail-Slideshow nutzt gemeinsame Sortierung mit `ownedSince ?? createdAt`.
+- 2026-07-06, Issue #13:
+  - umgesetzt: Community-Post-Snapshots speichern `snapshotSpecies = Unbekannt` unveraendert weiter.
+  - umgesetzt: Feed- und Profil-Post-Metadaten blenden unbekannte Snapshot-Arten aus und zeigen nur konkrete Arten plus Post-Datum.
+  - umgesetzt: Post-Meta-Helper nutzt die bestehende Platzhalter-/Datumsformatierung und ist per Test fuer `snapshotSpecies = Unbekannt` abgedeckt.
 
 ## Reference
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { PublicProfileDto } from "@/types/dto";
 import { POST_TYPE_LABELS } from "@/types/domain";
+import { buildPostSnapshotMeta } from "@/lib/posts";
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -63,6 +64,7 @@ export default function PublicProfilePage() {
                   <div className="card-body">
                     <div className="badge badge-outline w-fit">{POST_TYPE_LABELS[post.postType]}</div>
                     <h2 className="card-title">{post.snapshotName}</h2>
+                    <p className="text-sm text-base-content/70">{buildPostSnapshotMeta(post.snapshotSpecies, post.createdAt).join(" · ")}</p>
                     <p>{post.text}</p>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {post.images.map((image) => (

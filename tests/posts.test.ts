@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { SubEntry } from "@prisma/client";
-import { normalizeSelectedImages, snapshotEntryReferenceIds } from "@/lib/posts";
+import { buildPostSnapshotMeta, normalizeSelectedImages, snapshotEntryReferenceIds } from "@/lib/posts";
 
 test("normalizeSelectedImages keeps only available images and max 5 unique values", () => {
   assert.deepEqual(
@@ -50,4 +50,16 @@ test("snapshotEntryReferenceIds removes unknown ids", () => {
   ];
 
   assert.deepEqual(snapshotEntryReferenceIds(subEntries, [11, 99, 12]), [11, 12]);
+});
+
+test("buildPostSnapshotMeta omits unknown snapshot species and keeps the post date", () => {
+  assert.deepEqual(
+    buildPostSnapshotMeta("Unbekannt", "2026-07-06T00:00:00.000Z"),
+    ["06.07.2026"],
+  );
+
+  assert.deepEqual(
+    buildPostSnapshotMeta("Acer palmatum", "2026-07-06T00:00:00.000Z"),
+    ["Acer palmatum", "06.07.2026"],
+  );
 });

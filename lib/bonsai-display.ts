@@ -14,11 +14,15 @@ function normalizeDisplayValue(value: string | null | undefined): string | null 
   return UNKNOWN_DISPLAY_VALUES.has(trimmed.toLocaleLowerCase("de-DE")) ? null : trimmed;
 }
 
+export function normalizeBonsaiDisplayText(value: string | null | undefined): string | null {
+  return normalizeDisplayValue(value);
+}
+
 export function formatBonsaiDisplayText(
   value: string | null | undefined,
   fallback = "Nicht angegeben",
 ): string {
-  return normalizeDisplayValue(value) ?? fallback;
+  return normalizeBonsaiDisplayText(value) ?? fallback;
 }
 
 export function formatBonsaiAge(age: number | null, fallback = "Nicht angegeben"): string {
@@ -29,6 +33,6 @@ export function formatBonsaiDate(
   value: string | null | undefined,
   fallback = "Nicht angegeben",
 ): string {
-  const normalized = normalizeDisplayValue(value);
+  const normalized = normalizeBonsaiDisplayText(value);
   return normalized ? BONSAI_DATE_FORMATTER.format(new Date(normalized)) : fallback;
 }
