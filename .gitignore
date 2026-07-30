@@ -1,8 +1,14 @@
 node_modules
 .env
 .env.local
+.env*.local
 .env.development.local
 .next/
 .vercel
 .runtime/
 public/uploads/
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/.env.local
+tests/integration/.artifacts/

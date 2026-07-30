@@ -89,7 +89,7 @@ export interface BonsaiListResponse {
 
 export interface ReminderDto {
   id: number;
-  userId: number;
+  userId: string;
   bonsaiId: number;
   subEntryId: number | null;
   title: string | null;
@@ -106,7 +106,7 @@ export interface ReminderDto {
 export interface PostCommentDto {
   id: number;
   postId: number;
-  userId: number;
+  userId: string;
   userName: string | null;
   userProfileImageUrl: string | null;
   text: string;
@@ -116,7 +116,7 @@ export interface PostCommentDto {
 
 export interface PostDto {
   id: number;
-  userId: number;
+  userId: string;
   bonsaiId: number;
   userName: string | null;
   userProfileImageUrl: string | null;
@@ -135,7 +135,7 @@ export interface PostDto {
 }
 
 export interface PublicProfileDto {
-  id: number;
+  id: string;
   name: string | null;
   bio: string | null;
   profileImageUrl: string | null;

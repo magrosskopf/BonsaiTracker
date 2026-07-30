@@ -1,20 +1,15 @@
-import { getUploadStorageMode } from "@/lib/config/beta";
-import { localUploadStorage } from "@/lib/storage/local";
 import { supabaseUploadStorage } from "@/lib/storage/supabase";
 import type { ResolvedMedia, SavedUpload, SaveUploadInput, UploadStorage } from "@/lib/storage/types";
 
 const MANAGED_MEDIA_PREFIX = "/api/media/";
 
 function getUploadStorage(): UploadStorage {
-  return getUploadStorageMode() === "supabase" ? supabaseUploadStorage : localUploadStorage;
+  return supabaseUploadStorage;
 }
 
 function getStorageForKey(storageKey: string): UploadStorage {
   if (storageKey.startsWith("supabase/")) {
     return supabaseUploadStorage;
-  }
-  if (storageKey.startsWith("local/")) {
-    return localUploadStorage;
   }
   throw new Error("Unbekannter Storage-Key.");
 }

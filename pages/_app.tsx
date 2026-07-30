@@ -1,8 +1,8 @@
 import type { AppProps } from "next/app";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { SessionProvider } from "next-auth/react";
 import Analytics from "../components/Analytics";
+import { AuthProvider } from "../components/AuthProvider";
 import CookieBanner from "../components/CookieBanner";
 import LegalFooter from "../components/LegalFooter";
 import Navigation from "../components/Navigation";
@@ -46,7 +46,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <SessionProvider session={pageProps.session}>
+    <AuthProvider>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
@@ -63,6 +63,6 @@ export default function App({ Component, pageProps }: AppProps) {
           onClose={() => setBannerOpen(false)}
         />
       </div>
-    </SessionProvider>
+    </AuthProvider>
   );
 }

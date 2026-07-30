@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import { useAuth } from "./AuthProvider";
 import { shouldHideNavigation } from "./Navigation";
 
 interface LegalFooterProps {
@@ -9,7 +9,7 @@ interface LegalFooterProps {
 
 export default function LegalFooter({ onOpenCookieSettings }: LegalFooterProps) {
   const router = useRouter();
-  const { status } = useSession();
+  const { status } = useAuth();
   const isCompact = !shouldHideNavigation(router.pathname, status);
 
   return (

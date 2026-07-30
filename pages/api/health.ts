@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
-import { getUploadStorageMode, isHealthcheckEnabled, getSupabaseStorageConfig } from "@/lib/config/beta";
+import { getServerSupabaseConfig, isHealthcheckEnabled } from "@/lib/config/runtime";
 import { logError } from "@/lib/observability";
+import { getServerDataClient } from "@/lib/supabase/server-data";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   if (!isHealthcheckEnabled()) {
@@ -17,17 +17,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    await prisma.$queryRaw`SELECT 1`;
-
-    const uploadStorage = getUploadStorageMode();
-    if (uploadStorage === "supabase") {
-      getSupabaseStorageConfig();
+    const config = getServerSupabaseConfig();
+    const { error: settingsError } = await getServerDataClient().from("signup_settings").select("id").eq("id", true).single();
+    if (settingsError) {
+      throw settingsError;
+    }
+    const { error: bucketError } = await getServerDataClient().storage.getBucket(config.storageBucket);
+    if (bucketError) {
+      throw bucketError;
     }
 
     ok(res, {
       status: "ok",
-      database: "ok",
-      uploadStorage,
+      dataApi: "ok",
+      storageBucket: config.storageBucket,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

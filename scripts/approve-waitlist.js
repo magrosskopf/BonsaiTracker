@@ -1,51 +1,37 @@
-const { PrismaClient } = require("@prisma/client");
+#!/usr/bin/env node
 
-const prisma = new PrismaClient();
+const { createClient } = require("@supabase/supabase-js");
+const { loadEnvConfig } = require("@next/env");
 
-function normalizeEmail(email) {
-  return String(email).trim().toLowerCase();
-}
+loadEnvConfig(process.cwd());
 
-function parseEmailFromArgs(args) {
-  const index = args.findIndex((arg) => arg === "--email");
-  if (index < 0) {
-    return null;
-  }
-  const value = args[index + 1];
+function readRequiredEnv(name) {
+  const value = process.env[name] && process.env[name].trim();
   if (!value) {
-    return null;
+    throw new Error(`Missing required environment variable: ${name}`);
   }
-  return normalizeEmail(value);
+  return value;
 }
 
 async function main() {
-  const email = parseEmailFromArgs(process.argv.slice(2));
-  if (!email) {
-    throw new Error("Usage: node scripts/approve-waitlist.js --email <email>");
+  const email = process.argv[2]?.trim().toLowerCase();
+  const note = process.argv.slice(3).join(" ").trim() || null;
+  if (!email || !email.includes("@")) {
+    console.error("Usage: npm run approve-waitlist -- user@example.test [note]");
+    process.exit(1);
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.signupAllowlist.upsert({
-      where: { email },
-      update: {},
-      create: { email },
-    });
-
-    await tx.waitlistRequest.upsert({
-      where: { email },
-      update: { status: "APPROVED" },
-      create: { email, status: "APPROVED" },
-    });
+  const supabase = createClient(readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL"), readRequiredEnv("SUPABASE_SECRET_KEY"), {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
-
-  console.log(`Approved: ${email}`);
+  const { error } = await supabase.rpc("approve_waitlist", { p_email: email, p_note: note });
+  if (error) {
+    throw error;
+  }
+  console.log(`Approved ${email}`);
 }
 
-main()
-  .catch((error) => {
-    console.error(error instanceof Error ? error.message : error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+});

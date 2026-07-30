@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { mapPostCommentToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 import { getZodErrorMessage } from "@/lib/api/validation";
+import { createPostComment, getVisiblePost, listPostComments } from "@/lib/repositories/posts";
 import { commentCreateSchema } from "@/lib/validators/comment";
 
 function parseId(value: string | string[] | undefined): number | null {
@@ -14,8 +14,8 @@ function parseId(value: string | string[] | undefined): number | null {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -25,18 +25,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const post = await prisma.post.findUnique({ where: { id: postId } });
+  const post = await getVisiblePost(actor.id, postId);
   if (!post) {
     fail(res, "NOT_FOUND", "Post nicht gefunden.", 404);
     return;
   }
 
   if (req.method === "GET") {
-    const items = await prisma.postComment.findMany({
-      where: { postId },
-      include: { user: true },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    });
+    const items = await listPostComments(actor.id, postId);
     ok(res, { items: items.map(mapPostCommentToDto) });
     return;
   }
@@ -44,16 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === "POST") {
     try {
       const parsed = commentCreateSchema.parse(req.body);
-      const created = await prisma.postComment.create({
-        data: {
-          postId,
-          userId,
-          text: parsed.text,
-        },
-        include: {
-          user: true,
-        },
-      });
+      const created = await createPostComment(actor.id, postId, parsed.text);
       ok(res, mapPostCommentToDto(created), 201);
       return;
     } catch (error) {

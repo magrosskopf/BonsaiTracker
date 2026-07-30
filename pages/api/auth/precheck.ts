@@ -2,13 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { fail, ok } from "@/lib/api/response";
 import { checkAndConsumeRateLimit, getClientIp } from "@/lib/rate-limit";
-import {
-  evaluateSignupEligibility,
-  getSignupConfig,
-  isExistingUser,
-  normalizeEmail,
-  reserveSignupSlot,
-} from "@/lib/signup-gating";
+import { evaluateSignupEligibility, getSignupConfig, normalizeEmail } from "@/lib/signup-gating";
 
 const bodySchema = z.object({
   email: z.string().email().max(320),
@@ -36,15 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const parsed = bodySchema.parse(req.body);
     const email = normalizeEmail(parsed.email);
     const ip = getClientIp(req);
-    const config = getSignupConfig();
-
-    if (await isExistingUser(email)) {
-      ok(res, {
-        allowed: true,
-        message: "Wenn die E-Mail bekannt ist, wird ein Login-Link versendet.",
-      });
-      return;
-    }
+    const config = await getSignupConfig();
 
     const windowSeconds = parseIntegerEnv(process.env.SIGNUP_RATE_LIMIT_WINDOW_SECONDS, 900);
     const maxPerIp = parseIntegerEnv(process.env.SIGNUP_RATE_LIMIT_MAX_PER_IP, 10);
@@ -82,15 +68,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ok(res, {
         allowed: false,
         message,
-      });
-      return;
-    }
-
-    const reserved = await reserveSignupSlot(email);
-    if (!reserved.reserved) {
-      ok(res, {
-        allowed: false,
-        message: "Die geschlossene Beta ist aktuell voll. Nutze bitte die Warteliste.",
       });
       return;
     }

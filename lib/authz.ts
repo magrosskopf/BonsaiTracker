@@ -1,74 +1,45 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { Bonsai, Post, Reminder, SubEntry, User } from "@prisma/client";
-import { prisma } from "./prisma";
-import { getServerAuthSession } from "./auth";
 import { fail } from "./api/response";
+import { getServerAuthClient } from "./supabase/server-auth";
 
-export async function requireUser(req: NextApiRequest, res: NextApiResponse): Promise<number | null> {
-  const session = await getServerAuthSession(req, res);
-  const userId = Number(session?.user?.id);
+export interface AuthenticatedUser {
+  id: string;
+  email: string | null;
+}
 
-  if (!session?.user?.id || !Number.isInteger(userId) || userId <= 0) {
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function getBearerToken(req: NextApiRequest): string | null {
+  const header = req.headers.authorization;
+  if (!header) {
+    return null;
+  }
+  const [scheme, token, extra] = header.trim().split(/\s+/);
+  if (extra || scheme !== "Bearer" || !token) {
+    return null;
+  }
+  return token;
+}
+
+export function isUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
+export async function requireUser(req: NextApiRequest, res: NextApiResponse): Promise<AuthenticatedUser | null> {
+  const token = getBearerToken(req);
+  if (!token) {
     fail(res, "UNAUTHENTICATED", "Du musst angemeldet sein.", 401);
     return null;
   }
 
-  return userId;
-}
+  const { data, error } = await getServerAuthClient().auth.getUser(token);
+  if (error || !data.user?.id || !isUuid(data.user.id)) {
+    fail(res, "UNAUTHENTICATED", "Du musst angemeldet sein.", 401);
+    return null;
+  }
 
-export async function getOwnedBonsaiOr404(id: number, userId: number): Promise<Bonsai | null> {
-  return prisma.bonsai.findFirst({
-    where: {
-      id,
-      userId,
-      deletedAt: null,
-    },
-  });
-}
-
-export async function getOwnedBonsaiIncludingArchived(id: number, userId: number): Promise<Bonsai | null> {
-  return prisma.bonsai.findFirst({
-    where: {
-      id,
-      userId,
-    },
-  });
-}
-
-export async function getOwnedSubEntryOr404(id: number, userId: number): Promise<SubEntry | null> {
-  return prisma.subEntry.findFirst({
-    where: {
-      id,
-      bonsai: {
-        userId,
-        deletedAt: null,
-      },
-    },
-  });
-}
-
-export async function getOwnedReminderOr404(id: number, userId: number): Promise<Reminder | null> {
-  return prisma.reminder.findFirst({
-    where: {
-      id,
-      userId,
-    },
-  });
-}
-
-export async function getOwnedPostOr404(id: number, userId: number): Promise<Post | null> {
-  return prisma.post.findFirst({
-    where: {
-      id,
-      userId,
-    },
-  });
-}
-
-export async function getVisibleProfileOr404(id: number): Promise<User | null> {
-  return prisma.user.findUnique({
-    where: {
-      id,
-    },
-  });
+  return {
+    id: data.user.id,
+    email: data.user.email ?? null,
+  };
 }

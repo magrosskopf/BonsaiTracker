@@ -1,6 +1,5 @@
-import type { UploadStorageMode } from "@/lib/config/beta";
-
 export interface SaveUploadInput {
+  actorUserId: string;
   buffer: Buffer;
   contentType: string;
   originalName: string;
@@ -26,7 +25,7 @@ export type ResolvedMedia =
     };
 
 export interface UploadStorage {
-  mode: UploadStorageMode;
+  mode: "supabase";
   save(input: SaveUploadInput): Promise<SavedUpload>;
   resolve(storageKey: string): Promise<ResolvedMedia>;
   remove(storageKey: string): Promise<void>;

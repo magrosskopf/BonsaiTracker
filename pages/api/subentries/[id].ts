@@ -1,11 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { Prisma } from "@prisma/client";
 import multer from "multer";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
-import { getOwnedSubEntryOr404, requireUser } from "@/lib/authz";
+import { requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
 import { mapSubEntryToDto } from "@/lib/mappers";
+import { deleteOwnedSubEntry, getOwnedSubEntry, patchOwnedSubEntry } from "@/lib/repositories/subentries";
 import { runMiddleware } from "@/lib/middleware";
 import { logError } from "@/lib/observability";
 import { removeManagedMediaBatch } from "@/lib/storage";
@@ -46,8 +45,8 @@ async function safeCleanup(mediaPaths: string[], context: Record<string, unknown
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -67,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const existing = await getOwnedSubEntryOr404(subEntryId, userId);
+    const existing = await getOwnedSubEntry(actor.id, subEntryId);
     if (!existing) {
       fail(res, "NOT_FOUND", "Sub-Eintrag nicht gefunden.", 404);
       return;
@@ -77,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const keepImages = toOptionalStringArray(req.body["keepImages[]"] ?? req.body.keepImages) ?? [];
       const newImages = await Promise.all(
         ((req as MulterRequest).files ?? []).map(async (file) => {
-          const image = await persistImageUpload("subentries", file);
+          const image = await persistImageUpload(actor.id, "subentries", file);
           newlyPersistedImages.push(image);
           return image;
         }),
@@ -92,11 +91,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const candidate = subEntryPersistedSchema.parse({
         date: patch.date ?? existing.date,
-        entryType: patch.entryType ?? existing.entryType,
-        healthObservation: patch.healthObservation ?? existing.healthObservation,
-        performedActions: patch.performedActions ?? existing.performedActions,
-        nextAction: patch.nextAction ?? existing.nextAction,
-        reminderDate: patch.reminderDate ?? existing.reminderDate,
+        entryType: patch.entryType ?? existing.entry_type,
+        healthObservation: patch.healthObservation ?? existing.health_observation,
+        performedActions: patch.performedActions ?? existing.performed_actions,
+        nextAction: patch.nextAction ?? existing.next_action,
+        reminderDate: patch.reminderDate ?? existing.reminder_date,
         notes: patch.notes ?? existing.notes,
         images: finalImages,
       });
@@ -106,44 +105,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return;
       }
 
-      const updated = await prisma.subEntry.update({
-        where: { id: subEntryId },
-        data: {
-          ...patch,
-          performedActions: patch.performedActions ?? existing.performedActions,
-          images: candidate.images,
-        } as Prisma.SubEntryUpdateInput,
-      });
-
       const removedImages = existing.images.filter((image) => !candidate.images.includes(image));
-      await safeCleanup(removedImages, { userId, subEntryId }, "subentry.removed_media_cleanup_failed");
+      const addedImages = candidate.images.filter((image) => !existing.images.includes(image));
+      const updated = await patchOwnedSubEntry(actor.id, subEntryId, patch, addedImages, removedImages);
+      await safeCleanup(removedImages, { userId: actor.id, subEntryId }, "subentry.removed_media_cleanup_failed");
 
       ok(res, mapSubEntryToDto(updated));
       return;
     } catch (error) {
       if (error instanceof ZodError) {
-        await safeCleanup(newlyPersistedImages, { userId, subEntryId }, "subentry.new_media_cleanup_failed");
+        await safeCleanup(newlyPersistedImages, { userId: actor.id, subEntryId }, "subentry.new_media_cleanup_failed");
         fail(res, "VALIDATION_ERROR", "Die Sub-Entry-Daten sind ungültig.", 422, error.flatten());
         return;
       }
-      await safeCleanup(newlyPersistedImages, { userId, subEntryId }, "subentry.new_media_cleanup_failed");
-      logError("subentry.update_failed", error, { userId, subEntryId });
+      await safeCleanup(newlyPersistedImages, { userId: actor.id, subEntryId }, "subentry.new_media_cleanup_failed");
+      logError("subentry.update_failed", error, { userId: actor.id, subEntryId });
       fail(res, "INTERNAL_SERVER_ERROR", "Der Sub-Eintrag konnte nicht aktualisiert werden.", 500);
       return;
     }
   }
 
   if (req.method === "DELETE") {
-    const existing = await getOwnedSubEntryOr404(subEntryId, userId);
+    const existing = await getOwnedSubEntry(actor.id, subEntryId);
     if (!existing) {
       fail(res, "NOT_FOUND", "Sub-Eintrag nicht gefunden.", 404);
       return;
     }
 
-    await prisma.subEntry.delete({
-      where: { id: subEntryId },
-    });
-    await safeCleanup(existing.images, { userId, subEntryId }, "subentry.delete_cleanup_failed");
+    const removedImages = await deleteOwnedSubEntry(actor.id, subEntryId);
+    await safeCleanup(removedImages, { userId: actor.id, subEntryId }, "subentry.delete_cleanup_failed");
 
     res.status(204).end();
     return;

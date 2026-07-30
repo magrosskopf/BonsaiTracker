@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
+import { togglePostLike } from "@/lib/repositories/posts";
 
 function parseId(value: string | string[] | undefined): number | null {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -10,8 +10,8 @@ function parseId(value: string | string[] | undefined): number | null {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -27,39 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const post = await prisma.post.findUnique({ where: { id: postId } });
-  if (!post) {
-    fail(res, "NOT_FOUND", "Post nicht gefunden.", 404);
-    return;
-  }
-
-  const existing = await prisma.postLike.findUnique({
-    where: {
-      postId_userId: {
-        postId,
-        userId,
-      },
-    },
-  });
-
-  if (existing) {
-    await prisma.postLike.delete({
-      where: {
-        postId_userId: {
-          postId,
-          userId,
-        },
-      },
-    });
-    ok(res, { liked: false });
-    return;
-  }
-
-  await prisma.postLike.create({
-    data: {
-      postId,
-      userId,
-    },
-  });
-  ok(res, { liked: true }, 201);
+  const result = await togglePostLike(actor.id, postId);
+  ok(res, { liked: result.liked, likeCount: result.likeCount }, result.liked ? 201 : 200);
 }

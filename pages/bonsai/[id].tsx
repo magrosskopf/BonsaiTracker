@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import { formatBonsaiAge, formatBonsaiDate, formatBonsaiDisplayText } from "@/lib/bonsai-display";
 import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
 import type { BonsaiDetail, ReminderDto } from "@/types/dto";
@@ -34,12 +36,7 @@ function InfoRow({ label, value }: { label: string; value: string | null }) {
 export default function BonsaiDetailPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [bonsai, setBonsai] = useState<BonsaiDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +53,7 @@ export default function BonsaiDetailPage() {
 
     void (async () => {
       setLoading(true);
-      const response = await fetch(`/api/bonsais/${id}`);
+      const response = await apiFetch(`/api/bonsais/${id}`);
       const json = (await response.json()) as DetailResponse;
 
       if (!response.ok || !json.ok || !json.data) {
@@ -66,7 +63,7 @@ export default function BonsaiDetailPage() {
       }
 
       setBonsai(json.data);
-      const remindersResponse = await fetch(`/api/reminders?bonsaiId=${id}`);
+      const remindersResponse = await apiFetch(`/api/reminders?bonsaiId=${id}`);
       const remindersJson = (await remindersResponse.json()) as { ok: boolean; data?: { items: ReminderDto[] } };
       if (remindersResponse.ok && remindersJson.ok && remindersJson.data) {
         setReminders(remindersJson.data.items);
@@ -90,7 +87,7 @@ export default function BonsaiDetailPage() {
       return;
     }
     setDeleting(true);
-    const response = await fetch(`/api/bonsais/${id}`, { method: "DELETE" });
+    const response = await apiFetch(`/api/bonsais/${id}`, { method: "DELETE" });
     setDeleting(false);
 
     if (!response.ok) {
@@ -107,7 +104,7 @@ export default function BonsaiDetailPage() {
     }
 
     setRestoring(true);
-    const response = await fetch(`/api/bonsais/${id}`, {
+    const response = await apiFetch(`/api/bonsais/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ restore: true }),
@@ -234,7 +231,7 @@ export default function BonsaiDetailPage() {
                   {bonsai.images.length > 0 ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                       {bonsai.images.map((image) => (
-                        <img key={image} src={image} alt={bonsai.name} className="h-48 w-full rounded-2xl object-cover" loading="lazy" />
+                        <AuthenticatedImage key={image} src={image} alt={bonsai.name} className="h-48 w-full rounded-2xl object-cover" loading="lazy" />
                       ))}
                     </div>
                   ) : (
@@ -256,7 +253,7 @@ export default function BonsaiDetailPage() {
                   </div>
                   {slideshowImages.length > 0 ? (
                     <div className="space-y-3">
-                      <img src={slideshowImages[slideshowIndex]?.image} alt={bonsai.name} className="h-72 w-full rounded-2xl object-cover" />
+                      <AuthenticatedImage src={slideshowImages[slideshowIndex]?.image} alt={bonsai.name} className="h-72 w-full rounded-2xl object-cover" />
                       <p className="text-sm text-base-content/60">
                         {slideshowIndex + 1} / {slideshowImages.length} · {formatBonsaiDate(slideshowImages[slideshowIndex]?.date, "-")}
                       </p>

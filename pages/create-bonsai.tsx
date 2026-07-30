@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
 import BonsaiForm from "@/components/BonsaiForm";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import { getFirstValidationMessage, type ValidationErrorDetails } from "@/lib/api/validation";
 import { bonsaiFormValuesToPayload, emptyBonsaiFormValues } from "@/lib/forms";
 import type { BonsaiFormValues } from "@/types/forms";
@@ -21,12 +23,7 @@ function getCreateBonsaiErrorMessage(error: ApiErrorPayload | undefined): string
 
 export default function CreateBonsaiPage() {
   const router = useRouter();
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<string[]>([]);
@@ -46,7 +43,7 @@ export default function CreateBonsaiPage() {
           const formData = new FormData();
           formData.append("file", file);
 
-          const response = await fetch("/api/upload", {
+          const response = await apiFetch("/api/upload", {
             method: "POST",
             body: formData,
           });
@@ -69,7 +66,7 @@ export default function CreateBonsaiPage() {
     setSubmitting(true);
     setError(null);
 
-    const response = await fetch("/api/bonsais", {
+    const response = await apiFetch("/api/bonsais", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -134,7 +131,7 @@ export default function CreateBonsaiPage() {
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
               {images.map((image) => (
                 <div key={image} className="relative">
-                  <img src={image} alt="Upload" className="h-40 w-full rounded-2xl object-cover" />
+                  <AuthenticatedImage src={image} alt="Upload" className="h-40 w-full rounded-2xl object-cover" />
                   <button type="button" className="btn btn-error btn-xs absolute right-2 top-2" onClick={() => setImages((current) => current.filter((item) => item !== image))}>
                     Aus Auswahl entfernen
                   </button>

@@ -1,62 +1,43 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { mapSelfProfileToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 import { getZodErrorMessage } from "@/lib/api/validation";
+import { getProfile, updateOwnedProfile } from "@/lib/repositories/profiles";
 import { profilePatchSchema } from "@/lib/validators/profile";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
   if (req.method === "GET") {
-    const profile = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        posts: {
-          include: {
-            user: true,
-            likes: { select: { userId: true } },
-            comments: { include: { user: true } },
-            entryReferences: true,
-          },
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        },
-      },
-    });
+    const profile = await getProfile(actor.id);
 
     if (!profile) {
       fail(res, "NOT_FOUND", "Profil nicht gefunden.", 404);
       return;
     }
 
-    ok(res, mapSelfProfileToDto(profile, userId));
+    ok(res, mapSelfProfileToDto(profile, actor.email, actor.id));
     return;
   }
 
   if (req.method === "PATCH") {
     try {
       const parsed = profilePatchSchema.parse(req.body);
-      const updated = await prisma.user.update({
-        where: { id: userId },
-        data: parsed,
-        include: {
-          posts: {
-            include: {
-              user: true,
-              likes: { select: { userId: true } },
-              comments: { include: { user: true } },
-              entryReferences: true,
-            },
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-          },
-        },
+      const updated = await updateOwnedProfile(actor.id, {
+        name: parsed.name,
+        bio: parsed.bio,
+        profile_image_url: parsed.profileImageUrl,
       });
-      ok(res, mapSelfProfileToDto(updated, userId));
+      if (!updated) {
+        fail(res, "NOT_FOUND", "Profil nicht gefunden.", 404);
+        return;
+      }
+      ok(res, mapSelfProfileToDto(updated, actor.email, actor.id));
       return;
     } catch (error) {
       if (error instanceof ZodError) {

@@ -41,9 +41,9 @@ export default function DatenschutzPage() {
               Google vermittelt; dabei kann Google eigene Daten über den Anmeldevorgang verarbeiten.
             </p>
             <p>
-              Für technische oder betriebliche Ausnahmefälle kann zusätzlich eine Anmeldung per Magic Link per E-Mail
-              bereitgestellt werden. In diesem Fall verarbeiten wir Ihre E-Mail-Adresse, um einen Login-Link zu erzeugen
-              und zu versenden. Für den Versand kann der E-Mail-Dienstleister Resend eingesetzt werden.
+              Zusätzlich kann eine Anmeldung per Magic Link per E-Mail bereitgestellt werden. In diesem Fall verarbeitet
+              Supabase Auth Ihre E-Mail-Adresse, um einen Login-Link zu erzeugen und zu versenden. Für den SMTP-Versand
+              kann Resend als Custom-SMTP-Dienstleister von Supabase Auth eingesetzt werden.
             </p>
             <p>
               Die Verarbeitung erfolgt zur Durchführung der angeforderten Anmeldung und zur Bereitstellung Ihres
@@ -143,8 +143,8 @@ export default function DatenschutzPage() {
             <p>
               Personenbezogene Daten werden nur an solche Empfänger weitergegeben, die für den Betrieb der Anwendung
               erforderlich sind. Dazu können insbesondere technische Hosting- und Infrastruktur-Dienstleister,
-              Authentifizierungsdienstleister wie Google für Social Login, E-Mail-Versanddienstleister für Login-Links,
-              gegebenenfalls Speicherdienstleister für Medien sowie im Fall einer gesonderten Einwilligung Google als
+              Authentifizierungsdienstleister wie Supabase Auth und Google für Social Login, E-Mail-Versanddienstleister
+              für Login-Links, gegebenenfalls Speicherdienstleister für Medien sowie im Fall einer gesonderten Einwilligung Google als
               Analytics-Anbieter gehören.
             </p>
             <p>

@@ -19,14 +19,15 @@ Wenn die Zuordnung trotzdem unklar bleibt, wird standardmaessig [workflows/featu
 
 ## Projekt kurz
 
-- Stack: Next.js Pages Router, TypeScript, Prisma, Tailwind
+- Stack: Next.js Pages Router, TypeScript, Supabase CLI/SDK, Tailwind
 - UI: `pages/`, `components/`, `styles/`
 - Backend: `pages/api/`, `lib/`
-- Datenmodell: `prisma/schema.prisma`
+- Datenmodell: `supabase/migrations/`, generierte Typen in `types/supabase.ts`
 - Tests: `tests/`
 
 ## Nuetzliche Checks
 
 - Tests: `npm test`
+- DB-Tests: `npm run test:db`
 - Typecheck: `npm run typecheck`
 - Build: `npm run build`

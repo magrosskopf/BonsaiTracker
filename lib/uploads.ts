@@ -22,8 +22,9 @@ export function createImageUpload(_subDirectory = "") {
   });
 }
 
-export async function persistImageUpload(subDirectory: string, file: Express.Multer.File): Promise<string> {
+export async function persistImageUpload(actorUserId: string, subDirectory: string, file: Express.Multer.File): Promise<string> {
   const stored = await saveUploadedFile({
+    actorUserId,
     buffer: file.buffer,
     contentType: file.mimetype,
     originalName: file.originalname,

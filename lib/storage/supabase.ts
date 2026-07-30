@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import path from "path";
-import { createClient } from "@supabase/supabase-js";
-import { getSupabaseStorageConfig } from "@/lib/config/beta";
+import { getServerSupabaseConfig } from "@/lib/config/runtime";
+import { getServerDataClient } from "@/lib/supabase/server-data";
 import type { ResolvedMedia, SavedUpload, SaveUploadInput, UploadStorage } from "@/lib/storage/types";
 
 function slugifyFileName(name: string): string {
@@ -13,11 +13,11 @@ function slugifyFileName(name: string): string {
     .toLowerCase();
 }
 
-function buildObjectKey(subDirectory: string, originalName: string): string {
+function buildObjectKey(actorUserId: string, subDirectory: string, originalName: string): string {
   const extension = path.extname(originalName).toLowerCase() || ".bin";
   const safeBase = slugifyFileName(path.basename(originalName, path.extname(originalName))) || "upload";
   const fileName = `${Date.now()}-${crypto.randomUUID()}-${safeBase}${extension}`;
-  return subDirectory ? path.posix.join(subDirectory, fileName) : fileName;
+  return path.posix.join(actorUserId, subDirectory || "uploads", fileName);
 }
 
 function toStorageKey(objectKey: string): string {
@@ -31,24 +31,8 @@ function getObjectKey(storageKey: string): string {
   return storageKey.replace(/^supabase\//, "");
 }
 
-function getSignedUrlLocation(baseUrl: string, signedUrl: string): string {
-  if (signedUrl.startsWith("http://") || signedUrl.startsWith("https://")) {
-    return signedUrl;
-  }
-
-  return `${baseUrl}${signedUrl.startsWith("/") ? signedUrl : `/${signedUrl}`}`;
-}
-
 function createSupabaseStorageClient() {
-  const config = getSupabaseStorageConfig();
-  const client = createClient(config.url, config.serviceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  return { client, config };
+  return { client: getServerDataClient(), config: getServerSupabaseConfig() };
 }
 
 export const supabaseUploadStorage: UploadStorage = {
@@ -56,10 +40,10 @@ export const supabaseUploadStorage: UploadStorage = {
 
   async save(input: SaveUploadInput): Promise<SavedUpload> {
     const { client, config } = createSupabaseStorageClient();
-    const objectKey = buildObjectKey(input.subDirectory, input.originalName);
+    const objectKey = buildObjectKey(input.actorUserId, input.subDirectory, input.originalName);
 
     const { error } = await client.storage
-      .from(config.bucket)
+      .from(config.storageBucket)
       .upload(objectKey, input.buffer, {
         contentType: input.contentType,
         upsert: false,
@@ -80,19 +64,21 @@ export const supabaseUploadStorage: UploadStorage = {
     const objectKey = getObjectKey(storageKey);
 
     const { data, error } = await client.storage
-      .from(config.bucket)
-      .createSignedUrl(objectKey, config.signedUrlExpiresInSeconds);
+      .from(config.storageBucket)
+      .download(objectKey);
 
     if (error) {
       throw new Error(error.message);
     }
-    if (!data?.signedUrl) {
-      throw new Error("Supabase Storage hat keine Signed URL zurückgegeben.");
+    if (!data) {
+      throw new Error("Supabase Storage hat keine Datei zurückgegeben.");
     }
 
+    const buffer = Buffer.from(await data.arrayBuffer());
     return {
-      kind: "redirect",
-      location: getSignedUrlLocation(config.url, data.signedUrl),
+      kind: "buffer",
+      buffer,
+      contentType: data.type || "application/octet-stream",
       cacheControl: "private, no-store",
     };
   },
@@ -102,7 +88,7 @@ export const supabaseUploadStorage: UploadStorage = {
     const objectKey = getObjectKey(storageKey);
 
     const { error } = await client.storage
-      .from(config.bucket)
+      .from(config.storageBucket)
       .remove([objectKey]);
 
     if (error) {

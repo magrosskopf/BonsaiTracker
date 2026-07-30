@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
+import { apiFetch } from "@/lib/api/client";
 import { formatBonsaiDisplayText } from "@/lib/bonsai-display";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import type { BonsaiSummary } from "@/types/dto";
 import { HEALTH_STATUS_LABELS, INDOOR_OUTDOOR_LABELS } from "@/types/domain";
 
@@ -18,13 +19,7 @@ interface ApiResponse {
 }
 
 export default function Dashboard() {
-  const router = useRouter();
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [items, setItems] = useState<BonsaiSummary[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +34,7 @@ export default function Dashboard() {
       params.set("cursor", cursor);
     }
 
-    const response = await fetch(`/api/bonsais?${params.toString()}`);
+    const response = await apiFetch(`/api/bonsais?${params.toString()}`);
     const json = (await response.json()) as ApiResponse;
 
     if (!response.ok || !json.ok || !json.data) {
@@ -139,7 +134,7 @@ export default function Dashboard() {
           <article key={bonsai.id} className="surface-card bonsai-card card overflow-hidden">
             <figure className="h-52">
               {bonsai.coverImage ? (
-                <img src={bonsai.coverImage} alt={bonsai.name} className="h-full w-full object-cover" loading="lazy" />
+                <AuthenticatedImage src={bonsai.coverImage} alt={bonsai.name} className="h-full w-full object-cover" loading="lazy" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-base-content/50">Kein Bild</div>
               )}

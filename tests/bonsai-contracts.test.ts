@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { join } from "node:path";
 import test from "node:test";
 import { createElement } from "react";
 import BonsaiForm from "@/components/BonsaiForm";
 import { bonsaiFormStepConfigs } from "@/lib/config/forms";
 import { mapBonsaiDetail, mapBonsaiSummary, type BonsaiDetailRecord } from "@/lib/mappers";
-import { buildBonsaiSearchOr } from "@/lib/search/bonsais";
 import { bonsaiDetailToFormValues, bonsaiFormValuesToPayload, emptyBonsaiFormValues } from "@/lib/forms";
+import { getSupabaseDirectory } from "@/scripts/supabase-project";
 
 const require = createRequire(import.meta.url);
 const { renderToStaticMarkup } = require("react-dom/server") as {
@@ -14,44 +16,44 @@ const { renderToStaticMarkup } = require("react-dom/server") as {
 };
 
 function buildBonsaiRecord(): BonsaiDetailRecord {
-  const now = new Date("2026-07-05T12:00:00.000Z");
+  const now = "2026-07-05T12:00:00.000Z";
 
   return {
     id: 4,
-    userId: 2,
+    user_id: "11111111-1111-4111-8111-111111111111",
     name: "Deshojo",
     nickname: "Alter Rufname",
     species: "Acer palmatum",
-    latinName: null,
+    latin_name: null,
     location: "Terrasse",
-    indoorOutdoor: "OUTDOOR",
+    indoor_outdoor: "OUTDOOR",
     age: null,
-    heightCm: 30,
-    widthCm: 24,
-    trunkDiameterMm: 18,
+    height_cm: 30,
+    width_cm: 24,
+    trunk_diameter_mm: 18,
     style: "Unbekannt",
-    customStyle: null,
-    ownedSince: null,
-    acquiredFrom: null,
-    purchasePriceCents: null,
-    healthStatus: "UNBEKANNT",
-    developmentStage: "UNBEKANNT",
-    lastRepotDate: null,
-    nextRepotDue: null,
-    winterHardiness: null,
-    sunExposure: null,
-    potType: null,
-    potColor: null,
-    wateringNotes: null,
-    fertilizingNotes: null,
-    pruningNotes: null,
-    wiringNotes: null,
+    custom_style: null,
+    owned_since: null,
+    acquired_from: null,
+    purchase_price_cents: null,
+    health_status: "UNBEKANNT",
+    development_stage: "UNBEKANNT",
+    last_repot_date: null,
+    next_repot_due: null,
+    winter_hardiness: null,
+    sun_exposure: null,
+    pot_type: null,
+    pot_color: null,
+    watering_notes: null,
+    fertilizing_notes: null,
+    pruning_notes: null,
+    wiring_notes: null,
     notes: "Feiner Austrieb.",
-    images: ["/uploads/deshojo.webp"],
-    deletedAt: null,
-    createdAt: now,
-    updatedAt: now,
-    subEntries: [],
+    images: ["/api/media/supabase/11111111-1111-4111-8111-111111111111/bonsais/deshojo.webp"],
+    deleted_at: null,
+    created_at: now,
+    updated_at: now,
+    sub_entries: [],
   };
 }
 
@@ -61,7 +63,7 @@ function fieldConfigByKey() {
 
 test("bonsai dto mappers omit nickname and form mapping no longer expects it", () => {
   const record = buildBonsaiRecord();
-  const summary = mapBonsaiSummary({ ...record, _count: { subEntries: 0 } });
+  const summary = mapBonsaiSummary({ ...record, sub_entry_count: 0 });
   const detail = mapBonsaiDetail(record);
   const formValues = bonsaiDetailToFormValues(detail);
   const payload = bonsaiFormValuesToPayload(emptyBonsaiFormValues);
@@ -72,17 +74,10 @@ test("bonsai dto mappers omit nickname and form mapping no longer expects it", (
   assert.equal("nickname" in payload, false);
 });
 
-test("bonsai search helper excludes legacy nickname field", () => {
-  const conditions = buildBonsaiSearchOr("rufname");
-
-  assert.deepEqual(conditions, [
-    { name: { contains: "rufname", mode: "insensitive" } },
-    { species: { contains: "rufname", mode: "insensitive" } },
-    { latinName: { contains: "rufname", mode: "insensitive" } },
-    { location: { contains: "rufname", mode: "insensitive" } },
-    { notes: { contains: "rufname", mode: "insensitive" } },
-    { customStyle: { contains: "rufname", mode: "insensitive" } },
-  ]);
+test("bonsai search is delegated to parameterized Supabase RPC", () => {
+  const migration = readFileSync(join(getSupabaseDirectory(), "migrations", "20260718000300_service_rpcs.sql"), "utf8");
+  assert.match(migration, /p_search is null or b\.name ilike '%' \|\| p_search/);
+  assert.doesNotMatch(migration, /nickname ilike/);
 });
 
 test("bonsai form mappings support euro prices and nullable detail fields", () => {
@@ -106,7 +101,7 @@ test("bonsai form mappings support euro prices and nullable detail fields", () =
     purchasePriceCents: "",
   });
   const pricedFormValues = bonsaiDetailToFormValues(
-    mapBonsaiDetail({ ...buildBonsaiRecord(), purchasePriceCents: 1250 }),
+    mapBonsaiDetail({ ...buildBonsaiRecord(), purchase_price_cents: 1250 }),
   );
 
   assert.equal(formValues.age, "");

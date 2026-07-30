@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiFetch } from "@/lib/api/client";
 
 type WaitlistRequestFormVariant = "embedded" | "feature";
 
@@ -51,13 +52,13 @@ export default function WaitlistRequestForm({
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/access-requests", {
+      const response = await apiFetch("/api/access-requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email }),
-      });
+      }, { auth: "none" });
 
       const payload = (await response.json()) as AccessRequestResponse;
 

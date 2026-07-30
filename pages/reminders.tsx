@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import type { ReminderDto } from "@/types/dto";
 import { REMINDER_STATUS_LABELS } from "@/types/domain";
 
@@ -16,19 +16,13 @@ interface ReminderResponse {
 }
 
 export default function RemindersPage() {
-  const router = useRouter();
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [items, setItems] = useState<ReminderDto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadReminders() {
-    const response = await fetch("/api/reminders");
+    const response = await apiFetch("/api/reminders");
     const json = (await response.json()) as ReminderResponse;
     if (!response.ok || !json.ok || !json.data) {
       throw new Error(json.error?.message ?? "Die Reminder konnten nicht geladen werden.");
@@ -37,7 +31,7 @@ export default function RemindersPage() {
   }
 
   async function updateReminder(id: number, body: Record<string, unknown>) {
-    const response = await fetch(`/api/reminders/${id}`, {
+    const response = await apiFetch(`/api/reminders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
