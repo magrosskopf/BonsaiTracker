@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
+import { useAuth } from "@/components/AuthProvider";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
+import { formatPostSnapshotMeta } from "@/lib/posts";
+import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
 import type { BonsaiDetail, BonsaiSummary, PostCommentDto, PostDto } from "@/types/dto";
 import { POST_TYPE_LABELS, POST_TYPE_OPTIONS } from "@/types/domain";
 
@@ -29,43 +34,13 @@ interface ComposerImage {
 }
 
 function collectComposerImages(bonsai: BonsaiDetail | null): ComposerImage[] {
-  if (!bonsai) {
-    return [];
-  }
-
-  return [
-    ...bonsai.images.map((image) => ({
-      image,
-      date: bonsai.ownedSince,
-      createdAt: bonsai.createdAt,
-      source: "Bonsai",
-    })),
-    ...bonsai.subEntries.flatMap((entry) =>
-      entry.images.map((image) => ({
-        image,
-        date: entry.date,
-        createdAt: entry.createdAt,
-        source: entry.entryType,
-      })),
-    ),
-  ]
-    .sort((left, right) => {
-      if (left.date !== right.date) {
-        return new Date(left.date).getTime() - new Date(right.date).getTime();
-      }
-      return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-    })
-    .map(({ image, date, source }) => ({ image, date, source }));
+  return collectBonsaiTimelineImages(bonsai).map(({ image, date, source }) => ({ image, date, source }));
 }
 
 export default function FeedPage() {
   const router = useRouter();
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
+  const { user } = useAuth();
   const [posts, setPosts] = useState<PostDto[]>([]);
   const [bonsais, setBonsais] = useState<BonsaiSummary[]>([]);
   const [selectedBonsaiId, setSelectedBonsaiId] = useState<string>("");
@@ -87,7 +62,7 @@ export default function FeedPage() {
   const canSubmit = text.trim().length > 0 && !!selectedBonsaiId;
 
   async function loadFeed() {
-    const response = await fetch("/api/posts");
+    const response = await apiFetch("/api/posts");
     const json = (await response.json()) as FeedResponse;
     if (!response.ok || !json.ok || !json.data) {
       throw new Error(json.error?.message ?? "Der Feed konnte nicht geladen werden.");
@@ -103,8 +78,8 @@ export default function FeedPage() {
     void (async () => {
       try {
         const [feedResponse, bonsaiResponse] = await Promise.all([
-          fetch("/api/posts"),
-          fetch("/api/bonsais?limit=50"),
+          apiFetch("/api/posts"),
+          apiFetch("/api/bonsais?limit=50"),
         ]);
         const feedJson = (await feedResponse.json()) as FeedResponse;
         const bonsaiJson = (await bonsaiResponse.json()) as BonsaiListResponse;
@@ -133,7 +108,7 @@ export default function FeedPage() {
     }
 
     void (async () => {
-      const response = await fetch(`/api/bonsais/${selectedBonsaiId}`);
+      const response = await apiFetch(`/api/bonsais/${selectedBonsaiId}`);
       const json = (await response.json()) as { ok: boolean; data?: BonsaiDetail; error?: { message: string } };
       if (!response.ok || !json.ok || !json.data) {
         setError(json.error?.message ?? "Der ausgewählte Bonsai konnte nicht geladen werden.");
@@ -179,7 +154,7 @@ export default function FeedPage() {
     }
 
     setError(null);
-    const response = await fetch(editingPostId ? `/api/posts/${editingPostId}` : "/api/posts", {
+    const response = await apiFetch(editingPostId ? `/api/posts/${editingPostId}` : "/api/posts", {
       method: editingPostId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -206,7 +181,7 @@ export default function FeedPage() {
   }
 
   async function toggleLike(postId: number) {
-    const response = await fetch(`/api/posts/${postId}/likes`, { method: "POST" });
+    const response = await apiFetch(`/api/posts/${postId}/likes`, { method: "POST" });
     if (!response.ok) {
       setError("Das Like konnte nicht aktualisiert werden.");
       return;
@@ -215,7 +190,7 @@ export default function FeedPage() {
   }
 
   async function createComment(postId: number, commentText: string) {
-    const response = await fetch(`/api/posts/${postId}/comments`, {
+    const response = await apiFetch(`/api/posts/${postId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: commentText }),
@@ -228,7 +203,7 @@ export default function FeedPage() {
   }
 
   async function deletePost(postId: number) {
-    const response = await fetch(`/api/posts/${postId}`, { method: "DELETE" });
+    const response = await apiFetch(`/api/posts/${postId}`, { method: "DELETE" });
     if (!response.ok) {
       setError("Der Post konnte nicht gelöscht werden.");
       return;
@@ -282,7 +257,7 @@ export default function FeedPage() {
           <PostCard
             key={post.id}
             post={post}
-            currentUserId={Number(session?.user.id)}
+            currentUserId={user?.id ?? ""}
             onLike={toggleLike}
             onComment={createComment}
             onDelete={deletePost}
@@ -379,7 +354,7 @@ export default function FeedPage() {
                           });
                         }}
                       >
-                        <img src={item.image} alt="Post-Auswahl" className="h-40 w-full object-cover" />
+                        <AuthenticatedImage src={item.image} alt="Post-Auswahl" className="h-40 w-full object-cover" />
                         <div className="absolute inset-x-0 bottom-0 bg-black/55 p-2 text-xs text-white">
                           <div className="flex items-center justify-between gap-2">
                             <span>{new Date(item.date).toLocaleDateString("de-DE")}</span>
@@ -472,7 +447,7 @@ function PostCard({
   onEdit,
 }: {
   post: PostDto;
-  currentUserId: number;
+  currentUserId: string;
   onLike: (postId: number) => Promise<void>;
   onComment: (postId: number, text: string) => Promise<void>;
   onDelete: (postId: number) => Promise<void>;
@@ -481,13 +456,14 @@ function PostCard({
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<PostCommentDto[]>([]);
   const [showComments, setShowComments] = useState(false);
+  const snapshotMeta = formatPostSnapshotMeta(post.snapshotSpecies, post.createdAt);
 
   useEffect(() => {
     if (!showComments) {
       return;
     }
     void (async () => {
-      const response = await fetch(`/api/posts/${post.id}/comments`);
+      const response = await apiFetch(`/api/posts/${post.id}/comments`);
       const json = (await response.json()) as { ok: boolean; data?: { items: PostCommentDto[] } };
       if (response.ok && json.ok && json.data) {
         setComments(json.data.items);
@@ -507,7 +483,7 @@ function PostCard({
               <Link href={`/profile/${post.userId}`} className="link link-hover">{post.userName ?? "Unbekannt"}</Link>
             </h2>
             <p className="text-sm text-base-content/70">
-              {post.snapshotName} · {post.snapshotSpecies} · {new Date(post.createdAt).toLocaleDateString("de-DE")}
+              {post.snapshotName} · {snapshotMeta}
             </p>
           </div>
           <span className="text-sm text-base-content/60">{post.commentCount} Kommentare</span>
@@ -518,7 +494,7 @@ function PostCard({
         {post.images.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {post.images.map((image) => (
-              <img key={image} src={image} alt={post.snapshotName} className="h-44 w-full rounded-2xl object-cover" />
+              <AuthenticatedImage key={image} src={image} alt={post.snapshotName} className="h-44 w-full rounded-2xl object-cover" />
             ))}
           </div>
         ) : null}

@@ -1,13 +1,13 @@
 import type { ZodError } from "zod";
+import type { BonsaiFormValues } from "@/types/forms";
 
 export interface ValidationErrorDetails {
   formErrors?: string[];
   fieldErrors?: Record<string, string[] | undefined>;
 }
 
-const BONSAI_FIELD_LABELS: Record<string, string> = {
+const BONSAI_FIELD_LABELS: Record<keyof BonsaiFormValues, string> = {
   name: "Name",
-  nickname: "Rufname",
   species: "Art",
   latinName: "Botanischer Name",
   location: "Standort",
@@ -20,7 +20,7 @@ const BONSAI_FIELD_LABELS: Record<string, string> = {
   customStyle: "Eigener Stil",
   ownedSince: "Besitz seit",
   acquiredFrom: "Herkunft / Kaufquelle",
-  purchasePriceCents: "Kaufpreis in Cent",
+  purchasePriceCents: "Kaufpreis in Euro",
   healthStatus: "Gesundheitsstatus",
   developmentStage: "Entwicklungsstand",
   lastRepotDate: "Letztes Umtopfen",
@@ -36,8 +36,12 @@ const BONSAI_FIELD_LABELS: Record<string, string> = {
   notes: "Notizen",
 };
 
+function isBonsaiFieldKey(field: string): field is keyof BonsaiFormValues {
+  return field in BONSAI_FIELD_LABELS;
+}
+
 function withFieldLabel(field: string, message: string): string {
-  const label = BONSAI_FIELD_LABELS[field];
+  const label = isBonsaiFieldKey(field) ? BONSAI_FIELD_LABELS[field] : undefined;
   return label ? `${label}: ${message}` : message;
 }
 

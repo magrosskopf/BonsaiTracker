@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { fail, ok } from "@/lib/api/response";
-import { prisma } from "@/lib/prisma";
 import { checkAndConsumeRateLimit, getClientIp } from "@/lib/rate-limit";
 import { getSignupConfig, normalizeEmail } from "@/lib/signup-gating";
+import { upsertWaitlistRequest } from "@/lib/repositories/signup";
 
 const bodySchema = z.object({
   email: z.string().email().max(320),
@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const config = getSignupConfig();
+    const config = await getSignupConfig();
     if (!config.waitlistEnabled) {
       ok(res, {
         submitted: false,
@@ -66,20 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    await prisma.waitlistRequest.upsert({
-      where: {
-        email,
-      },
-      update: {
-        sourceIp: ip,
-        userAgent,
-      },
-      create: {
-        email,
-        sourceIp: ip,
-        userAgent,
-      },
-    });
+    await upsertWaitlistRequest(email, ip, userAgent);
 
     ok(res, {
       submitted: true,

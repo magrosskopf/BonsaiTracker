@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import type { BonsaiDetail, SubEntryDto } from "@/types/dto";
 import { ENTRY_TYPE_LABELS, ENTRY_TYPE_OPTIONS, HEALTH_STATUS_LABELS, HEALTH_STATUS_OPTIONS } from "@/types/domain";
 
@@ -83,12 +85,7 @@ function toPatchFormData(state: EntryFormState) {
 export default function BonsaiSubEntriesPage() {
   const router = useRouter();
   const bonsaiId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [bonsai, setBonsai] = useState<BonsaiDetail | null>(null);
   const [entries, setEntries] = useState<SubEntryDto[]>([]);
   const [createForm, setCreateForm] = useState<EntryFormState>(emptyEntryForm());
@@ -105,7 +102,7 @@ export default function BonsaiSubEntriesPage() {
     }
 
     void (async () => {
-      const detailResponse = await fetch(`/api/bonsais/${bonsaiId}`);
+      const detailResponse = await apiFetch(`/api/bonsais/${bonsaiId}`);
       const detailJson = (await detailResponse.json()) as { ok: boolean; data?: BonsaiDetail; error?: { message: string } };
       if (!detailResponse.ok || !detailJson.ok || !detailJson.data) {
         setError(detailJson.error?.message ?? "Die Bonsai-Daten konnten nicht geladen werden.");
@@ -113,7 +110,7 @@ export default function BonsaiSubEntriesPage() {
       }
       const detail = detailJson.data;
 
-      const entriesResponse = await fetch(`/api/subentries?bonsaiId=${bonsaiId}`);
+      const entriesResponse = await apiFetch(`/api/subentries?bonsaiId=${bonsaiId}`);
       const entriesJson = (await entriesResponse.json()) as { ok: boolean; data?: { items: SubEntryDto[] }; error?: { message: string } };
       if (!entriesResponse.ok || !entriesJson.ok || !entriesJson.data) {
         setError(entriesJson.error?.message ?? "Die Sub-Einträge konnten nicht geladen werden.");
@@ -122,7 +119,7 @@ export default function BonsaiSubEntriesPage() {
 
       setBonsai(detail);
       setEntries(entriesJson.data.items);
-      setCreateForm((current) => ({ ...current, date: detail.ownedSince.slice(0, 10) }));
+      setCreateForm((current) => ({ ...current, date: (detail.ownedSince ?? detail.createdAt).slice(0, 10) }));
     })();
   }, [bonsaiId, status]);
 
@@ -137,7 +134,7 @@ export default function BonsaiSubEntriesPage() {
     }
     setSubmitting(true);
     setError(null);
-    const response = await fetch("/api/subentries", {
+    const response = await apiFetch("/api/subentries", {
       method: "POST",
       body: toFormData(bonsaiId, createForm),
     });
@@ -159,7 +156,7 @@ export default function BonsaiSubEntriesPage() {
     }
     setSubmitting(true);
     setError(null);
-    const response = await fetch(`/api/subentries/${editingId}`, {
+    const response = await apiFetch(`/api/subentries/${editingId}`, {
       method: "PATCH",
       body: toPatchFormData(editForm),
     });
@@ -190,7 +187,7 @@ export default function BonsaiSubEntriesPage() {
       keepImages: nextKeepImages,
     });
 
-    const response = await fetch(`/api/subentries/${editingId}`, {
+    const response = await apiFetch(`/api/subentries/${editingId}`, {
       method: "PATCH",
       body: nextFormData,
     });
@@ -211,7 +208,7 @@ export default function BonsaiSubEntriesPage() {
   }
 
   async function deleteEntry(entryId: number) {
-    const response = await fetch(`/api/subentries/${entryId}`, { method: "DELETE" });
+    const response = await apiFetch(`/api/subentries/${entryId}`, { method: "DELETE" });
     if (!response.ok) {
       setError("Der Sub-Eintrag konnte nicht gelöscht werden.");
       return;
@@ -340,7 +337,7 @@ export default function BonsaiSubEntriesPage() {
               {entry.images.length > 0 ? (
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {entry.images.map((image) => (
-                    <img key={image} src={image} alt={entry.entryType} className="h-36 w-full rounded-2xl object-cover" loading="lazy" />
+                    <AuthenticatedImage key={image} src={image} alt={entry.entryType} className="h-36 w-full rounded-2xl object-cover" loading="lazy" />
                   ))}
                 </div>
               ) : null}
@@ -400,7 +397,7 @@ export default function BonsaiSubEntriesPage() {
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {editForm.keepImages.map((image) => (
                     <div key={image} className="relative">
-                      <img src={image} alt="Bestehendes Bild" className="h-32 w-full rounded-2xl object-cover" loading="lazy" />
+                      <AuthenticatedImage src={image} alt="Bestehendes Bild" className="h-32 w-full rounded-2xl object-cover" loading="lazy" />
                       <button
                         type="button"
                         className="btn btn-error btn-xs absolute right-2 top-2"

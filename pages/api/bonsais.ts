@@ -1,13 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { decodeCursor, encodeCursor } from "@/lib/api/cursor";
 import { firstQueryValue } from "@/lib/api/request";
 import { fail, ok } from "@/lib/api/response";
 import { getZodErrorMessage } from "@/lib/api/validation";
 import { mapBonsaiSummary } from "@/lib/mappers";
+import { logError, logInfo, logWarn } from "@/lib/observability";
+import { createOwnedBonsai, listOwnedBonsais } from "@/lib/repositories/bonsais";
 import { bonsaiCreateSchema } from "@/lib/validators/bonsai";
 import {
   DEVELOPMENT_STAGE_OPTIONS,
@@ -18,9 +18,26 @@ import {
   type IndoorOutdoorOption,
 } from "@/types/domain";
 
+function summarizeBonsaiCreatePayload(parsed: Record<string, unknown>): Record<string, unknown> {
+  return {
+    name: parsed.name,
+    species: parsed.species,
+    location: parsed.location,
+    indoorOutdoor: parsed.indoorOutdoor,
+    style: parsed.style,
+    hasCustomStyle: typeof parsed.customStyle === "string" && parsed.customStyle.length > 0,
+    ownedSince: parsed.ownedSince,
+    healthStatus: parsed.healthStatus,
+    developmentStage: parsed.developmentStage,
+    lastRepotDate: parsed.lastRepotDate,
+    nextRepotDue: parsed.nextRepotDue,
+    imageCount: Array.isArray(parsed.images) ? parsed.images.length : null,
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -69,73 +86,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const cursor = cursorRaw ? decodeCursor(cursorRaw) : null;
-      const statusFilter =
-        status === "archived" ? { deletedAt: { not: null } } :
-        status === "all" ? {} :
-        { deletedAt: null };
-      const where: Prisma.BonsaiWhereInput = {
-        AND: [
-          { userId, ...statusFilter },
-          ...(species ? [{ species }] : []),
-          ...(healthStatusFilter ? [{ healthStatus: healthStatusFilter }] : []),
-          ...(developmentStageFilter ? [{ developmentStage: developmentStageFilter }] : []),
-          ...(indoorOutdoorFilter ? [{ indoorOutdoor: indoorOutdoorFilter }] : []),
-          ...(search
-            ? [
-                {
-                  OR: [
-                    { name: { contains: search, mode: "insensitive" as const } },
-                    { nickname: { contains: search, mode: "insensitive" as const } },
-                    { species: { contains: search, mode: "insensitive" as const } },
-                    { latinName: { contains: search, mode: "insensitive" as const } },
-                    { location: { contains: search, mode: "insensitive" as const } },
-                    { notes: { contains: search, mode: "insensitive" as const } },
-                    { customStyle: { contains: search, mode: "insensitive" as const } },
-                  ],
-                },
-              ]
-            : []),
-          ...(cursor
-            ? [
-                {
-                  OR: [
-                    { updatedAt: { lt: new Date(cursor.updatedAt) } },
-                    {
-                      AND: [
-                        { updatedAt: new Date(cursor.updatedAt) },
-                        { id: { lt: cursor.id } },
-                      ],
-                    },
-                  ],
-                },
-              ]
-            : []),
-        ],
-      };
-
-      const bonsais = await prisma.bonsai.findMany({
-        where,
-        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-        take: limit + 1,
-        include: {
-          _count: {
-            select: {
-              subEntries: true,
-            },
-          },
-        },
+      const bonsais = await listOwnedBonsais(actor.id, {
+        search,
+        species,
+        healthStatus: healthStatusFilter,
+        developmentStage: developmentStageFilter,
+        indoorOutdoor: indoorOutdoorFilter,
+        status: status ?? "active",
+        cursorUpdatedAt: cursor?.updatedAt,
+        cursorId: cursor?.id,
+        limit: limit + 1,
       });
 
       const hasMore = bonsais.length > limit;
       const visibleItems = hasMore ? bonsais.slice(0, limit) : bonsais;
       const nextCursor = hasMore
         ? encodeCursor({
-            updatedAt: visibleItems[visibleItems.length - 1].updatedAt.toISOString(),
+            updatedAt: visibleItems[visibleItems.length - 1].updated_at,
             id: visibleItems[visibleItems.length - 1].id,
           })
         : null;
 
-      ok(res, { items: visibleItems.map((bonsai) => mapBonsaiSummary(bonsai as Parameters<typeof mapBonsaiSummary>[0])), nextCursor });
+      ok(res, { items: visibleItems.map(mapBonsaiSummary), nextCursor });
       return;
     } catch (error) {
       fail(res, "BAD_REQUEST", "Ungültiger Cursor oder ungültige Filterparameter.", 400);
@@ -145,18 +117,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "POST") {
     try {
+      logInfo("bonsai.create_started", {
+        userId: actor.id,
+        contentType: req.headers["content-type"],
+        bodyKeys: req.body && typeof req.body === "object" ? Object.keys(req.body) : [],
+      });
+
       const parsed = bonsaiCreateSchema.parse({
         ...req.body,
         images: req.body.images ?? [],
       });
+      logInfo("bonsai.create_payload_parsed", {
+        userId: actor.id,
+        payload: summarizeBonsaiCreatePayload(parsed),
+      });
 
-      const created = await prisma.bonsai.create({
-        data: {
-          ...parsed,
-          userId,
-          customStyle: parsed.style === "Sonstiger" ? parsed.customStyle : null,
-        } as Prisma.BonsaiUncheckedCreateInput,
-        select: { id: true },
+      const created = await createOwnedBonsai(actor.id, parsed);
+      logInfo("bonsai.create_succeeded", {
+        userId: actor.id,
+        bonsaiId: created.id,
       });
 
       ok(res, { id: created.id }, 201);
@@ -164,9 +143,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (error) {
       if (error instanceof ZodError) {
         const { details, message } = getZodErrorMessage(error, "Die Bonsai-Daten sind ungültig.");
+        logWarn("bonsai.create_validation_failed", {
+          userId: actor.id,
+          details,
+        });
         fail(res, "VALIDATION_ERROR", message, 422, details);
         return;
       }
+      logError("bonsai.create_failed", error, { userId: actor.id });
       fail(res, "INTERNAL_SERVER_ERROR", "Der Bonsai konnte nicht erstellt werden.", 500);
       return;
     }

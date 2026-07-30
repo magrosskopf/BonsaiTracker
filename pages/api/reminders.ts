@@ -1,17 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
-import { getOwnedBonsaiOr404, getOwnedSubEntryOr404, requireUser } from "@/lib/authz";
+import { requireUser } from "@/lib/authz";
 import { mapReminderToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 import { firstQueryValue } from "@/lib/api/request";
 import { getZodErrorMessage } from "@/lib/api/validation";
+import { createOwnedReminder, listOwnedReminders } from "@/lib/repositories/reminders";
 import { reminderCreateSchema } from "@/lib/validators/reminder";
 import { REMINDER_STATUS_OPTIONS, type ReminderStatusOption } from "@/types/domain";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -25,17 +25,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const items = await prisma.reminder.findMany({
-      where: {
-        userId,
-        ...(status ? { status: status as ReminderStatusOption } : includeDone ? {} : { status: { in: ["PENDING", "SNOOZED"] } }),
-        ...(bonsaiId ? { bonsaiId: Number(bonsaiId) } : {}),
-        ...(includeDone ? {} : { bonsai: { deletedAt: null } }),
-      },
-      include: {
-        bonsai: true,
-      },
-      orderBy: [{ reminderDate: "asc" }, { id: "asc" }],
+    const items = await listOwnedReminders(actor.id, {
+      status: status as ReminderStatusOption | undefined,
+      bonsaiId: bonsaiId ? Number(bonsaiId) : undefined,
+      includeDone,
     });
 
     ok(res, { items: items.map(mapReminderToDto) });
@@ -45,32 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === "POST") {
     try {
       const parsed = reminderCreateSchema.parse(req.body);
-      const bonsai = await getOwnedBonsaiOr404(parsed.bonsaiId, userId);
-      if (!bonsai) {
-        fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
-        return;
-      }
-
-      if (parsed.subEntryId) {
-        const subEntry = await getOwnedSubEntryOr404(parsed.subEntryId, userId);
-        if (!subEntry || subEntry.bonsaiId !== parsed.bonsaiId) {
-          fail(res, "NOT_FOUND", "Sub-Eintrag nicht gefunden.", 404);
-          return;
-        }
-      }
-
-      const created = await prisma.reminder.create({
-        data: {
-          userId,
-          bonsaiId: parsed.bonsaiId,
-          subEntryId: parsed.subEntryId,
-          title: parsed.title,
-          reminderDate: parsed.reminderDate,
-        },
-        include: {
-          bonsai: true,
-        },
-      });
+      const created = await createOwnedReminder(actor.id, parsed);
 
       ok(res, mapReminderToDto(created), 201);
       return;

@@ -12,17 +12,16 @@ import type {
 export interface BonsaiSummary {
   id: number;
   name: string;
-  nickname: string | null;
   species: string;
   latinName: string | null;
   location: string;
   indoorOutdoor: IndoorOutdoorOption;
-  age: number;
+  age: number | null;
   heightCm: number | null;
   widthCm: number | null;
   style: string;
   customStyle: string | null;
-  ownedSince: string;
+  ownedSince: string | null;
   healthStatus: HealthStatusOption;
   developmentStage: DevelopmentStageOption;
   coverImage: string | null;
@@ -50,18 +49,17 @@ export interface SubEntryDto {
 export interface BonsaiDetail {
   id: number;
   name: string;
-  nickname: string | null;
   species: string;
   latinName: string | null;
   location: string;
   indoorOutdoor: IndoorOutdoorOption;
-  age: number;
+  age: number | null;
   heightCm: number | null;
   widthCm: number | null;
   trunkDiameterMm: number | null;
   style: string;
   customStyle: string | null;
-  ownedSince: string;
+  ownedSince: string | null;
   acquiredFrom: string | null;
   purchasePriceCents: number | null;
   healthStatus: HealthStatusOption;
@@ -91,7 +89,7 @@ export interface BonsaiListResponse {
 
 export interface ReminderDto {
   id: number;
-  userId: number;
+  userId: string;
   bonsaiId: number;
   subEntryId: number | null;
   title: string | null;
@@ -108,7 +106,7 @@ export interface ReminderDto {
 export interface PostCommentDto {
   id: number;
   postId: number;
-  userId: number;
+  userId: string;
   userName: string | null;
   userProfileImageUrl: string | null;
   text: string;
@@ -118,7 +116,7 @@ export interface PostCommentDto {
 
 export interface PostDto {
   id: number;
-  userId: number;
+  userId: string;
   bonsaiId: number;
   userName: string | null;
   userProfileImageUrl: string | null;
@@ -137,7 +135,7 @@ export interface PostDto {
 }
 
 export interface PublicProfileDto {
-  id: number;
+  id: string;
   name: string | null;
   bio: string | null;
   profileImageUrl: string | null;

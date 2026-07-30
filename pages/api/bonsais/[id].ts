@@ -1,11 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
-import { getOwnedBonsaiIncludingArchived, getOwnedBonsaiOr404, requireUser } from "@/lib/authz";
+import { requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
 import { mapBonsaiDetail } from "@/lib/mappers";
 import { logError } from "@/lib/observability";
+import { getOwnedBonsai, patchOwnedBonsai, setOwnedBonsaiArchived } from "@/lib/repositories/bonsais";
 import { removeManagedMediaBatch } from "@/lib/storage";
 import { bonsaiPatchSchema, bonsaiPersistedSchema } from "@/lib/validators/bonsai";
 
@@ -24,8 +23,8 @@ async function safeCleanup(mediaPaths: string[], context: Record<string, unknown
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -36,14 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "GET") {
-    const bonsai = await prisma.bonsai.findFirst({
-      where: { id: bonsaiId, userId },
-      include: {
-        subEntries: {
-          orderBy: [{ date: "desc" }, { id: "desc" }],
-        },
-      },
-    });
+    const bonsai = await getOwnedBonsai(actor.id, bonsaiId, true);
 
     if (!bonsai) {
       fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
@@ -56,72 +48,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "PATCH") {
     const restore = req.body?.restore === true;
-    const existing = restore ? await getOwnedBonsaiIncludingArchived(bonsaiId, userId) : await getOwnedBonsaiOr404(bonsaiId, userId);
+    const existing = await getOwnedBonsai(actor.id, bonsaiId, restore);
     if (!existing) {
       fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
       return;
     }
 
     if (restore) {
-      const restored = await prisma.bonsai.update({
-        where: { id: bonsaiId },
-        data: { deletedAt: null },
-        include: {
-          subEntries: {
-            orderBy: [{ date: "desc" }, { id: "desc" }],
-          },
-        },
-      });
-
-      await prisma.reminder.updateMany({
-        where: {
-          bonsaiId,
-          userId,
-          status: "SNOOZED",
-        },
-        data: {
-          status: "PENDING",
-          snoozedUntil: null,
-        },
-      });
-
-      ok(res, mapBonsaiDetail(restored as Parameters<typeof mapBonsaiDetail>[0]));
+      await setOwnedBonsaiArchived(actor.id, bonsaiId, false);
+      const restored = await getOwnedBonsai(actor.id, bonsaiId, true);
+      ok(res, mapBonsaiDetail(restored!));
       return;
     }
 
     try {
       const patch = bonsaiPatchSchema.parse(req.body);
       const candidate = bonsaiPersistedSchema.parse({
-        ...existing,
-        ...patch,
+        name: existing.name,
+        species: existing.species,
+        latinName: existing.latin_name,
+        location: existing.location,
+        indoorOutdoor: existing.indoor_outdoor,
+        age: existing.age,
+        heightCm: existing.height_cm,
+        widthCm: existing.width_cm,
+        trunkDiameterMm: existing.trunk_diameter_mm,
+        ownedSince: existing.owned_since,
+        acquiredFrom: existing.acquired_from,
+        purchasePriceCents: existing.purchase_price_cents,
+        healthStatus: existing.health_status,
+        developmentStage: existing.development_stage,
+        lastRepotDate: existing.last_repot_date,
+        nextRepotDue: existing.next_repot_due,
+        winterHardiness: existing.winter_hardiness,
+        sunExposure: existing.sun_exposure,
+        potType: existing.pot_type,
+        potColor: existing.pot_color,
+        wateringNotes: existing.watering_notes,
+        fertilizingNotes: existing.fertilizing_notes,
+        pruningNotes: existing.pruning_notes,
+        wiringNotes: existing.wiring_notes,
+        notes: existing.notes,
         style: patch.style ?? existing.style,
         customStyle: patch.style
           ? patch.style === "Sonstiger"
-            ? (patch.customStyle ?? existing.customStyle)
+            ? (patch.customStyle ?? existing.custom_style)
             : null
-          : patch.customStyle ?? existing.customStyle,
+          : patch.customStyle ?? existing.custom_style,
         images: patch.images ?? existing.images,
-      });
-
-      const updated = await prisma.bonsai.update({
-        where: { id: bonsaiId },
-        data: {
-          ...patch,
-          customStyle: candidate.style === "Sonstiger" ? candidate.customStyle : null,
-          images: patch.images ?? existing.images,
-        } as Prisma.BonsaiUpdateInput,
-        include: {
-          subEntries: {
-            orderBy: [{ date: "desc" }, { id: "desc" }],
-          },
-        },
       });
 
       const nextImages = patch.images ?? existing.images;
       const removedImages = existing.images.filter((image) => !nextImages.includes(image));
-      await safeCleanup(removedImages, { userId, bonsaiId });
+      const addedImages = nextImages.filter((image) => !existing.images.includes(image));
+      await patchOwnedBonsai(actor.id, bonsaiId, { ...patch, customStyle: candidate.style === "Sonstiger" ? candidate.customStyle : null }, addedImages, removedImages);
+      const updated = await getOwnedBonsai(actor.id, bonsaiId, true);
 
-      ok(res, mapBonsaiDetail(updated as Parameters<typeof mapBonsaiDetail>[0]));
+      await safeCleanup(removedImages, { userId: actor.id, bonsaiId });
+
+      ok(res, mapBonsaiDetail(updated!));
       return;
     } catch (error) {
       if (error instanceof ZodError) {
@@ -134,28 +119,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "DELETE") {
-    const existing = await getOwnedBonsaiOr404(bonsaiId, userId);
+    const existing = await getOwnedBonsai(actor.id, bonsaiId);
     if (!existing) {
       fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
       return;
     }
 
-    await prisma.bonsai.update({
-      where: { id: bonsaiId },
-      data: { deletedAt: new Date() },
-    });
-
-    await prisma.reminder.updateMany({
-      where: {
-        bonsaiId,
-        userId,
-        status: "PENDING",
-      },
-      data: {
-        status: "SNOOZED",
-        snoozedUntil: new Date(),
-      },
-    });
+    await setOwnedBonsaiArchived(actor.id, bonsaiId, true);
 
     res.status(204).end();
     return;

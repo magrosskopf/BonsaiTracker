@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import { useAuth } from "./AuthProvider";
 
 export const navigationItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -24,7 +24,7 @@ export function getNavigationItemClassName(active: boolean): string {
 
 export default function Navigation() {
   const router = useRouter();
-  const { status } = useSession();
+  const { status } = useAuth();
 
   if (shouldHideNavigation(router.pathname, status)) {
     return null;

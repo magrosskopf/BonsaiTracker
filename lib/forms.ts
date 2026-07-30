@@ -1,9 +1,12 @@
 import type { BonsaiDetail } from "@/types/dto";
 import type { BonsaiFormValues } from "@/types/forms";
 
+const DATE_INPUT_VALUE_LENGTH = 10;
+const EURO_CENTS_FACTOR = 100;
+const EURO_AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
+
 export const emptyBonsaiFormValues: BonsaiFormValues = {
   name: "",
-  nickname: "",
   species: "",
   latinName: "",
   location: "",
@@ -12,13 +15,13 @@ export const emptyBonsaiFormValues: BonsaiFormValues = {
   heightCm: "",
   widthCm: "",
   trunkDiameterMm: "",
-  style: "Chokkan",
+  style: "Unbekannt",
   customStyle: "",
   ownedSince: "",
   acquiredFrom: "",
   purchasePriceCents: "",
   healthStatus: "UNBEKANNT",
-  developmentStage: "ROHLING",
+  developmentStage: "UNBEKANNT",
   lastRepotDate: "",
   nextRepotDue: "",
   winterHardiness: "",
@@ -36,27 +39,30 @@ function asString(value: number | string | null | undefined): string {
   return value === null || value === undefined ? "" : String(value);
 }
 
+function toDateInputValue(value: string | null | undefined): string {
+  return value?.slice(0, DATE_INPUT_VALUE_LENGTH) ?? "";
+}
+
 export function bonsaiDetailToFormValues(detail: BonsaiDetail): BonsaiFormValues {
   return {
     name: detail.name,
-    nickname: detail.nickname ?? "",
     species: detail.species,
     latinName: detail.latinName ?? "",
     location: detail.location,
     indoorOutdoor: detail.indoorOutdoor,
-    age: String(detail.age),
+    age: asString(detail.age),
     heightCm: asString(detail.heightCm),
     widthCm: asString(detail.widthCm),
     trunkDiameterMm: asString(detail.trunkDiameterMm),
     style: detail.style,
     customStyle: detail.customStyle ?? "",
-    ownedSince: detail.ownedSince.slice(0, 10),
+    ownedSince: toDateInputValue(detail.ownedSince),
     acquiredFrom: detail.acquiredFrom ?? "",
-    purchasePriceCents: asString(detail.purchasePriceCents),
+    purchasePriceCents: centsToEuroString(detail.purchasePriceCents),
     healthStatus: detail.healthStatus,
     developmentStage: detail.developmentStage,
-    lastRepotDate: detail.lastRepotDate?.slice(0, 10) ?? "",
-    nextRepotDue: detail.nextRepotDue?.slice(0, 10) ?? "",
+    lastRepotDate: toDateInputValue(detail.lastRepotDate),
+    nextRepotDue: toDateInputValue(detail.nextRepotDue),
     winterHardiness: detail.winterHardiness ?? "",
     sunExposure: detail.sunExposure ?? "",
     potType: detail.potType ?? "",
@@ -79,6 +85,32 @@ function nullableNumber(value: string): number | null {
   return trimmed === "" ? null : Number(trimmed);
 }
 
+function normalizeEuroAmount(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return null;
+  }
+
+  return trimmed.replace(",", ".");
+}
+
+function euroToCents(value: string): number | null {
+  const normalized = normalizeEuroAmount(value);
+  if (normalized === null) {
+    return null;
+  }
+
+  if (!EURO_AMOUNT_PATTERN.test(normalized)) {
+    return Number.NaN;
+  }
+
+  return Math.round(Number(normalized) * EURO_CENTS_FACTOR);
+}
+
+function centsToEuroString(value: number | null): string {
+  return value === null ? "" : (value / EURO_CENTS_FACTOR).toFixed(2).replace(".", ",");
+}
+
 function nullableDate(value: string): string | null {
   const trimmed = value.trim();
   return trimmed === "" ? null : trimmed;
@@ -87,20 +119,19 @@ function nullableDate(value: string): string | null {
 export function bonsaiFormValuesToPayload(values: BonsaiFormValues) {
   return {
     name: values.name,
-    nickname: nullableString(values.nickname),
     species: values.species,
     latinName: nullableString(values.latinName),
     location: values.location,
     indoorOutdoor: values.indoorOutdoor,
-    age: Number(values.age),
+    age: nullableNumber(values.age),
     heightCm: nullableNumber(values.heightCm),
     widthCm: nullableNumber(values.widthCm),
     trunkDiameterMm: nullableNumber(values.trunkDiameterMm),
     style: values.style,
     customStyle: values.style === "Sonstiger" ? nullableString(values.customStyle) : null,
-    ownedSince: values.ownedSince,
+    ownedSince: nullableDate(values.ownedSince),
     acquiredFrom: nullableString(values.acquiredFrom),
-    purchasePriceCents: nullableNumber(values.purchasePriceCents),
+    purchasePriceCents: euroToCents(values.purchasePriceCents),
     healthStatus: values.healthStatus,
     developmentStage: values.developmentStage,
     lastRepotDate: nullableDate(values.lastRepotDate),

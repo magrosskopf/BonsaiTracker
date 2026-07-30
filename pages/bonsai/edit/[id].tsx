@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
 import BonsaiForm from "@/components/BonsaiForm";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import { bonsaiDetailToFormValues, bonsaiFormValuesToPayload } from "@/lib/forms";
 import type { BonsaiDetail } from "@/types/dto";
 import type { BonsaiFormValues } from "@/types/forms";
@@ -10,12 +12,7 @@ import type { BonsaiFormValues } from "@/types/forms";
 export default function EditBonsaiPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [bonsai, setBonsai] = useState<BonsaiDetail | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -31,7 +28,7 @@ export default function EditBonsaiPage() {
     }
 
     void (async () => {
-      const response = await fetch(`/api/bonsais/${id}`);
+      const response = await apiFetch(`/api/bonsais/${id}`);
       const json = (await response.json()) as { ok: boolean; data?: BonsaiDetail; error?: { message: string } };
 
       if (!response.ok || !json.ok || !json.data) {
@@ -59,7 +56,7 @@ export default function EditBonsaiPage() {
           formData.append("file", file);
           formData.append("bonsaiId", String(id));
 
-          const response = await fetch("/api/upload", {
+          const response = await apiFetch("/api/upload", {
             method: "POST",
             body: formData,
           });
@@ -86,7 +83,7 @@ export default function EditBonsaiPage() {
     setSubmitting(true);
     setError(null);
     setSuccess(null);
-    const response = await fetch(`/api/bonsais/${id}`, {
+    const response = await apiFetch(`/api/bonsais/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -117,7 +114,7 @@ export default function EditBonsaiPage() {
     setSuccess(null);
 
     const nextImages = images.filter((image) => image !== imagePendingDeletion);
-    const response = await fetch(`/api/bonsais/${id}`, {
+    const response = await apiFetch(`/api/bonsais/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -171,7 +168,7 @@ export default function EditBonsaiPage() {
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {images.map((image) => (
               <div key={image} className="relative">
-                <img src={image} alt="Bonsai" className="h-40 w-full rounded-2xl object-cover" loading="lazy" />
+                <AuthenticatedImage src={image} alt="Bonsai" className="h-40 w-full rounded-2xl object-cover" loading="lazy" />
                 <button
                   type="button"
                   className="btn btn-error btn-xs absolute right-2 top-2"
@@ -190,6 +187,7 @@ export default function EditBonsaiPage() {
       </section>
 
       <BonsaiForm
+        mode="edit"
         initialValues={bonsaiDetailToFormValues(bonsai)}
         submitLabel="Änderungen speichern"
         onSubmit={handleSubmit}

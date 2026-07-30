@@ -1,19 +1,17 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
+import { formatPostSnapshotMeta } from "@/lib/posts";
 import type { PublicProfileDto } from "@/types/dto";
 import { POST_TYPE_LABELS } from "@/types/domain";
 
 export default function PublicProfilePage() {
   const router = useRouter();
   const profileId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [profile, setProfile] = useState<PublicProfileDto | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +21,7 @@ export default function PublicProfilePage() {
     }
 
     void (async () => {
-      const response = await fetch(`/api/profiles/${profileId}`);
+      const response = await apiFetch(`/api/profiles/${profileId}`);
       const json = (await response.json()) as { ok: boolean; data?: PublicProfileDto; error?: { message: string } };
       if (!response.ok || !json.ok || !json.data) {
         setError(json.error?.message ?? "Das Profil konnte nicht geladen werden.");
@@ -63,10 +61,11 @@ export default function PublicProfilePage() {
                   <div className="card-body">
                     <div className="badge badge-outline w-fit">{POST_TYPE_LABELS[post.postType]}</div>
                     <h2 className="card-title">{post.snapshotName}</h2>
+                    <p className="text-sm text-base-content/70">{formatPostSnapshotMeta(post.snapshotSpecies, post.createdAt)}</p>
                     <p>{post.text}</p>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {post.images.map((image) => (
-                        <img key={image} src={image} alt={post.snapshotName} className="h-40 w-full rounded-2xl object-cover" />
+                        <AuthenticatedImage key={image} src={image} alt={post.snapshotName} className="h-40 w-full rounded-2xl object-cover" />
                       ))}
                     </div>
                   </div>

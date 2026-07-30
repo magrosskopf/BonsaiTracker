@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import AuthenticatedImage from "@/components/AuthenticatedImage";
 import BonsaiForm from "@/components/BonsaiForm";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import { getFirstValidationMessage, type ValidationErrorDetails } from "@/lib/api/validation";
 import { bonsaiFormValuesToPayload, emptyBonsaiFormValues } from "@/lib/forms";
 import type { BonsaiFormValues } from "@/types/forms";
@@ -21,12 +23,7 @@ function getCreateBonsaiErrorMessage(error: ApiErrorPayload | undefined): string
 
 export default function CreateBonsaiPage() {
   const router = useRouter();
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [images, setImages] = useState<string[]>([]);
@@ -46,7 +43,7 @@ export default function CreateBonsaiPage() {
           const formData = new FormData();
           formData.append("file", file);
 
-          const response = await fetch("/api/upload", {
+          const response = await apiFetch("/api/upload", {
             method: "POST",
             body: formData,
           });
@@ -69,7 +66,7 @@ export default function CreateBonsaiPage() {
     setSubmitting(true);
     setError(null);
 
-    const response = await fetch("/api/bonsais", {
+    const response = await apiFetch("/api/bonsais", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -98,11 +95,27 @@ export default function CreateBonsaiPage() {
       <div className="hero-panel mb-6 space-y-2 rounded-[2rem] p-6">
         <p className="text-sm uppercase tracking-[0.2em] text-primary">Neuer Bonsai</p>
         <h1 className="text-3xl font-bold">Bonsai anlegen</h1>
+        <p className="max-w-2xl text-sm text-base-content/75">
+          Starte mit dem Namen und speichere sofort. Bilder und weitere Details kannst du direkt optional ergänzen oder nach dem Anlegen pflegen.
+        </p>
       </div>
-      <section className="surface-card mb-6 card">
+      <BonsaiForm
+        mode="create"
+        initialValues={emptyBonsaiFormValues}
+        submitLabel="Bonsai speichern"
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        error={error}
+      />
+      <section className="surface-card mt-6 card">
         <div className="card-body gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h2 className="card-title">Bilder</h2>
+            <div>
+              <h2 className="card-title">Optionale Bilder</h2>
+              <p className="text-sm text-base-content/70">
+                Bilder bleiben freiwillig. Wenn du jetzt hochlädst, werden sie beim Speichern direkt diesem neuen Bonsai zugeordnet.
+              </p>
+            </div>
             <label className="btn btn-secondary">
               {uploading ? "Lädt..." : "Bilder hochladen"}
               <input
@@ -114,15 +127,11 @@ export default function CreateBonsaiPage() {
               />
             </label>
           </div>
-          <p className="text-sm text-base-content/70">
-            Uploads werden sofort in den Medien-Storage geladen. Mit <strong>Bonsai speichern</strong> werden sie
-            diesem neuen Bonsai zugeordnet. Entfernen nimmt ein Bild nur aus dieser Auswahlliste.
-          </p>
           {images.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
               {images.map((image) => (
                 <div key={image} className="relative">
-                  <img src={image} alt="Upload" className="h-40 w-full rounded-2xl object-cover" />
+                  <AuthenticatedImage src={image} alt="Upload" className="h-40 w-full rounded-2xl object-cover" />
                   <button type="button" className="btn btn-error btn-xs absolute right-2 top-2" onClick={() => setImages((current) => current.filter((item) => item !== image))}>
                     Aus Auswahl entfernen
                   </button>
@@ -130,17 +139,10 @@ export default function CreateBonsaiPage() {
               ))}
             </div>
           ) : (
-            <p className="text-base-content/70">Lade optional Bilder hoch, damit der Bonsai direkt mit Galerie und Slideshow startet.</p>
+            <p className="text-base-content/70">Ohne Bilder ist der Schnellstart sofort speicherbar.</p>
           )}
         </div>
       </section>
-      <BonsaiForm
-        initialValues={emptyBonsaiFormValues}
-        submitLabel="Bonsai speichern"
-        onSubmit={handleSubmit}
-        submitting={submitting}
-        error={error}
-      />
     </main>
   );
 }

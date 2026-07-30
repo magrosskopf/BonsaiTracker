@@ -1,18 +1,16 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useAuth } from "@/components/AuthProvider";
+import { apiFetch } from "@/lib/api/client";
+import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import type { SelfProfileDto } from "@/types/dto";
 import { POST_TYPE_LABELS } from "@/types/domain";
 
 export default function Profile() {
   const router = useRouter();
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      void router.replace("/");
-    },
-  });
+  const { status } = useRequireAuth();
+  const { session, signOut } = useAuth();
   const [profile, setProfile] = useState<SelfProfileDto | null>(null);
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -26,7 +24,7 @@ export default function Profile() {
     }
 
     void (async () => {
-      const response = await fetch("/api/profile/me");
+      const response = await apiFetch("/api/profile/me");
       const json = (await response.json()) as { ok: boolean; data?: SelfProfileDto; error?: { message: string } };
       if (!response.ok || !json.ok || !json.data) {
         setError(json.error?.message ?? "Das Profil konnte nicht geladen werden.");
@@ -43,7 +41,7 @@ export default function Profile() {
   async function saveProfile() {
     setError(null);
     setSuccess(null);
-    const response = await fetch("/api/profile/me", {
+    const response = await apiFetch("/api/profile/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -104,7 +102,7 @@ export default function Profile() {
                 <button className="btn btn-primary" onClick={() => void saveProfile()}>
                   Speichern
                 </button>
-                <button className="btn btn-error" onClick={() => signOut({ callbackUrl: "/" })}>
+                <button className="btn btn-error" onClick={() => void signOut().then(() => router.replace("/"))}>
                   Logout
                 </button>
               </div>

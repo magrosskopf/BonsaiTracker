@@ -1,12 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { Prisma } from "@prisma/client";
 import multer from "multer";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
 import { firstQueryValue, toOptionalStringArray } from "@/lib/api/request";
 import { mapSubEntryToDto } from "@/lib/mappers";
+import { createOwnedSubEntry, listOwnedSubEntries } from "@/lib/repositories/subentries";
 import { runMiddleware } from "@/lib/middleware";
 import { logError } from "@/lib/observability";
 import { removeManagedMediaBatch } from "@/lib/storage";
@@ -40,8 +39,8 @@ async function safeCleanup(mediaPaths: string[], context: Record<string, unknown
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -52,19 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    const bonsai = await prisma.bonsai.findFirst({
-      where: { id: bonsaiId, userId, deletedAt: null },
-    });
-
-    if (!bonsai) {
+    const items = await listOwnedSubEntries(actor.id, bonsaiId);
+    if (!items) {
       fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
       return;
     }
-
-    const items = await prisma.subEntry.findMany({
-      where: { bonsaiId },
-      orderBy: [{ date: "desc" }, { id: "desc" }],
-    });
 
     ok(res, { items: items.map(mapSubEntryToDto) });
     return;
@@ -83,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const files = await Promise.all(
         ((req as MulterRequest).files ?? []).map(async (file) => {
-          const image = await persistImageUpload("subentries", file);
+          const image = await persistImageUpload(actor.id, "subentries", file);
           persistedImages.push(image);
           return image;
         }),
@@ -94,29 +85,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         images: files,
       });
 
-      const bonsai = await prisma.bonsai.findFirst({
-        where: { id: parsed.bonsaiId, userId, deletedAt: null },
-      });
-
-      if (!bonsai) {
-        fail(res, "NOT_FOUND", "Bonsai nicht gefunden.", 404);
-        return;
-      }
-
-      const created = await prisma.subEntry.create({
-        data: parsed as Prisma.SubEntryUncheckedCreateInput,
-      });
+      const created = await createOwnedSubEntry(actor.id, parsed, files);
 
       ok(res, mapSubEntryToDto(created), 201);
       return;
     } catch (error) {
       if (error instanceof ZodError) {
-        await safeCleanup(persistedImages, { userId });
+        await safeCleanup(persistedImages, { userId: actor.id });
         fail(res, "VALIDATION_ERROR", "Die Sub-Entry-Daten sind ungültig.", 422, error.flatten());
         return;
       }
-      await safeCleanup(persistedImages, { userId });
-      logError("subentry.create_failed", error, { userId });
+      await safeCleanup(persistedImages, { userId: actor.id });
+      logError("subentry.create_failed", error, { userId: actor.id });
       fail(res, "INTERNAL_SERVER_ERROR", "Der Sub-Eintrag konnte nicht erstellt werden.", 500);
       return;
     }

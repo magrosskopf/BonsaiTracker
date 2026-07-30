@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ZodError } from "zod";
-import { prisma } from "@/lib/prisma";
-import { getOwnedReminderOr404, requireUser } from "@/lib/authz";
+import { requireUser } from "@/lib/authz";
 import { mapReminderToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 import { getZodErrorMessage } from "@/lib/api/validation";
+import { getOwnedReminder, patchOwnedReminder } from "@/lib/repositories/reminders";
 import { reminderPatchSchema } from "@/lib/validators/reminder";
 
 function parseId(value: string | string[] | undefined): number | null {
@@ -14,8 +14,8 @@ function parseId(value: string | string[] | undefined): number | null {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  const userId = await requireUser(req, res);
-  if (!userId) {
+  const actor = await requireUser(req, res);
+  if (!actor) {
     return;
   }
 
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === "PATCH") {
-    const existing = await getOwnedReminderOr404(reminderId, userId);
+    const existing = await getOwnedReminder(actor.id, reminderId);
     if (!existing) {
       fail(res, "NOT_FOUND", "Reminder nicht gefunden.", 404);
       return;
@@ -34,22 +34,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const parsed = reminderPatchSchema.parse(req.body);
-      const nextReminderDate = parsed.snoozeDays ? new Date(existing.reminderDate.getTime() + parsed.snoozeDays * 24 * 60 * 60 * 1000) : parsed.reminderDate;
+      const existingReminderDate = new Date(existing.reminder_date);
+      const nextReminderDate = parsed.snoozeDays ? new Date(existingReminderDate.getTime() + parsed.snoozeDays * 24 * 60 * 60 * 1000) : parsed.reminderDate;
       const nextStatus = parsed.snoozeDays ? "SNOOZED" : parsed.status;
 
-      const updated = await prisma.reminder.update({
-        where: { id: reminderId },
-        data: {
-          title: parsed.title ?? undefined,
-          reminderDate: nextReminderDate ?? undefined,
-          status: nextStatus ?? undefined,
-          snoozedUntil: parsed.snoozeDays ? nextReminderDate ?? undefined : nextStatus === "DONE" ? null : undefined,
-          completedAt: nextStatus === "DONE" ? new Date() : nextStatus === "SNOOZED" ? null : undefined,
-        },
-        include: {
-          bonsai: true,
-        },
+      const updated = await patchOwnedReminder(actor.id, reminderId, {
+        title: parsed.title ?? undefined,
+        reminder_date: nextReminderDate ? nextReminderDate.toISOString() : undefined,
+        status: nextStatus ?? undefined,
+        snoozed_until: parsed.snoozeDays ? nextReminderDate?.toISOString() : nextStatus === "DONE" ? null : undefined,
+        completed_at: nextStatus === "DONE" ? new Date().toISOString() : nextStatus === "SNOOZED" ? null : undefined,
       });
+      if (!updated) {
+        fail(res, "NOT_FOUND", "Reminder nicht gefunden.", 404);
+        return;
+      }
 
       ok(res, mapReminderToDto(updated));
       return;

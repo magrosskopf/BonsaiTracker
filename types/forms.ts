@@ -1,6 +1,5 @@
 export interface BonsaiFormValues {
   name: string;
-  nickname: string;
   species: string;
   latinName: string;
   location: string;

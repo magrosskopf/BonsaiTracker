@@ -25,34 +25,34 @@ Erzeuge eine vollstaendig lauffaehige, koharente Anwendung ohne offensichtliche 
 - TypeScript
 - Tailwind CSS 3
 - DaisyUI 5
-- Prisma
-- PostgreSQL
-- NextAuth v4 mit EmailProvider
-- Resend fuer E-Mail-Versand
+- Supabase CLI, Auth, Data API, RPC und Storage
+- PostgreSQL ueber versionierte Supabase-Migrationen
+- Supabase Auth mit Google und Magic Link
+- Resend als Supabase Auth Custom SMTP
 - multer fuer Uploads
 - swiper fuer Bildgalerien
 
 ## Verbindliche Umgebungsannahmen
-- Lokale Entwicklungsbasis: `NEXTAUTH_URL=http://localhost:3000`
-- `DATABASE_URL` folgt aktuell dem Prisma-Accelerate-Schema `prisma+postgres://...`
-- Aktiver Mailversand in v1: `RESEND_API_KEY` + `EMAIL_FROM`
-- `EMAIL_SERVER` kann vorhanden sein, ist in v1 aber nicht der primaere Versandweg
+- Lokale Entwicklungsbasis: `NEXT_PUBLIC_APP_URL=http://localhost:3000`
+- App-Runtime liest keine direkte PostgreSQL-URL.
+- Supabase Runtime-Keys: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
+- Aktiver Magic-Link-Mailversand laeuft ueber Supabase Auth Custom SMTP.
 - Niemals echte Secret-Werte aus `.env.local` in Code, Doku, Tests oder Platzhalterdateien uebernehmen
 
 ## Verbindliche Produktentscheidungen
 - Sprache nur Deutsch
-- Login nur per Magic Link
+- Login per Google und Magic Link
 - Bonsais werden soft-deleted
 - Sub-Entries werden physisch geloescht
 - Dashboard nutzt Infinite Scroll mit Cursor-Pagination
-- Uploads bleiben lokal in `public/uploads`
+- Uploads laufen ueber privaten Supabase Storage und Next.js Media-Routen
 - `style` ist eine feste Auswahlliste
 - `customStyle` nur bei `style = "Sonstiger"`
 
 ## Konkreter Arbeitsauftrag
 1. Lies `SPEC.md` vollstaendig.
 2. Analysiere den Bestandscode und identifiziere Abweichungen zur SPEC.
-3. Harmonisiere Prisma-Schema, Migrationen und Datentypen.
+3. Harmonisiere Supabase-Migrationen, generierte Typen und DTOs.
 4. Stabilisiere Auth und Session-Nutzung.
 5. Implementiere oder refaktoriere alle API-Routen gemaess SPEC.
 6. Implementiere oder refaktoriere alle Seiten gemaess SPEC.
