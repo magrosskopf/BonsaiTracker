@@ -5,6 +5,7 @@ import {
   AUTH_RECOVERY_REDIRECT,
   AUTH_SUCCESS_REDIRECT,
   getCallbackCode,
+  getCallbackCleanPath,
   getCallbackStartPageError,
   getCallbackSuccessRedirect,
   getFirstQueryValue,
@@ -15,6 +16,7 @@ import {
 
 test("auth callback uses the dashboard as successful login target", () => {
   assert.equal(AUTH_SUCCESS_REDIRECT, "/dashboard");
+  assert.equal(getCallbackCleanPath(), "/auth/callback");
 });
 
 test("auth callback routes recovery links to the password reset page", () => {

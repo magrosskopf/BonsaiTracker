@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 type QueryValue = string | string[] | undefined;
@@ -13,6 +13,7 @@ type CallbackQuery = {
 
 export const AUTH_SUCCESS_REDIRECT = "/dashboard";
 export const AUTH_RECOVERY_REDIRECT = "/auth/reset-password";
+export const AUTH_CALLBACK_PATH = "/auth/callback";
 export const AUTH_CALLBACK_ERROR_MESSAGE = "Der Login konnte nicht abgeschlossen werden.";
 
 export function getFirstQueryValue(value: QueryValue): string | undefined {
@@ -70,8 +71,13 @@ export function getStartPageAuthErrorUrl(errorCode: string): string {
   return `/?error=${encodeURIComponent(errorCode)}`;
 }
 
+export function getCallbackCleanPath(): string {
+  return AUTH_CALLBACK_PATH;
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const exchangedCodeRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -93,14 +99,26 @@ export default function AuthCallbackPage() {
     if (!code) {
       return;
     }
+    if (exchangedCodeRef.current === code) {
+      return;
+    }
+    exchangedCodeRef.current = code;
+
+    const successRedirect = getCallbackSuccessRedirect(router.query);
+    window.history.replaceState(null, "", getCallbackCleanPath());
 
     void (async () => {
       const { error: exchangeError } = await getBrowserSupabaseClient().auth.exchangeCodeForSession(code);
       if (exchangeError) {
+        console.error("Supabase auth code exchange failed", {
+          code: exchangeError.code,
+          message: exchangeError.message,
+          status: exchangeError.status,
+        });
         setError(AUTH_CALLBACK_ERROR_MESSAGE);
         return;
       }
-      void router.replace(getCallbackSuccessRedirect(router.query));
+      void router.replace(successRedirect);
     })();
   }, [router]);
 
