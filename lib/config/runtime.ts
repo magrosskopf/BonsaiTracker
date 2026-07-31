@@ -21,6 +21,19 @@ function hasKnownPrefix(value: string, prefixes: readonly string[]): boolean {
   return prefixes.some((prefix) => value.startsWith(prefix));
 }
 
+function isLikelySelfHostedSupabaseUrl(value: string): boolean {
+  const hostname = new URL(value).hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".sslip.io");
+}
+
+function assertPublicKeyMatchesUrl(url: string, publishableKey: string): void {
+  if (isLikelySelfHostedSupabaseUrl(url) && publishableKey.startsWith("sb_publishable_")) {
+    throw new Error(
+      "Self-hosted Supabase deployments behind Kong require the public anon JWT for NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Supabase Cloud sb_publishable_ keys will be rejected by Kong with 401 Unauthorized.",
+    );
+  }
+}
+
 export function getBrowserSupabaseConfig(): { url: string; publishableKey: string } {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
@@ -34,6 +47,7 @@ export function getBrowserSupabaseConfig(): { url: string; publishableKey: strin
   if (!hasKnownPrefix(publishableKey, PUBLISHABLE_PREFIXES)) {
     throw new Error("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY does not look like a Supabase publishable key.");
   }
+  assertPublicKeyMatchesUrl(url, publishableKey);
   return { url, publishableKey };
 }
 

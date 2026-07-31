@@ -19,13 +19,26 @@ test("browser config reads only public Supabase values", () => {
   const oldEnv = process.env;
   process.env = {
     NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "eyJ_local_anon_test",
   } as unknown as NodeJS.ProcessEnv;
   try {
     assert.deepEqual(getBrowserSupabaseConfig(), {
       url: "http://127.0.0.1:54321",
-      publishableKey: "sb_publishable_test",
+      publishableKey: "eyJ_local_anon_test",
     });
+  } finally {
+    process.env = oldEnv;
+  }
+});
+
+test("browser config rejects cloud publishable keys for self-hosted Supabase", () => {
+  const oldEnv = process.env;
+  process.env = {
+    NEXT_PUBLIC_SUPABASE_URL: "https://supabasekong-example.127.0.0.1.sslip.io",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+  } as unknown as NodeJS.ProcessEnv;
+  try {
+    assert.throws(() => getBrowserSupabaseConfig(), /Self-hosted Supabase deployments behind Kong require the public anon JWT/);
   } finally {
     process.env = oldEnv;
   }
@@ -34,7 +47,7 @@ test("browser config reads only public Supabase values", () => {
 test("server config rejects publishable key as secret", () => {
   const oldEnv = process.env;
   process.env = {
-    NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
     SUPABASE_SECRET_KEY: "sb_publishable_test",
     SUPABASE_STORAGE_BUCKET: "bonsai-beta-media",
