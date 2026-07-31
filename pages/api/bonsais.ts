@@ -8,6 +8,7 @@ import { getZodErrorMessage } from "@/lib/api/validation";
 import { mapBonsaiSummary } from "@/lib/mappers";
 import { logError, logInfo, logWarn } from "@/lib/observability";
 import { createOwnedBonsai, listOwnedBonsais } from "@/lib/repositories/bonsais";
+import { failWithSupabaseError } from "@/lib/supabase/errors";
 import { bonsaiCreateSchema } from "@/lib/validators/bonsai";
 import {
   DEVELOPMENT_STAGE_OPTIONS,
@@ -85,7 +86,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return;
       }
 
-      const cursor = cursorRaw ? decodeCursor(cursorRaw) : null;
+      let cursor: ReturnType<typeof decodeCursor> | null = null;
+      try {
+        cursor = cursorRaw ? decodeCursor(cursorRaw) : null;
+      } catch {
+        fail(res, "BAD_REQUEST", "Ungültiger Cursor.", 400);
+        return;
+      }
+
       const bonsais = await listOwnedBonsais(actor.id, {
         search,
         species,
@@ -110,7 +118,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ok(res, { items: visibleItems.map(mapBonsaiSummary), nextCursor });
       return;
     } catch (error) {
-      fail(res, "BAD_REQUEST", "Ungültiger Cursor oder ungültige Filterparameter.", 400);
+      failWithSupabaseError(res, error, "Das Dashboard konnte nicht geladen werden.", "bonsai.list_failed", {
+        userId: actor.id,
+      });
       return;
     }
   }

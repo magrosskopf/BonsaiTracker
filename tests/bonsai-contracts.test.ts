@@ -8,7 +8,6 @@ import BonsaiForm from "@/components/BonsaiForm";
 import { bonsaiFormStepConfigs } from "@/lib/config/forms";
 import { mapBonsaiDetail, mapBonsaiSummary, type BonsaiDetailRecord } from "@/lib/mappers";
 import { bonsaiDetailToFormValues, bonsaiFormValuesToPayload, emptyBonsaiFormValues } from "@/lib/forms";
-import { getSupabaseDirectory } from "@/scripts/supabase-project";
 
 const require = createRequire(import.meta.url);
 const { renderToStaticMarkup } = require("react-dom/server") as {
@@ -74,10 +73,15 @@ test("bonsai dto mappers omit nickname and form mapping no longer expects it", (
   assert.equal("nickname" in payload, false);
 });
 
-test("bonsai search is delegated to parameterized Supabase RPC", () => {
-  const migration = readFileSync(join(getSupabaseDirectory(), "migrations", "20260718000300_service_rpcs.sql"), "utf8");
-  assert.match(migration, /p_search is null or b\.name ilike '%' \|\| p_search/);
-  assert.doesNotMatch(migration, /nickname ilike/);
+test("bonsai search uses direct Supabase filters without nickname", () => {
+  const source = readFileSync(join(process.cwd(), "lib", "repositories", "bonsais.ts"), "utf8");
+
+  assert.doesNotMatch(source, /rpc\("list_owned_bonsais"/);
+  assert.match(source, /name\.ilike/);
+  assert.match(source, /species\.ilike/);
+  assert.match(source, /latin_name\.ilike/);
+  assert.match(source, /location\.ilike/);
+  assert.doesNotMatch(source, /nickname\.ilike/);
 });
 
 test("bonsai form mappings support euro prices and nullable detail fields", () => {
