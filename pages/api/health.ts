@@ -4,6 +4,10 @@ import { getServerSupabaseConfig, isHealthcheckEnabled } from "@/lib/config/runt
 import { logError } from "@/lib/observability";
 import { getServerDataClient } from "@/lib/supabase/server-data";
 
+function getAppCommitSha(): string {
+  return process.env.NEXT_PUBLIC_APP_COMMIT_SHA || process.env.APP_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || "unknown";
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   if (!isHealthcheckEnabled()) {
     fail(res, "NOT_FOUND", "Healthcheck ist deaktiviert.", 404);
@@ -29,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     ok(res, {
       status: "ok",
+      commit: getAppCommitSha(),
       dataApi: "ok",
       storageBucket: config.storageBucket,
       timestamp: new Date().toISOString(),

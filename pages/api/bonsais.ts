@@ -120,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (error) {
       failWithSupabaseError(res, error, "Das Dashboard konnte nicht geladen werden.", "bonsai.list_failed", {
         userId: actor.id,
-      });
+      }, true);
       return;
     }
   }

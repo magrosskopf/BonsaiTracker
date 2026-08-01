@@ -6,6 +6,7 @@ export interface SupabaseLikeError {
   code?: string;
   message?: string;
   details?: string;
+  status?: number;
 }
 
 export class NotFoundError extends Error {}
@@ -46,10 +47,19 @@ export function failWithSupabaseError(
   fallbackMessage: string,
   context: string,
   metadata?: Record<string, unknown>,
+  includeSafeDetails = false,
 ): void {
   const mapped = toApiError(error);
   if (mapped.status === 500) {
     logError(context, error, metadata);
   }
-  fail(res, mapped.code, mapped.status === 500 ? fallbackMessage : mapped.message, mapped.status);
+  const details =
+    includeSafeDetails && typeof error === "object" && error !== null
+      ? {
+          code: "code" in error ? String((error as SupabaseLikeError).code ?? "") || null : null,
+          message: "message" in error ? String((error as SupabaseLikeError).message ?? "") || null : null,
+          status: "status" in error && typeof (error as SupabaseLikeError).status === "number" ? (error as SupabaseLikeError).status : null,
+        }
+      : undefined;
+  fail(res, mapped.code, mapped.status === 500 ? fallbackMessage : mapped.message, mapped.status, details);
 }
