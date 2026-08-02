@@ -22,8 +22,19 @@ export const DEVELOPMENT_STAGE_OPTIONS = ["UNBEKANNT", "ROHLING", "IN_GESTALTUNG
 export const WINTER_HARDINESS_OPTIONS = ["NICHT_WINTERHART", "BEDINGT_WINTERHART", "WINTERHART"] as const;
 export const SUN_EXPOSURE_OPTIONS = ["VOLLE_SONNE", "HALBSCHATTEN", "SCHATTEN"] as const;
 export const ENTRY_TYPE_OPTIONS = ["GIESSEN", "DUENGEN", "SCHNEIDEN", "DRAHTEN", "UMTOPFEN", "KONTROLLE", "FOTO_UPDATE", "SONSTIGES"] as const;
-export const REMINDER_STATUS_OPTIONS = ["PENDING", "DONE", "SNOOZED"] as const;
+export const REMINDER_STATUS_OPTIONS = ["PENDING", "DONE", "SNOOZED", "CANCELLED"] as const;
 export const POST_TYPE_OPTIONS = ["SHOWCASE", "HELP"] as const;
+export const COMMUNITY_REPORT_REASON_OPTIONS = [
+  "SPAM",
+  "HARASSMENT",
+  "HATE_OR_EXTREMISM",
+  "SEXUAL_CONTENT",
+  "VIOLENCE_OR_SELF_HARM",
+  "ILLEGAL_CONTENT",
+  "PERSONAL_DATA",
+  "OTHER",
+] as const;
+export const COMMUNITY_REPORT_STATUS_OPTIONS = ["OPEN"] as const;
 
 export type StyleOption = (typeof STYLE_OPTIONS)[number];
 export type IndoorOutdoorOption = (typeof INDOOR_OUTDOOR_OPTIONS)[number];
@@ -34,6 +45,8 @@ export type SunExposureOption = (typeof SUN_EXPOSURE_OPTIONS)[number];
 export type EntryTypeOption = (typeof ENTRY_TYPE_OPTIONS)[number];
 export type ReminderStatusOption = (typeof REMINDER_STATUS_OPTIONS)[number];
 export type PostTypeOption = (typeof POST_TYPE_OPTIONS)[number];
+export type CommunityReportReasonOption = (typeof COMMUNITY_REPORT_REASON_OPTIONS)[number];
+export type CommunityReportStatusOption = (typeof COMMUNITY_REPORT_STATUS_OPTIONS)[number];
 
 export const INDOOR_OUTDOOR_LABELS: Record<IndoorOutdoorOption, string> = {
   INDOOR: "Indoor",
@@ -84,6 +97,7 @@ export const REMINDER_STATUS_LABELS: Record<ReminderStatusOption, string> = {
   PENDING: "Offen",
   DONE: "Erledigt",
   SNOOZED: "Verschoben",
+  CANCELLED: "Entfernt",
 };
 
 export const POST_TYPE_LABELS: Record<PostTypeOption, string> = {

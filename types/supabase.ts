@@ -155,6 +155,67 @@ export type Database = {
           },
         ]
       }
+      community_reports: {
+        Row: {
+          created_at: string
+          id: number
+          note: string | null
+          reason: Database["public"]["Enums"]["community_report_reason_enum"]
+          reporter_user_id: string
+          status: Database["public"]["Enums"]["community_report_status_enum"]
+          target_comment_id: number | null
+          target_post_id: number | null
+          target_type: Database["public"]["Enums"]["community_report_target_type_enum"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          note?: string | null
+          reason: Database["public"]["Enums"]["community_report_reason_enum"]
+          reporter_user_id: string
+          status?: Database["public"]["Enums"]["community_report_status_enum"]
+          target_comment_id?: number | null
+          target_post_id?: number | null
+          target_type: Database["public"]["Enums"]["community_report_target_type_enum"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          note?: string | null
+          reason?: Database["public"]["Enums"]["community_report_reason_enum"]
+          reporter_user_id?: string
+          status?: Database["public"]["Enums"]["community_report_status_enum"]
+          target_comment_id?: number | null
+          target_post_id?: number | null
+          target_type?: Database["public"]["Enums"]["community_report_target_type_enum"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_reports_reporter_user_id_fkey"
+            columns: ["reporter_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_reports_target_comment_id_fkey"
+            columns: ["target_comment_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_reports_target_post_id_fkey"
+            columns: ["target_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           created_at: string
@@ -820,6 +881,17 @@ export type Database = {
       }
     }
     Enums: {
+      community_report_reason_enum:
+        | "SPAM"
+        | "HARASSMENT"
+        | "HATE_OR_EXTREMISM"
+        | "SEXUAL_CONTENT"
+        | "VIOLENCE_OR_SELF_HARM"
+        | "ILLEGAL_CONTENT"
+        | "PERSONAL_DATA"
+        | "OTHER"
+      community_report_status_enum: "OPEN"
+      community_report_target_type_enum: "post" | "comment"
       development_stage_enum:
         | "UNBEKANNT"
         | "ROHLING"
@@ -843,7 +915,7 @@ export type Database = {
         | "KRITISCH"
       indoor_outdoor_enum: "INDOOR" | "OUTDOOR" | "BEIDES"
       post_type_enum: "SHOWCASE" | "HELP"
-      reminder_status_enum: "PENDING" | "DONE" | "SNOOZED"
+      reminder_status_enum: "PENDING" | "DONE" | "SNOOZED" | "CANCELLED"
       sun_exposure_enum: "VOLLE_SONNE" | "HALBSCHATTEN" | "SCHATTEN"
       waitlist_status_enum: "PENDING" | "APPROVED" | "REJECTED"
       winter_hardiness_enum:
@@ -977,6 +1049,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      community_report_reason_enum: [
+        "SPAM",
+        "HARASSMENT",
+        "HATE_OR_EXTREMISM",
+        "SEXUAL_CONTENT",
+        "VIOLENCE_OR_SELF_HARM",
+        "ILLEGAL_CONTENT",
+        "PERSONAL_DATA",
+        "OTHER",
+      ],
+      community_report_status_enum: ["OPEN"],
+      community_report_target_type_enum: ["post", "comment"],
       development_stage_enum: [
         "UNBEKANNT",
         "ROHLING",
@@ -1003,7 +1087,7 @@ export const Constants = {
       ],
       indoor_outdoor_enum: ["INDOOR", "OUTDOOR", "BEIDES"],
       post_type_enum: ["SHOWCASE", "HELP"],
-      reminder_status_enum: ["PENDING", "DONE", "SNOOZED"],
+      reminder_status_enum: ["PENDING", "DONE", "SNOOZED", "CANCELLED"],
       sun_exposure_enum: ["VOLLE_SONNE", "HALBSCHATTEN", "SCHATTEN"],
       waitlist_status_enum: ["PENDING", "APPROVED", "REJECTED"],
       winter_hardiness_enum: [

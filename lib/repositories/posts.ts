@@ -5,12 +5,30 @@ import type { PostTypeOption } from "@/types/domain";
 
 const POST_SELECT = "*, profiles(name, profile_image_url), post_likes(user_id), post_comments(*, profiles(name, profile_image_url)), post_entry_references(sub_entry_id)";
 
-export async function listFeedPosts(actorUserId: string): Promise<PostRecord[]> {
-  const { data, error } = await getServerDataClient()
+export interface FeedPostListOptions {
+  limit?: number;
+  cursorCreatedAt?: string;
+  cursorId?: number;
+}
+
+export async function listFeedPosts(_actorUserId: string, options: FeedPostListOptions = {}): Promise<PostRecord[]> {
+  let query = getServerDataClient()
     .from("posts")
     .select(POST_SELECT)
     .order("created_at", { ascending: false })
     .order("id", { ascending: false });
+
+  if (options.limit) {
+    query = query.limit(options.limit);
+  }
+
+  if (options.cursorCreatedAt) {
+    query = query.or(
+      `created_at.lt.${options.cursorCreatedAt},and(created_at.eq.${options.cursorCreatedAt},id.lt.${options.cursorId ?? 2147483647})`,
+    );
+  }
+
+  const { data, error } = await query;
   if (error) {
     throw error;
   }
@@ -108,4 +126,50 @@ export async function createPostComment(actorUserId: string, postId: number, tex
     throw error;
   }
   return data as PostCommentRecord;
+}
+
+export async function updateOwnedPostComment(
+  actorUserId: string,
+  postId: number,
+  commentId: number,
+  text: string,
+): Promise<PostCommentRecord | null> {
+  const { data, error } = await getServerDataClient()
+    .from("post_comments")
+    .update({ text } as never)
+    .eq("id", commentId)
+    .eq("post_id", postId)
+    .eq("user_id", actorUserId)
+    .select("*, profiles(name, profile_image_url)")
+    .maybeSingle();
+  if (error) {
+    throw error;
+  }
+  return data as PostCommentRecord | null;
+}
+
+export async function deleteOwnedPostComment(actorUserId: string, postId: number, commentId: number): Promise<boolean> {
+  const { error, count } = await getServerDataClient()
+    .from("post_comments")
+    .delete({ count: "exact" })
+    .eq("id", commentId)
+    .eq("post_id", postId)
+    .eq("user_id", actorUserId);
+  if (error) {
+    throw error;
+  }
+  return (count ?? 0) > 0;
+}
+
+export async function getVisiblePostComment(_actorUserId: string, postId: number, commentId: number): Promise<PostCommentRecord | null> {
+  const { data, error } = await getServerDataClient()
+    .from("post_comments")
+    .select("*, profiles(name, profile_image_url)")
+    .eq("id", commentId)
+    .eq("post_id", postId)
+    .maybeSingle();
+  if (error) {
+    throw error;
+  }
+  return data as PostCommentRecord | null;
 }

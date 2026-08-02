@@ -37,13 +37,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const existingReminderDate = new Date(existing.reminder_date);
       const nextReminderDate = parsed.snoozeDays ? new Date(existingReminderDate.getTime() + parsed.snoozeDays * 24 * 60 * 60 * 1000) : parsed.reminderDate;
       const nextStatus = parsed.snoozeDays ? "SNOOZED" : parsed.status;
+      const isCancelled = nextStatus === "CANCELLED";
 
       const updated = await patchOwnedReminder(actor.id, reminderId, {
         title: parsed.title ?? undefined,
-        reminder_date: nextReminderDate ? nextReminderDate.toISOString() : undefined,
+        reminder_date: nextReminderDate && !isCancelled ? nextReminderDate.toISOString() : undefined,
         status: nextStatus ?? undefined,
-        snoozed_until: parsed.snoozeDays ? nextReminderDate?.toISOString() : nextStatus === "DONE" ? null : undefined,
-        completed_at: nextStatus === "DONE" ? new Date().toISOString() : nextStatus === "SNOOZED" ? null : undefined,
+        snoozed_until: isCancelled ? null : parsed.snoozeDays ? nextReminderDate?.toISOString() : nextStatus === "DONE" ? null : undefined,
+        completed_at: isCancelled ? null : nextStatus === "DONE" ? new Date().toISOString() : nextStatus === "SNOOZED" ? null : undefined,
       });
       if (!updated) {
         fail(res, "NOT_FOUND", "Reminder nicht gefunden.", 404);

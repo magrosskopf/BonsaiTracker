@@ -11,3 +11,4 @@ export type ReminderRow = Row<"reminders">;
 export type PostRow = Row<"posts">;
 export type PostCommentRow = Row<"post_comments">;
 export type ProfileRow = Row<"profiles">;
+export type CommunityReportRow = Row<"community_reports">;

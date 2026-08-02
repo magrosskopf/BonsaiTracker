@@ -7,6 +7,7 @@ import type {
   ReminderStatusOption,
   WinterHardinessOption,
   SunExposureOption,
+  CommunityReportStatusOption,
 } from "./domain";
 
 export interface BonsaiSummary {
@@ -87,6 +88,11 @@ export interface BonsaiListResponse {
   nextCursor: string | null;
 }
 
+export interface FeedListResponse {
+  items: PostDto[];
+  nextCursor: string | null;
+}
+
 export interface ReminderDto {
   id: number;
   userId: string;
@@ -144,4 +150,16 @@ export interface PublicProfileDto {
 
 export interface SelfProfileDto extends PublicProfileDto {
   email: string | null;
+}
+
+export interface CommunityReportDto {
+  reported: true;
+  status: CommunityReportStatusOption;
+}
+
+export interface AppIntegrityDto {
+  platform: "ios" | "android" | null;
+  subject: string | null;
+  verified: boolean;
+  devBypass: boolean;
 }

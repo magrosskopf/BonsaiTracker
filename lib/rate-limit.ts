@@ -2,7 +2,17 @@ import crypto from "crypto";
 import type { NextApiRequest } from "next";
 import { getServerDataClient } from "@/lib/supabase/server-data";
 
-export type RateLimitScope = "signup_ip" | "signup_email" | "waitlist_ip" | "waitlist_email";
+export type RateLimitScope =
+  | "signup_ip"
+  | "signup_email"
+  | "waitlist_ip"
+  | "waitlist_email"
+  | "mobile_upload"
+  | "mobile_post_create"
+  | "mobile_comment_create"
+  | "mobile_report"
+  | "mobile_like_toggle"
+  | "mobile_media_read";
 
 export interface RateLimitResult {
   allowed: boolean;

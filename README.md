@@ -6,8 +6,17 @@
 - Browser code uses Supabase only for Auth with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
   For self-hosted Supabase behind Kong, this key must be the public anon JWT, not a Supabase Cloud `sb_publishable_...` key.
 - Next.js API Routes remain the application data boundary and validate `Authorization: Bearer <access-token>`.
+- Flutter uses the versioned Public Client API under `/api/v1/...` for application data. It keeps Supabase Auth direct and sends the Supabase access token as `Authorization: Bearer <token>`.
 - Data API, service-only RPCs and private Storage are accessed only server-side with `SUPABASE_SECRET_KEY`.
 - Supabase CLI migrations live in the external local Supabase project at `../supabase/supabase/migrations/` by default.
+
+## Flutter Public Client API
+
+- Configure Flutter with `API_BASE_URL`, `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. The publishable key is only for Supabase Auth and explicitly public client flows.
+- Public Client API responses use `{ ok, data?, error? }` and live under `/api/v1/...`.
+- Private `/api/v1/...` routes require Bearer Auth and app-integrity headers: `X-Bonsai-App-Integrity` and `X-Bonsai-Platform: ios|android`.
+- Production enforces app integrity fail-closed. Local development can disable enforcement with `PUBLIC_CLIENT_APP_INTEGRITY_MODE=off` or use an explicit dev bypass token hash.
+- Supabase Auth redirect URLs must include the web callback and the iOS/Android deep-link callback URLs for the Flutter app.
 
 ## Local Development
 
@@ -33,6 +42,7 @@ If the external Supabase project is not in `../supabase`, set `BONSAI_SUPABASE_P
 - Password signups are still gated by `/api/auth/precheck` and the server-side Supabase signup checks.
 - Configure email confirmations deliberately for the beta setup; confirmed signup and password-recovery links should both return to `/auth/callback`.
 - The Magic Link fallback stays hidden by default and can be enabled with `NEXT_PUBLIC_AUTH_EMAIL_FALLBACK_ENABLED=true`.
+- For Flutter, configure Supabase deep-link redirects per environment before enabling Magic Links, password recovery or OAuth in native builds.
 
 ## Operations
 
