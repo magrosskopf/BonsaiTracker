@@ -146,7 +146,7 @@ export default function BonsaiDetailPage() {
                 Bearbeiten
               </Link>
               <Link href={`/bonsai/${bonsai.id}/subentries`} className="btn btn-outline">
-                Sub-Einträge
+                Pflegeeinträge
               </Link>
               <Link href="/feed" className="btn btn-outline">
                 Im Feed teilen
@@ -314,7 +314,7 @@ export default function BonsaiDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-base-content/60">Noch keine Sub-Einträge vorhanden.</p>
+                    <p className="text-base-content/60">Noch keine Pflegeeinträge vorhanden.</p>
                   )}
                 </div>
               </div>

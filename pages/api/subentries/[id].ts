@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const existing = await getOwnedSubEntry(actor.id, subEntryId);
     if (!existing) {
-      fail(res, "NOT_FOUND", "Sub-Eintrag nicht gefunden.", 404);
+      fail(res, "NOT_FOUND", "Pflegeeintrag nicht gefunden.", 404);
       return;
     }
 
@@ -120,7 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       await safeCleanup(newlyPersistedImages, { userId: actor.id, subEntryId }, "subentry.new_media_cleanup_failed");
       logError("subentry.update_failed", error, { userId: actor.id, subEntryId });
-      fail(res, "INTERNAL_SERVER_ERROR", "Der Sub-Eintrag konnte nicht aktualisiert werden.", 500);
+      fail(res, "INTERNAL_SERVER_ERROR", "Der Pflegeeintrag konnte nicht aktualisiert werden.", 500);
       return;
     }
   }
@@ -128,7 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === "DELETE") {
     const existing = await getOwnedSubEntry(actor.id, subEntryId);
     if (!existing) {
-      fail(res, "NOT_FOUND", "Sub-Eintrag nicht gefunden.", 404);
+      fail(res, "NOT_FOUND", "Pflegeeintrag nicht gefunden.", 404);
       return;
     }
 
