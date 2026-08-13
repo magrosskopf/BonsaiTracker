@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       await safeCleanup(persistedImages, { userId: actor.id });
       logError("subentry.create_failed", error, { userId: actor.id });
-      fail(res, "INTERNAL_SERVER_ERROR", "Der Sub-Eintrag konnte nicht erstellt werden.", 500);
+      fail(res, "INTERNAL_SERVER_ERROR", "Der Pflegeeintrag konnte nicht erstellt werden.", 500);
       return;
     }
   }

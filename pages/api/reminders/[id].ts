@@ -38,9 +38,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const nextReminderDate = parsed.snoozeDays ? new Date(existingReminderDate.getTime() + parsed.snoozeDays * 24 * 60 * 60 * 1000) : parsed.reminderDate;
       const nextStatus = parsed.snoozeDays ? "SNOOZED" : parsed.status;
       const isCancelled = nextStatus === "CANCELLED";
+      const hasTitle = Object.prototype.hasOwnProperty.call(parsed, "title");
 
       const updated = await patchOwnedReminder(actor.id, reminderId, {
-        title: parsed.title ?? undefined,
+        bonsai_id: parsed.bonsaiId ?? undefined,
+        title: hasTitle ? parsed.title : undefined,
         reminder_date: nextReminderDate && !isCancelled ? nextReminderDate.toISOString() : undefined,
         status: nextStatus ?? undefined,
         snoozed_until: isCancelled ? null : parsed.snoozeDays ? nextReminderDate?.toISOString() : nextStatus === "DONE" ? null : undefined,

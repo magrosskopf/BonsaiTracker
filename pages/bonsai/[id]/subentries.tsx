@@ -113,7 +113,7 @@ export default function BonsaiSubEntriesPage() {
       const entriesResponse = await apiFetch(`/api/subentries?bonsaiId=${bonsaiId}`);
       const entriesJson = (await entriesResponse.json()) as { ok: boolean; data?: { items: SubEntryDto[] }; error?: { message: string } };
       if (!entriesResponse.ok || !entriesJson.ok || !entriesJson.data) {
-        setError(entriesJson.error?.message ?? "Die Sub-Einträge konnten nicht geladen werden.");
+        setError(entriesJson.error?.message ?? "Die Pflegeeinträge konnten nicht geladen werden.");
         return;
       }
 
@@ -142,7 +142,7 @@ export default function BonsaiSubEntriesPage() {
     setSubmitting(false);
 
     if (!response.ok || !json.ok || !json.data) {
-      setError(json.error?.message ?? "Der Sub-Eintrag konnte nicht erstellt werden.");
+      setError(json.error?.message ?? "Der Pflegeeintrag konnte nicht erstellt werden.");
       return;
     }
 
@@ -164,7 +164,7 @@ export default function BonsaiSubEntriesPage() {
     setSubmitting(false);
 
     if (!response.ok || !json.ok || !json.data) {
-      setError(json.error?.message ?? "Der Sub-Eintrag konnte nicht gespeichert werden.");
+      setError(json.error?.message ?? "Der Pflegeeintrag konnte nicht gespeichert werden.");
       return;
     }
 
@@ -210,7 +210,7 @@ export default function BonsaiSubEntriesPage() {
   async function deleteEntry(entryId: number) {
     const response = await apiFetch(`/api/subentries/${entryId}`, { method: "DELETE" });
     if (!response.ok) {
-      setError("Der Sub-Eintrag konnte nicht gelöscht werden.");
+      setError("Der Pflegeeintrag konnte nicht gelöscht werden.");
       return;
     }
     setEntries((current) => current.filter((entry) => entry.id !== entryId));
@@ -236,7 +236,7 @@ export default function BonsaiSubEntriesPage() {
 
       <section className="surface-card card">
         <div className="card-body space-y-4">
-          <h2 className="card-title">Neuen Sub-Eintrag hinzufügen</h2>
+          <h2 className="card-title">Neuen Pflegeeintrag hinzufügen</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <fieldset className="fieldset gap-2">
               <legend className="fieldset-legend text-sm font-medium">Datum</legend>
@@ -278,7 +278,7 @@ export default function BonsaiSubEntriesPage() {
             <fieldset className="fieldset gap-2 md:col-span-2">
               <legend className="fieldset-legend text-sm font-medium">Bilder</legend>
               <p className="text-sm text-base-content/70">
-                Neue Bilder werden erst mit <strong>Sub-Eintrag anlegen</strong> gespeichert und diesem Eintrag
+                Neue Bilder werden erst mit <strong>Pflegeeintrag anlegen</strong> gespeichert und diesem Eintrag
                 zugeordnet.
               </p>
               <input className="file-input file-input-bordered" type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={(event) => setCreateForm((current) => ({ ...current, newImages: Array.from(event.target.files ?? []) }))} />
@@ -287,7 +287,7 @@ export default function BonsaiSubEntriesPage() {
           <div className="card-actions justify-end">
             <button className="btn btn-primary" onClick={createEntry} disabled={submitting || !createForm.date}>
               {submitting ? <span className="loading loading-spinner loading-sm" /> : null}
-              Sub-Eintrag anlegen
+              Pflegeeintrag anlegen
             </button>
           </div>
         </div>
@@ -348,7 +348,7 @@ export default function BonsaiSubEntriesPage() {
 
       <dialog className={`modal ${editingEntry ? "modal-open" : ""}`}>
         <div className="modal-box max-w-3xl">
-          <h3 className="text-lg font-bold">Sub-Eintrag bearbeiten</h3>
+          <h3 className="text-lg font-bold">Pflegeeintrag bearbeiten</h3>
           {editingEntry ? (
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <fieldset className="fieldset gap-2">
@@ -432,7 +432,7 @@ export default function BonsaiSubEntriesPage() {
         <div className="modal-box max-w-lg">
           <h3 className="text-lg font-bold">Bild entfernen?</h3>
           <p className="mt-3 text-sm text-base-content/70">
-            Das Bild wird nach der Bestätigung sofort aus diesem Sub-Eintrag entfernt und muss nicht zusätzlich
+            Das Bild wird nach der Bestätigung sofort aus diesem Pflegeeintrag entfernt und muss nicht zusätzlich
             über den Bearbeiten-Dialog gespeichert werden.
           </p>
           <div className="modal-action">
