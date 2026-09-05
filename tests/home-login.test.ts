@@ -6,11 +6,12 @@ import {
   AUTH_CALLBACK_PATH,
   EMAIL_PASSWORD_LOGIN_LABEL,
   EMAIL_PASSWORD_SIGNUP_LABEL,
-  GOOGLE_LOGIN_LABEL,
+  GOOGLE_LOGIN_LABELS,
   MAGIC_LINK_FALLBACK_LABEL,
   PASSWORD_RESET_LABEL,
   getAuthCallbackUrl,
   getAuthErrorMessage,
+  getGoogleLoginLabel,
   getAuthModeTitle,
   normalizeAuthEmail,
   validatePasswordSignup,
@@ -19,7 +20,13 @@ import {
 const repoRoot = process.cwd();
 
 test("home page exposes Google and email/password as standard auth options", () => {
-  assert.equal(GOOGLE_LOGIN_LABEL, "Mit Google fortfahren");
+  assert.deepEqual(GOOGLE_LOGIN_LABELS, {
+    login: "Mit Google anmelden",
+    signup: "Mit Google registrieren",
+  });
+  assert.equal(getGoogleLoginLabel("login"), "Mit Google anmelden");
+  assert.equal(getGoogleLoginLabel("signup"), "Mit Google registrieren");
+  assert.equal(getGoogleLoginLabel("reset"), "Mit Google anmelden");
   assert.equal(EMAIL_PASSWORD_LOGIN_LABEL, "Mit E-Mail anmelden");
   assert.equal(EMAIL_PASSWORD_SIGNUP_LABEL, "Mit E-Mail registrieren");
   assert.equal(PASSWORD_RESET_LABEL, "Passwort vergessen?");
@@ -68,9 +75,31 @@ test("home page uses direct Supabase auth calls without signup precheck", () => 
   assert.match(source, /signInWithPassword/);
   assert.match(source, /signUp/);
   assert.match(source, /resetPasswordForEmail/);
+  assert.match(source, /getGoogleLoginLabel\(authMode\)/);
   assert.doesNotMatch(source, /apiFetch\("\/api\/auth\/precheck"/);
   assert.doesNotMatch(source, /WaitlistRequestForm/);
   assert.doesNotMatch(source, /Warteliste|Whitelist|Beta-Zugang|geschlossene Beta|Freigabe/);
+});
+
+test("home page places Google action below auth mode switch", () => {
+  const source = readFileSync(join(repoRoot, "pages", "index.tsx"), "utf8");
+  const switchPosition = source.indexOf('className="join grid grid-cols-2"');
+  const googlePosition = source.indexOf("getGoogleLoginLabel(authMode)");
+
+  assert.notEqual(switchPosition, -1);
+  assert.notEqual(googlePosition, -1);
+  assert.ok(switchPosition < googlePosition);
+});
+
+test("home page uses a consistent auth field layout for email and password inputs", () => {
+  const source = readFileSync(join(repoRoot, "pages", "index.tsx"), "utf8");
+
+  assert.match(source, /function AuthField/);
+  assert.match(source, /input input-bordered input-lg w-full/);
+  assert.match(source, /md:grid-cols-2/);
+  assert.match(source, /md:col-span-2/);
+  assert.match(source, /label="E-Mail-Adresse"/);
+  assert.match(source, /label="Passwort bestätigen"/);
 });
 
 test("waitlist page is no longer part of the app surface", () => {

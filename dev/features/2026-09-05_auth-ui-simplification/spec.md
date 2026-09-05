@@ -11,7 +11,7 @@ Ziel ist eine deutlich ruhigere Auth-UI, die drei Begriffe sauber trennt:
 
 1. **Login**: Bestehende Nutzer melden sich mit E-Mail und Passwort an.
 2. **Registrierung**: Neue Nutzer erstellen ein Konto mit E-Mail und Passwort.
-3. **Google-Fortfahren**: Nutzer verwenden Google als alternativen Auth-Weg fuer Anmeldung oder Kontoerstellung.
+3. **Google-Anmeldung/-Registrierung**: Nutzer verwenden Google als alternativen Auth-Weg fuer Anmeldung oder Kontoerstellung, passend zum ausgewaehlten Modus.
 
 Die Warteliste beziehungsweise Whitelist-Kommunikation soll aus der Anwendungsschicht verschwinden. Neue Nutzer sollen sich grundsaetzlich registrieren koennen; eine vorgelagerte Freigabepruefung ist fuer den Web-Registrierungsflow nicht mehr Teil des Produkts.
 
@@ -39,6 +39,7 @@ Die Warteliste beziehungsweise Whitelist-Kommunikation soll aus der Anwendungssc
 10. Anwendungsschicht-Code fuer Waitlist-Anfragen und Signup-Gating wird entfernt, sofern er nicht fuer bestehende Auth-, Daten- oder DB-Validierungsgrenzen noetig ist.
 11. Bereits eingeloggte Nutzer sehen weiterhin die bestehenden Dashboard- und Logout-Aktionen.
 12. Die UI bleibt auf Mobile und Desktop klar lesbar, ohne ueberlappende Texte und ohne eine ueberladene Card.
+13. E-Mail- und Passwort-Felder sind innerhalb der Auth-Card konsistent ausgerichtet, vollbreit im Login-Modus und im Registrierungsmodus sauber als geordnete Formulargruppe dargestellt.
 
 ## Technical Constraints
 
@@ -59,13 +60,14 @@ Die Warteliste beziehungsweise Whitelist-Kommunikation soll aus der Anwendungssc
 3. Die Startseite importiert und rendert `WaitlistRequestForm` nicht mehr.
 4. Die Startseite zeigt keinen Link zur Wartelisten-Seite fuer nicht eingeloggte Nutzer.
 5. Sichtbare Startseiten-Texte enthalten keine Wartelisten-/Whitelist-/Beta-Freigabe-Kommunikation.
-6. Google-Fortfahren, E-Mail-Anmeldung und E-Mail-Registrierung sind anhand ihrer Labels und Modus-Ueberschriften eindeutig unterscheidbar.
+6. Google-Anmeldung/-Registrierung, E-Mail-Anmeldung und E-Mail-Registrierung sind anhand ihrer Labels und Modus-Ueberschriften eindeutig unterscheidbar.
 7. Der aktive Auth-Modus ist visuell und semantisch klar erkennbar.
 8. E-Mail-Registrierung verwendet keinen Signup-Precheck mehr und zeigt keine Gating-, Waitlist-, Whitelist-, Beta- oder Freigabe-Blockademeldungen.
 9. Passwort-Reset bleibt im Login-Modus erreichbar und funktioniert unveraendert ueber Supabase `resetPasswordForEmail`.
 10. Bestehende Auth-Handler fuer Google, E-Mail/Passwort, Signup und Reset bleiben funktional.
 11. Tests decken ab, dass Waitlist-UI von der Startseite entfernt ist, `/waitlist` nicht mehr als Page existiert und die Auth-Labels weiterhin eindeutig sind.
 12. Anwendungsschicht-Tests und Doku enthalten keine aktiven Waitlist-/Beta-Freigabe-Betriebsablaeufe mehr.
+13. Auth-Formularfelder verwenden eine einheitliche Feldstruktur mit klaren Labels, konsistenter Input-Breite und stabiler Ausrichtung fuer Login, Registrierung, Reset und optionalen Magic-Link-Fallback.
 
 ## Out-of-Scope
 
@@ -92,8 +94,10 @@ Dieser Abschnitt ist ein Planentwurf. Der verbindliche `implementation.md` wird 
    - `getAuthErrorMessage("AccessDenied")` ohne Beta-/Waitlist-Verweis formulieren.
    - Auth-Fehlermeldungen bleiben deutsch und handlungsorientiert, aber ohne Gating-Begriffe.
 4. UI-Struktur schaerfen:
-   - Google-Button als separaten Auth-Weg oberhalb oder neben dem E-Mail-Bereich lassen und mit `Mit Google fortfahren` beschriften.
+   - Segment-Control fuer `Anmelden` und `Registrieren` vor den Auth-Aktionen anzeigen.
+   - Google-Button als separaten Auth-Weg unterhalb der Modus-Auswahl anzeigen und je nach Modus mit `Mit Google anmelden` oder `Mit Google registrieren` beschriften.
    - Segment-Control fuer `Anmelden` und `Registrieren` beibehalten, aber mit klarer Headline und knapper Hilfskopie pro Modus.
+   - E-Mail- und Passwortfelder mit gemeinsamer Feldkomponente, voller Breite und sauberem Grid fuer Registrierungs-Passwortfelder ausrichten.
    - Passwort-Reset nur im Login-Modus nachrangig anzeigen.
 5. Anwendungsschicht-Waitlist/Gating entfernen:
    - `pages/waitlist.tsx`, `components/WaitlistRequestForm.tsx`, `pages/api/access-requests.ts`, `pages/api/auth/precheck.ts` und die v1-Aliase entfernen.
@@ -132,4 +136,4 @@ Dieser Abschnitt ist ein Planentwurf. Der verbindliche `implementation.md` wird 
 5. Docs und Betriebsskripte fuer Waitlist-/Beta-Freigabe werden entfernt oder bereinigt.
 6. Die Auth-Seite soll keine neue Informationsarchitektur bekommen, sondern gezielt entlastet werden.
 7. Google und E-Mail/Passwort bleiben die Standard-Auth-Wege.
-8. Google wird als kombinierter Auth-Weg fuer Anmeldung oder Kontoerstellung verstanden und mit `Mit Google fortfahren` beschriftet.
+8. Google wird als kombinierter Auth-Weg fuer Anmeldung oder Kontoerstellung verstanden; das Button-Label folgt dem ausgewaehlten Modus.

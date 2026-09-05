@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 
-export const GOOGLE_LOGIN_LABEL = "Mit Google fortfahren";
+export const GOOGLE_LOGIN_LABELS = {
+  login: "Mit Google anmelden",
+  signup: "Mit Google registrieren",
+} as const;
 export const EMAIL_PASSWORD_LOGIN_LABEL = "Mit E-Mail anmelden";
 export const EMAIL_PASSWORD_SIGNUP_LABEL = "Mit E-Mail registrieren";
 export const MAGIC_LINK_FALLBACK_LABEL = "Login-Link per E-Mail senden";
@@ -15,6 +18,7 @@ export const AUTH_CALLBACK_PATH = "/auth/callback";
 const isEmailFallbackEnabled = process.env.NEXT_PUBLIC_AUTH_EMAIL_FALLBACK_ENABLED === "true";
 export type AuthMode = "login" | "signup" | "reset";
 type SubmitAction = "google" | "login" | "signup" | "reset" | "magic-link";
+const AUTH_INPUT_CLASS = "input input-bordered input-lg w-full bg-base-100 text-base";
 
 export function getAuthCallbackUrl(origin: string): string {
   return `${origin.replace(/\/$/, "")}${AUTH_CALLBACK_PATH}`;
@@ -38,14 +42,18 @@ export function validatePasswordSignup(password: string, confirmation: string): 
 
 export function getAuthModeTitle(mode: AuthMode): string {
   if (mode === "signup") {
-    return "Mit E-Mail registrieren";
+    return EMAIL_PASSWORD_SIGNUP_LABEL;
   }
 
   if (mode === "reset") {
     return "Passwort zurücksetzen";
   }
 
-  return "Mit E-Mail anmelden";
+  return EMAIL_PASSWORD_LOGIN_LABEL;
+}
+
+export function getGoogleLoginLabel(mode: AuthMode): string {
+  return mode === "signup" ? GOOGLE_LOGIN_LABELS.signup : GOOGLE_LOGIN_LABELS.login;
 }
 
 export function getAuthErrorMessage(error: string | string[] | undefined): string | null {
@@ -67,6 +75,26 @@ export function getAuthErrorMessage(error: string | string[] | undefined): strin
   }
 
   return "Der Login konnte nicht abgeschlossen werden.";
+}
+
+function AuthField({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <fieldset className="fieldset w-full gap-2 p-0">
+      <legend className="fieldset-legend flex w-full items-center justify-between p-0 text-sm font-semibold text-base-content">
+        {label}
+      </legend>
+      {children}
+      {hint ? <p className="label-text-alt leading-relaxed text-base-content/60">{hint}</p> : null}
+    </fieldset>
+  );
 }
 
 export default function Home() {
@@ -279,16 +307,12 @@ export default function Home() {
         <div className="card-body">
           <h2 className="card-title text-2xl">Anmelden oder Konto erstellen</h2>
           <p className="text-base-content/70">
-            Fahre mit Google fort oder nutze E-Mail und Passwort. Bestehende Konten melden sich an, neue Konten registrieren sich.
+            Wähle Anmeldung oder Registrierung und nutze danach Google oder E-Mail und Passwort.
           </p>
           {authError ? <div className="alert alert-error">{authError}</div> : null}
           {message ? <div className="alert alert-success">{message}</div> : null}
           {error ? <div className="alert alert-error">{error}</div> : null}
           <div className="space-y-4 border-b border-base-300 pb-6">
-            <button className="btn btn-primary w-full" disabled={submitting} onClick={handleGoogleLogin} type="button">
-              {submittingAction === "google" ? <span className="loading loading-spinner loading-sm" /> : <span aria-hidden="true">G</span>}
-              {GOOGLE_LOGIN_LABEL}
-            </button>
             <div className="join grid grid-cols-2">
               <button
                 className={`btn join-item ${authMode === "login" ? "btn-active" : "btn-outline"}`}
@@ -307,14 +331,17 @@ export default function Home() {
                 Registrieren
               </button>
             </div>
+            <button className="btn btn-primary w-full" disabled={submitting} onClick={handleGoogleLogin} type="button">
+              {submittingAction === "google" ? <span className="loading loading-spinner loading-sm" /> : <span aria-hidden="true">G</span>}
+              {getGoogleLoginLabel(authMode)}
+            </button>
             {authMode === "reset" ? (
-              <form className="space-y-4 pt-2" onSubmit={handlePasswordReset}>
+              <form className="space-y-5 pt-2" onSubmit={handlePasswordReset}>
                 <h3 className="text-lg font-semibold">{getAuthModeTitle(authMode)}</h3>
                 <p className="text-sm text-base-content/60">Erhalte eine E-Mail, um dein Passwort fuer ein bestehendes Konto zu erneuern.</p>
-                <label className="form-control gap-2">
-                  <span className="label-text">E-Mail</span>
+                <AuthField label="E-Mail-Adresse">
                   <input
-                    className="input input-bordered"
+                    className={AUTH_INPUT_CLASS}
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
@@ -322,7 +349,7 @@ export default function Home() {
                     autoComplete="email"
                     required
                   />
-                </label>
+                </AuthField>
                 <button className="btn btn-primary w-full" disabled={submitting || !email}>
                   {submittingAction === "reset" ? <span className="loading loading-spinner loading-sm" /> : null}
                   Reset-E-Mail senden
@@ -332,49 +359,52 @@ export default function Home() {
                 </button>
               </form>
             ) : (
-              <form className="space-y-4 pt-2" onSubmit={authMode === "signup" ? handleEmailPasswordSignup : handleEmailPasswordLogin}>
+              <form className="space-y-5 pt-2" onSubmit={authMode === "signup" ? handleEmailPasswordSignup : handleEmailPasswordLogin}>
                 <h3 className="text-lg font-semibold">{getAuthModeTitle(authMode)}</h3>
                 <p className="text-sm text-base-content/60">
                   {authMode === "signup" ? "Erstelle ein neues Konto mit E-Mail und Passwort." : "Melde dich mit den Zugangsdaten deines bestehenden Kontos an."}
                 </p>
-                <label className="form-control gap-2">
-                  <span className="label-text">E-Mail</span>
-                  <input
-                    className="input input-bordered"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="du@example.com"
-                    autoComplete="email"
-                    required
-                  />
-                </label>
-                <label className="form-control gap-2">
-                  <span className="label-text">Passwort</span>
-                  <input
-                    className="input input-bordered"
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    autoComplete={authMode === "signup" ? "new-password" : "current-password"}
-                    minLength={authMode === "signup" ? 8 : undefined}
-                    required
-                  />
-                </label>
-                {authMode === "signup" ? (
-                  <label className="form-control gap-2">
-                    <span className="label-text">Passwort bestätigen</span>
-                    <input
-                      className="input input-bordered"
-                      type="password"
-                      value={passwordConfirmation}
-                      onChange={(event) => setPasswordConfirmation(event.target.value)}
-                      autoComplete="new-password"
-                      minLength={8}
-                      required
-                    />
-                  </label>
-                ) : null}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <AuthField label="E-Mail-Adresse">
+                      <input
+                        className={AUTH_INPUT_CLASS}
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="du@example.com"
+                        autoComplete="email"
+                        required
+                      />
+                    </AuthField>
+                  </div>
+                  <div className={authMode === "signup" ? undefined : "md:col-span-2"}>
+                    <AuthField label="Passwort" hint={authMode === "signup" ? "Mindestens 8 Zeichen." : undefined}>
+                      <input
+                        className={AUTH_INPUT_CLASS}
+                        type="password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+                        minLength={authMode === "signup" ? 8 : undefined}
+                        required
+                      />
+                    </AuthField>
+                  </div>
+                  {authMode === "signup" ? (
+                    <AuthField label="Passwort bestätigen">
+                      <input
+                        className={AUTH_INPUT_CLASS}
+                        type="password"
+                        value={passwordConfirmation}
+                        onChange={(event) => setPasswordConfirmation(event.target.value)}
+                        autoComplete="new-password"
+                        minLength={8}
+                        required
+                      />
+                    </AuthField>
+                  ) : null}
+                </div>
                 <button className="btn btn-primary w-full" disabled={submitting || !email || !password || (authMode === "signup" && !passwordConfirmation)}>
                   {submittingAction === authMode ? <span className="loading loading-spinner loading-sm" /> : null}
                   {authMode === "signup" ? EMAIL_PASSWORD_SIGNUP_LABEL : EMAIL_PASSWORD_LOGIN_LABEL}
@@ -388,10 +418,9 @@ export default function Home() {
             )}
             {isEmailFallbackEnabled ? (
               <form className="space-y-4 border-t border-base-300 pt-5" onSubmit={handleMagicLinkFallback}>
-                <fieldset className="fieldset gap-2">
-                  <legend className="fieldset-legend text-sm font-medium">Probleme beim Einloggen?</legend>
+                <AuthField label="Probleme beim Einloggen?">
                   <input
-                    className="input input-bordered"
+                    className={AUTH_INPUT_CLASS}
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
@@ -399,7 +428,7 @@ export default function Home() {
                     autoComplete="email"
                     required
                   />
-                </fieldset>
+                </AuthField>
                 <button className="btn btn-outline w-full" disabled={submitting || !email}>
                   {submittingAction === "magic-link" ? <span className="loading loading-spinner loading-sm" /> : null}
                   {MAGIC_LINK_FALLBACK_LABEL}
