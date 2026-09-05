@@ -2,11 +2,9 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import WaitlistRequestForm from "@/components/WaitlistRequestForm";
-import { apiFetch } from "@/lib/api/client";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
 
-export const GOOGLE_LOGIN_LABEL = "Mit Google anmelden";
+export const GOOGLE_LOGIN_LABEL = "Mit Google fortfahren";
 export const EMAIL_PASSWORD_LOGIN_LABEL = "Mit E-Mail anmelden";
 export const EMAIL_PASSWORD_SIGNUP_LABEL = "Mit E-Mail registrieren";
 export const MAGIC_LINK_FALLBACK_LABEL = "Login-Link per E-Mail senden";
@@ -57,7 +55,7 @@ export function getAuthErrorMessage(error: string | string[] | undefined): strin
   }
 
   if (code === "AccessDenied") {
-    return "Dieser Account ist noch nicht für die geschlossene Beta freigeschaltet. Nutze bitte die Warteliste.";
+    return "Der Zugriff wurde abgelehnt. Bitte melde dich erneut an oder kontaktiere den Support.";
   }
 
   if (code === "OAuthAccountNotLinked") {
@@ -145,25 +143,6 @@ export default function Home() {
     setSubmittingAction("signup");
 
     try {
-      const precheckResponse = await apiFetch("/api/auth/precheck", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: normalizedEmail }),
-      }, { auth: "none" });
-
-      const precheckPayload = await precheckResponse.json();
-      if (!precheckResponse.ok || !precheckPayload?.ok) {
-        setError("Die Registrierung konnte nicht gestartet werden.");
-        return;
-      }
-
-      if (!precheckPayload.data?.allowed) {
-        setError(precheckPayload.data?.message ?? "Registrierungen sind aktuell nur mit Freigabe möglich.");
-        return;
-      }
-
       const { data, error: signUpError } = await getBrowserSupabaseClient().auth.signUp({
         email: normalizedEmail,
         password,
@@ -184,7 +163,7 @@ export default function Home() {
 
       setMessage("Bitte prüfe dein Postfach, um deine Registrierung abzuschliessen.");
     } catch {
-      setError("Die Registrierung konnte nicht gestartet werden.");
+      setError("Die Registrierung konnte nicht abgeschlossen werden.");
     } finally {
       setSubmittingAction(null);
     }
@@ -233,30 +212,11 @@ export default function Home() {
     setSubmittingAction("magic-link");
 
     try {
-      const precheckResponse = await apiFetch("/api/auth/precheck", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: normalizedEmail }),
-      }, { auth: "none" });
-
-      const precheckPayload = await precheckResponse.json();
-      if (!precheckResponse.ok || !precheckPayload?.ok) {
-        setError("Der Login-Link konnte nicht gestartet werden.");
-        return;
-      }
-
-      if (!precheckPayload.data?.allowed) {
-        setError(precheckPayload.data?.message ?? "Registrierungen sind aktuell nur mit Freigabe möglich.");
-        return;
-      }
-
       const result = await getBrowserSupabaseClient().auth.signInWithOtp({
         email: normalizedEmail,
         options: {
           emailRedirectTo: getAuthCallbackUrl(window.location.origin),
-          shouldCreateUser: true,
+          shouldCreateUser: false,
         },
       });
 
@@ -313,20 +273,14 @@ export default function Home() {
             </button>
           </div>
         ) : null}
-        {status !== "authenticated" ? (
-          <div className="flex flex-wrap gap-3 text-sm text-base-content/70">
-            <Link href="/waitlist" className="btn btn-outline">
-              Zur öffentlichen Warteliste
-            </Link>
-            <p className="max-w-sm self-center">Du willst Bonsai Tracker schon jetzt teilen? Nutze die neue Landingpage für die Voranmeldung.</p>
-          </div>
-        ) : null}
       </section>
 
       <section className="surface-card card w-full max-w-lg">
         <div className="card-body">
-          <h2 className="card-title text-2xl">Login und Beta-Zugang</h2>
-          <p className="text-base-content/70">Du hast schon einen Zugang? Dann melde dich mit Google oder E-Mail und Passwort an. Wenn du neu bist, kannst du dich für die Warteliste eintragen.</p>
+          <h2 className="card-title text-2xl">Anmelden oder Konto erstellen</h2>
+          <p className="text-base-content/70">
+            Fahre mit Google fort oder nutze E-Mail und Passwort. Bestehende Konten melden sich an, neue Konten registrieren sich.
+          </p>
           {authError ? <div className="alert alert-error">{authError}</div> : null}
           {message ? <div className="alert alert-success">{message}</div> : null}
           {error ? <div className="alert alert-error">{error}</div> : null}
@@ -356,6 +310,7 @@ export default function Home() {
             {authMode === "reset" ? (
               <form className="space-y-4 pt-2" onSubmit={handlePasswordReset}>
                 <h3 className="text-lg font-semibold">{getAuthModeTitle(authMode)}</h3>
+                <p className="text-sm text-base-content/60">Erhalte eine E-Mail, um dein Passwort fuer ein bestehendes Konto zu erneuern.</p>
                 <label className="form-control gap-2">
                   <span className="label-text">E-Mail</span>
                   <input
@@ -379,6 +334,9 @@ export default function Home() {
             ) : (
               <form className="space-y-4 pt-2" onSubmit={authMode === "signup" ? handleEmailPasswordSignup : handleEmailPasswordLogin}>
                 <h3 className="text-lg font-semibold">{getAuthModeTitle(authMode)}</h3>
+                <p className="text-sm text-base-content/60">
+                  {authMode === "signup" ? "Erstelle ein neues Konto mit E-Mail und Passwort." : "Melde dich mit den Zugangsdaten deines bestehenden Kontos an."}
+                </p>
                 <label className="form-control gap-2">
                   <span className="label-text">E-Mail</span>
                   <input
@@ -448,14 +406,6 @@ export default function Home() {
                 </button>
               </form>
             ) : null}
-          </div>
-          <div className="border-t border-base-300 pt-6">
-            <WaitlistRequestForm
-              title="Neu hier? Zugang anfragen"
-              description="Wenn du vor dem offiziellen Start informiert werden willst, kannst du dich hier direkt auf die Warteliste setzen."
-              submitLabel="Warteliste anfragen"
-              variant="embedded"
-            />
           </div>
         </div>
       </section>

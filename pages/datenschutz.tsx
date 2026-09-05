@@ -54,20 +54,18 @@ export default function DatenschutzPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-xl font-semibold">Beta-Zugang, Warteliste und Missbrauchsschutz</h2>
+            <h2 className="text-xl font-semibold">Registrierung und Missbrauchsschutz</h2>
             <p>
-              Wenn Sie einen Zugang anfragen oder sich für die Warteliste eintragen, verarbeiten wir insbesondere Ihre
-              E-Mail-Adresse. Zusätzlich können zur Missbrauchsvermeidung und Anfragedrosselung Ihre IP-Adresse,
-              Zeitpunkte von Anfragen sowie der User-Agent Ihres Browsers verarbeitet werden.
+              Wenn Sie ein Konto erstellen oder sich anmelden, verarbeiten wir insbesondere Ihre E-Mail-Adresse und
+              technische Authentifizierungsdaten. Zusätzlich können zur Missbrauchsvermeidung und Anfragedrosselung
+              Ihre IP-Adresse, Zeitpunkte von Anfragen sowie der User-Agent Ihres Browsers verarbeitet werden.
             </p>
             <p>
-              Diese Verarbeitung dient der Bearbeitung Ihrer Anfrage, der Steuerung des Beta-Zugangs und dem Schutz vor
-              automatisierten oder missbräuchlichen Anfragen. Rechtsgrundlagen sind je nach Kontext Art. 6 Abs. 1 lit.
-              b DSGVO für angefragte Zugangsprozesse sowie Art. 6 Abs. 1 lit. f DSGVO für Sicherheits- und
-              Missbrauchsschutzmaßnahmen. Wartelisten- und Freigabedaten speichern wir, bis die Anfrage erledigt ist,
-              Sie eine Löschung verlangen oder die Daten für diesen Zweck nicht mehr benötigt werden. Kurzfristige
-              Rate-Limit-Einträge werden nur solange gespeichert, wie sie technisch für den Schutz der Anwendung
-              erforderlich sind.
+              Diese Verarbeitung dient der Bereitstellung des Nutzerkontos und dem Schutz vor automatisierten oder
+              missbräuchlichen Anfragen. Rechtsgrundlagen sind je nach Kontext Art. 6 Abs. 1 lit. b DSGVO für
+              Konto- und Zugangsprozesse sowie Art. 6 Abs. 1 lit. f DSGVO für Sicherheits- und
+              Missbrauchsschutzmaßnahmen. Kurzfristige Rate-Limit-Einträge werden nur solange gespeichert, wie sie
+              technisch für den Schutz der Anwendung erforderlich sind.
             </p>
           </section>
 

@@ -22,10 +22,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const config = getServerSupabaseConfig();
-    const { error: settingsError } = await getServerDataClient().from("signup_settings").select("id").eq("id", true).single();
-    if (settingsError) {
-      throw settingsError;
-    }
     const { error: bucketError } = await getServerDataClient().storage.getBucket(config.storageBucket);
     if (bucketError) {
       throw bucketError;

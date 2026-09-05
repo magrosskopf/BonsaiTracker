@@ -31,6 +31,7 @@ test("package scripts expose Supabase validation lifecycle", () => {
   assert.equal(packageJson.scripts?.["test:db"], "node scripts/run-supabase-cli.js test db");
   assert.equal(packageJson.scripts?.["supabase:types:check"], "tsx scripts/check-supabase-types.ts");
   assert.equal(packageJson.scripts?.["test:integration"], "tsx scripts/run-supabase-integration-tests.ts");
+  assert.equal(packageJson.scripts?.["approve-waitlist"], undefined);
 });
 
 test("runtime dependencies no longer include Prisma or NextAuth packages", () => {
@@ -62,15 +63,9 @@ test("Supabase CLI scripts target the external project directory", () => {
   assert.match(readRepoFile("scripts/check-supabase-types.ts"), /getSupabaseProjectRoot/);
 });
 
-test("direct Supabase scripts load Next env before reading runtime variables", () => {
+test("removed signup operation scripts are absent", () => {
   for (const relativePath of ["scripts/approve-waitlist.js", "scripts/update-signup-settings.js"]) {
-    const source = readRepoFile(relativePath);
-    const envLoadIndex = source.indexOf("loadEnvConfig(process.cwd())");
-    const readEnvIndex = source.indexOf("readRequiredEnv(\"NEXT_PUBLIC_SUPABASE_URL\")");
-
-    assert.notEqual(envLoadIndex, -1, `${relativePath} must load Next env files`);
-    assert.notEqual(readEnvIndex, -1, `${relativePath} must read the canonical Supabase URL env var`);
-    assert.ok(envLoadIndex < readEnvIndex, `${relativePath} must load env before reading Supabase config`);
+    assert.equal(existsSync(path.join(repoRoot, relativePath)), false, relativePath);
   }
 });
 

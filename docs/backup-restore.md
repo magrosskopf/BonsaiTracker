@@ -2,12 +2,12 @@
 
 ## Ziel
 
-Wiederherstellung von PostgreSQL-Daten und Upload-Medien für die Closed Beta.
+Wiederherstellung von PostgreSQL-Daten und Upload-Medien.
 
 ## Was gesichert werden muss
 
 - PostgreSQL-Datenbank
-- Supabase Storage Bucket für Beta-Medien
+- Supabase Storage Bucket für Medien
 - Relevante Betriebsdokumentation und Umgebungsvariablen separat, aber nicht im Repo
 
 ## Backup-Reihenfolge

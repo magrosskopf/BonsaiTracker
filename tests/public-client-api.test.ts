@@ -34,9 +34,9 @@ test("all private public-client v1 routes exist and use the shared boundary", ()
   }
 });
 
-test("mobile aliases for auth precheck and access requests exist", () => {
-  assert.equal(fs.existsSync(path.join(process.cwd(), "pages/api/v1/auth/precheck.ts")), true);
-  assert.equal(fs.existsSync(path.join(process.cwd(), "pages/api/v1/access-requests.ts")), true);
+test("mobile aliases for removed signup gating routes do not exist", () => {
+  assert.equal(fs.existsSync(path.join(process.cwd(), "pages/api/v1/auth/precheck.ts")), false);
+  assert.equal(fs.existsSync(path.join(process.cwd(), "pages/api/v1/access-requests.ts")), false);
 });
 
 test("reminder cancellation is part of domain and validation", () => {

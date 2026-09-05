@@ -44,7 +44,7 @@ export default function PublicProfilePage() {
             <p className="text-sm uppercase tracking-[0.2em] text-primary">Profil</p>
             <h1 className="text-3xl font-bold">{profile.name ?? "Unbekannt"}</h1>
             <p className="mt-2 text-base-content/70">{profile.bio ?? "Keine Bio hinterlegt."}</p>
-            <p className="mt-3 text-sm text-base-content/60">Sichtbar sind nur Community-Daten innerhalb der geschlossenen Beta. Private Kontodaten wie die E-Mail-Adresse werden hier nicht angezeigt.</p>
+            <p className="mt-3 text-sm text-base-content/60">Sichtbar sind nur Community-Daten eingeloggter Nutzer. Private Kontodaten wie die E-Mail-Adresse werden hier nicht angezeigt.</p>
           </div>
 
           {profile.posts.length === 0 ? (

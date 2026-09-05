@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import {
@@ -19,7 +19,7 @@ import {
 const repoRoot = process.cwd();
 
 test("home page exposes Google and email/password as standard auth options", () => {
-  assert.equal(GOOGLE_LOGIN_LABEL, "Mit Google anmelden");
+  assert.equal(GOOGLE_LOGIN_LABEL, "Mit Google fortfahren");
   assert.equal(EMAIL_PASSWORD_LOGIN_LABEL, "Mit E-Mail anmelden");
   assert.equal(EMAIL_PASSWORD_SIGNUP_LABEL, "Mit E-Mail registrieren");
   assert.equal(PASSWORD_RESET_LABEL, "Passwort vergessen?");
@@ -37,7 +37,9 @@ test("home page builds Supabase auth callback URLs from the current origin", () 
 });
 
 test("home page maps known auth errors to actionable messages", () => {
-  assert.match(getAuthErrorMessage("AccessDenied") ?? "", /geschlossene Beta/);
+  const accessDeniedMessage = getAuthErrorMessage("AccessDenied") ?? "";
+  assert.match(accessDeniedMessage, /Zugriff wurde abgelehnt/);
+  assert.doesNotMatch(accessDeniedMessage, /Beta|Warteliste|Whitelist|Freigabe/i);
   assert.match(getAuthErrorMessage("OAuthAccountNotLinked") ?? "", /bereits ein Zugang/);
   assert.match(getAuthErrorMessage("Configuration") ?? "", /nicht vollständig konfiguriert/);
   assert.equal(getAuthErrorMessage(undefined), null);
@@ -60,11 +62,21 @@ test("home page exposes stable titles for auth modes", () => {
   assert.equal(getAuthModeTitle("reset"), "Passwort zurücksetzen");
 });
 
-test("home page uses password auth and gated signup Supabase calls", () => {
+test("home page uses direct Supabase auth calls without signup precheck", () => {
   const source = readFileSync(join(repoRoot, "pages", "index.tsx"), "utf8");
 
   assert.match(source, /signInWithPassword/);
-  assert.match(source, /apiFetch\("\/api\/auth\/precheck"/);
   assert.match(source, /signUp/);
   assert.match(source, /resetPasswordForEmail/);
+  assert.doesNotMatch(source, /apiFetch\("\/api\/auth\/precheck"/);
+  assert.doesNotMatch(source, /WaitlistRequestForm/);
+  assert.doesNotMatch(source, /Warteliste|Whitelist|Beta-Zugang|geschlossene Beta|Freigabe/);
+});
+
+test("waitlist page is no longer part of the app surface", () => {
+  const source = readFileSync(join(repoRoot, "pages", "index.tsx"), "utf8");
+
+  assert.equal(existsSync(join(repoRoot, "pages", "waitlist.tsx")), false);
+  assert.equal(source.includes('href="/waitlist"'), false);
+  assert.equal(source.includes("WaitlistRequestForm"), false);
 });

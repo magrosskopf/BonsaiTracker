@@ -1,8 +1,8 @@
-# Community Privacy for Closed Beta
+# Community Privacy
 
 ## Sichtbarkeit
 
-- Feed und öffentliche Profile sind nur für eingeloggte Beta-Nutzer sichtbar.
+- Feed und öffentliche Profile sind nur für eingeloggte Nutzer sichtbar.
 - Öffentliche Profile zeigen Name, Bio, Profilbild und veröffentlichte Posts.
 - E-Mail-Adressen bleiben privat und erscheinen nicht in öffentlichen Profilantworten.
 
@@ -24,9 +24,9 @@
 
 ## Nutzerkommunikation
 
-Allen Beta-Nutzern soll klar kommuniziert werden:
+Allen Nutzern soll klar kommuniziert werden:
 
-- Beiträge und Profile sind für alle eingeloggten Beta-Tester sichtbar.
+- Beiträge und Profile sind für alle eingeloggten Nutzer sichtbar.
 - Keine sensiblen persönlichen Daten posten.
 - Keine fremden Inhalte ohne Erlaubnis hochladen.
-- Gemeldete Inhalte können während der Beta manuell entfernt werden.
+- Gemeldete Inhalte können manuell entfernt werden.

@@ -12,7 +12,6 @@ test("navigation keeps the existing five app destinations", () => {
 
 test("navigation stays hidden for public routes and non-authenticated states", () => {
   assert.equal(shouldHideNavigation("/", "authenticated"), true);
-  assert.equal(shouldHideNavigation("/waitlist", "authenticated"), true);
   assert.equal(shouldHideNavigation("/dashboard", "unauthenticated"), true);
   assert.equal(shouldHideNavigation("/dashboard", "loading"), true);
   assert.equal(shouldHideNavigation("/dashboard", "authenticated"), false);

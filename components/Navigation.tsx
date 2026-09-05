@@ -10,7 +10,7 @@ export const navigationItems = [
   { href: "/profile", label: "Profil" },
 ];
 
-export const hiddenRoutes = new Set(["/", "/waitlist"]);
+export const hiddenRoutes = new Set(["/"]);
 
 type NavigationSessionStatus = "authenticated" | "loading" | "unauthenticated";
 

@@ -224,7 +224,7 @@ export default function FeedPage() {
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-primary">Community Feed</p>
           <h1 className="text-3xl font-bold">Zeige Fortschritte oder frage die Community</h1>
-          <p className="mt-2 text-base-content/70">Posts und Profile sind innerhalb der geschlossenen Beta für alle eingeloggten Tester sichtbar.</p>
+          <p className="mt-2 text-base-content/70">Posts und Profile sind für alle eingeloggten Nutzer sichtbar.</p>
         </div>
         <button className="btn btn-primary btn-sm md:btn-md" onClick={openComposer} disabled={bonsais.length === 0}>
           Beitrag erstellen

@@ -69,7 +69,7 @@ export default function Profile() {
         <div className="hero-panel rounded-[2rem] p-6">
           <p className="text-sm uppercase tracking-[0.2em] text-primary">Profil</p>
           <h1 className="text-3xl font-bold">Dein Konto</h1>
-          <p className="mt-2 text-base-content/70">Name, Bio, Profilbild und deine veröffentlichten Posts sind für andere eingeloggte Beta-Nutzer sichtbar. Deine E-Mail bleibt privat.</p>
+          <p className="mt-2 text-base-content/70">Name, Bio, Profilbild und deine veröffentlichten Posts sind für andere eingeloggte Nutzer sichtbar. Deine E-Mail bleibt privat.</p>
         </div>
 
         {error ? <div className="alert alert-error">{error}</div> : null}

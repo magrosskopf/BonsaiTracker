@@ -3,10 +3,6 @@ import type { NextApiRequest } from "next";
 import { getServerDataClient } from "@/lib/supabase/server-data";
 
 export type RateLimitScope =
-  | "signup_ip"
-  | "signup_email"
-  | "waitlist_ip"
-  | "waitlist_email"
   | "mobile_upload"
   | "mobile_post_create"
   | "mobile_comment_create"

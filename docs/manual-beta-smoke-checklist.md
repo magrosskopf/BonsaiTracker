@@ -1,16 +1,16 @@
-# Manual Beta Smoke Checklist
+# Manual Smoke Checklist
 
 ## Vorbedingungen
 
 - Produktive oder staging-nahe Konfiguration aktiv
 - `/api/health` liefert `ok`
-- Mindestens ein freigegebener Testnutzer vorhanden
+- Mindestens ein Testnutzer vorhanden
 
 ## Checkliste
 
-1. Magic-Link-Login für bestehenden Nutzer testen.
-2. Waitlist-Anfrage stellen.
-3. Nutzer per Script freigeben.
+1. Google-Login oder E-Mail-Login fuer bestehenden Nutzer testen.
+2. E-Mail-Registrierung fuer neuen Nutzer testen.
+3. Passwort-Reset fuer bestehenden Nutzer testen.
 4. Bonsai mit Bild anlegen.
 5. Bonsai bearbeiten.
 6. Bonsai löschen oder archivieren und Rückweg prüfen.

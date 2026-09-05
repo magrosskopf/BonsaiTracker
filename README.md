@@ -1,4 +1,4 @@
-# Bonsai Tracker Beta Operations
+# Bonsai Tracker Operations
 
 ## Runtime Architecture
 
@@ -39,14 +39,11 @@ If the external Supabase project is not in `../supabase`, set `BONSAI_SUPABASE_P
 - Add the production redirect URL later when a production domain exists: `https://<production-domain>/auth/callback`.
 - Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser auth. Self-hosted/Kong deployments require the anon JWT as the browser key; using a Cloud `sb_publishable_...` key against Kong returns `401 Unauthorized`.
 - Keep server-only Supabase access on `SUPABASE_SECRET_KEY` and `SUPABASE_STORAGE_BUCKET`. Self-hosted/Kong deployments require the service-role JWT as the server key.
-- Password signups are still gated by `/api/auth/precheck` and the server-side Supabase signup checks.
-- Configure email confirmations deliberately for the beta setup; confirmed signup and password-recovery links should both return to `/auth/callback`.
+- Configure email confirmations deliberately; confirmed signup and password-recovery links should both return to `/auth/callback`.
 - The Magic Link fallback stays hidden by default and can be enabled with `NEXT_PUBLIC_AUTH_EMAIL_FALLBACK_ENABLED=true`.
 - For Flutter, configure Supabase deep-link redirects per environment before enabling Magic Links, password recovery or OAuth in native builds.
 
 ## Operations
 
-- Approve a waitlist user: `npm run approve-waitlist -- user@example.test "optional note"`
-- Update signup settings: `node scripts/update-signup-settings.js signup_enabled=true waitlist_enabled=true max_total_users=100`
 - Validate local stack: `npm run validate:local-supabase`
 - Cutover and rollback: `docs/supabase-sdk-cutover.md`

@@ -2,7 +2,7 @@
 
 ## Support-Eingang
 
-- Ein zentraler Beta-Kanal genügt für die erste Beta.
+- Ein zentraler Support-Kanal genügt für den ersten Betrieb.
 - Jede Meldung bekommt eine verantwortliche Person.
 
 ## Priorisierung
@@ -17,7 +17,7 @@
 2. Kategorie markieren: Auth, Bonsai, Reminder, Upload, Community, Datenschutz.
 3. Schweregrad setzen.
 4. Reproduktion versuchen.
-5. Entscheidung: sofortiger Fix, geplanter Fix oder bewusste Beta-Einschränkung.
+5. Entscheidung: sofortiger Fix, geplanter Fix oder bewusste Produkteinschränkung.
 
 ## Community-spezifische Fälle
 

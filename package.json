@@ -16,8 +16,7 @@
     "supabase:types:check": "tsx scripts/check-supabase-types.ts",
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "tsx scripts/run-supabase-integration-tests.ts",
-    "validate:local-supabase": "tsx scripts/run-local-supabase-validation.ts",
-    "approve-waitlist": "node scripts/approve-waitlist.js"
+    "validate:local-supabase": "tsx scripts/run-local-supabase-validation.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",
