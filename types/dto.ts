@@ -14,6 +14,11 @@ export interface BonsaiSummary {
   id: number;
   name: string;
   species: string;
+  carePlanSpeciesId: string | null;
+  carePlanActive: boolean;
+  carePlanVersion: string | null;
+  carePlanActivatedAt: string | null;
+  carePlanReplacedAt: string | null;
   latinName: string | null;
   location: string;
   indoorOutdoor: IndoorOutdoorOption;
@@ -51,6 +56,11 @@ export interface BonsaiDetail {
   id: number;
   name: string;
   species: string;
+  carePlanSpeciesId: string | null;
+  carePlanActive: boolean;
+  carePlanVersion: string | null;
+  carePlanActivatedAt: string | null;
+  carePlanReplacedAt: string | null;
   latinName: string | null;
   location: string;
   indoorOutdoor: IndoorOutdoorOption;
@@ -101,6 +111,12 @@ export interface ReminderDto {
   title: string | null;
   reminderDate: string;
   status: ReminderStatusOption;
+  source: "USER" | "CARE_PLAN";
+  careType: string | null;
+  carePlanVersion: string | null;
+  carePlanSpeciesId: string | null;
+  carePlanRuleId: string | null;
+  carePlanTargetMonth: string | null;
   completedAt: string | null;
   snoozedUntil: string | null;
   createdAt: string;
@@ -150,6 +166,11 @@ export interface PublicProfileDto {
 
 export interface SelfProfileDto extends PublicProfileDto {
   email: string | null;
+  carePlanEntitlement: {
+    active: boolean;
+    status: string | null;
+    currentPeriodEnd: string | null;
+  };
 }
 
 export interface CommunityReportDto {

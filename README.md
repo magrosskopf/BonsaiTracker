@@ -9,6 +9,7 @@
 - Flutter uses the versioned Public Client API under `/api/v1/...` for application data. It keeps Supabase Auth direct and sends the Supabase access token as `Authorization: Bearer <token>`.
 - Data API, service-only RPCs and private Storage are accessed only server-side with `SUPABASE_SECRET_KEY`.
 - Supabase CLI migrations live in the external local Supabase project at `../supabase/supabase/migrations/` by default.
+- Pflegeplan access is an internal entitlement updated from Stripe subscription webhooks; Checkout success/cancel URLs only navigate users back into context.
 
 ## Flutter Public Client API
 
@@ -30,6 +31,13 @@ npm run dev
 ```
 
 If the external Supabase project is not in `../supabase`, set `BONSAI_SUPABASE_PROJECT_ROOT` to its project root before running Supabase CLI scripts.
+Apply `dev/features/2026-09-06_pflegeplan-paywall/migration.sql` to that external Supabase project before running `npm run supabase:types`.
+
+## Pflegeplan Billing
+
+- Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CARE_PLAN_PRICE_ID` and `NEXT_PUBLIC_APP_URL`.
+- Configure Stripe Checkout for the monthly care-plan price and send subscription webhooks to `/api/stripe/webhook`.
+- The app treats Stripe `active` and `trialing` subscriptions as active Pflegeplan access. Other subscription states revoke generation access but keep existing system reminders visible.
 
 ## Supabase Auth
 

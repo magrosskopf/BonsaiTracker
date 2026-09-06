@@ -23,6 +23,7 @@ export const WINTER_HARDINESS_OPTIONS = ["NICHT_WINTERHART", "BEDINGT_WINTERHART
 export const SUN_EXPOSURE_OPTIONS = ["VOLLE_SONNE", "HALBSCHATTEN", "SCHATTEN"] as const;
 export const ENTRY_TYPE_OPTIONS = ["GIESSEN", "DUENGEN", "SCHNEIDEN", "DRAHTEN", "UMTOPFEN", "KONTROLLE", "FOTO_UPDATE", "SONSTIGES"] as const;
 export const REMINDER_STATUS_OPTIONS = ["PENDING", "DONE", "SNOOZED", "CANCELLED"] as const;
+export const REMINDER_SOURCE_OPTIONS = ["USER", "CARE_PLAN"] as const;
 export const POST_TYPE_OPTIONS = ["SHOWCASE", "HELP"] as const;
 export const COMMUNITY_REPORT_REASON_OPTIONS = [
   "SPAM",
@@ -44,6 +45,7 @@ export type WinterHardinessOption = (typeof WINTER_HARDINESS_OPTIONS)[number];
 export type SunExposureOption = (typeof SUN_EXPOSURE_OPTIONS)[number];
 export type EntryTypeOption = (typeof ENTRY_TYPE_OPTIONS)[number];
 export type ReminderStatusOption = (typeof REMINDER_STATUS_OPTIONS)[number];
+export type ReminderSourceOption = (typeof REMINDER_SOURCE_OPTIONS)[number];
 export type PostTypeOption = (typeof POST_TYPE_OPTIONS)[number];
 export type CommunityReportReasonOption = (typeof COMMUNITY_REPORT_REASON_OPTIONS)[number];
 export type CommunityReportStatusOption = (typeof COMMUNITY_REPORT_STATUS_OPTIONS)[number];

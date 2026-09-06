@@ -36,6 +36,11 @@ export function mapBonsaiSummary(bonsai: BonsaiSummaryRecord): BonsaiSummary {
     id: bonsai.id,
     name: bonsai.name,
     species: bonsai.species,
+    carePlanSpeciesId: bonsai.care_plan_species_id,
+    carePlanActive: bonsai.care_plan_active,
+    carePlanVersion: bonsai.care_plan_version,
+    carePlanActivatedAt: iso(bonsai.care_plan_activated_at),
+    carePlanReplacedAt: iso(bonsai.care_plan_replaced_at),
     latinName: bonsai.latin_name,
     location: bonsai.location,
     indoorOutdoor: bonsai.indoor_outdoor,
@@ -64,6 +69,11 @@ export function mapBonsaiDetail(bonsai: BonsaiDetailRecord): BonsaiDetail {
     id: bonsai.id,
     name: bonsai.name,
     species: bonsai.species,
+    carePlanSpeciesId: bonsai.care_plan_species_id,
+    carePlanActive: bonsai.care_plan_active,
+    carePlanVersion: bonsai.care_plan_version,
+    carePlanActivatedAt: iso(bonsai.care_plan_activated_at),
+    carePlanReplacedAt: iso(bonsai.care_plan_replaced_at),
     latinName: bonsai.latin_name,
     location: bonsai.location,
     indoorOutdoor: bonsai.indoor_outdoor,
@@ -110,6 +120,12 @@ export function mapReminderToDto(reminder: ReminderRecord): ReminderDto {
     title: reminder.title,
     reminderDate: iso(reminder.reminder_date) ?? reminder.reminder_date,
     status: reminder.status,
+    source: reminder.source === "CARE_PLAN" ? "CARE_PLAN" : "USER",
+    careType: reminder.care_type,
+    carePlanVersion: reminder.care_plan_version,
+    carePlanSpeciesId: reminder.care_plan_species_id,
+    carePlanRuleId: reminder.care_plan_rule_id,
+    carePlanTargetMonth: iso(reminder.care_plan_target_month),
     completedAt: iso(reminder.completed_at),
     snoozedUntil: iso(reminder.snoozed_until),
     createdAt: iso(reminder.created_at) ?? reminder.created_at,
@@ -179,9 +195,15 @@ export function mapPublicProfileToDto(profile: ProfileRecord, viewerUserId?: str
   };
 }
 
-export function mapSelfProfileToDto(profile: ProfileRecord, email: string | null, viewerUserId?: string): SelfProfileDto {
+export function mapSelfProfileToDto(
+  profile: ProfileRecord,
+  email: string | null,
+  viewerUserId?: string,
+  carePlanEntitlement: SelfProfileDto["carePlanEntitlement"] = { active: false, status: null, currentPeriodEnd: null },
+): SelfProfileDto {
   return {
     ...mapPublicProfileToDto(profile, viewerUserId),
     email,
+    carePlanEntitlement,
   };
 }

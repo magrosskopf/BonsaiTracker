@@ -9,6 +9,7 @@ export interface ValidationErrorDetails {
 const BONSAI_FIELD_LABELS: Record<keyof BonsaiFormValues, string> = {
   name: "Name",
   species: "Art",
+  carePlanSpeciesId: "Pflegeplan-Pflanzenart",
   latinName: "Botanischer Name",
   location: "Standort",
   indoorOutdoor: "Indoor / Outdoor",

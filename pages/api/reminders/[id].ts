@@ -13,6 +13,24 @@ function parseId(value: string | string[] | undefined): number | null {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+function hasOwn(input: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(input, key);
+}
+
+function isAllowedCarePlanPatch(parsed: Record<string, unknown>): boolean {
+  const keys = Object.keys(parsed);
+  if (keys.length === 0) {
+    return true;
+  }
+  if (keys.some((key) => !["status", "snoozeDays"].includes(key))) {
+    return false;
+  }
+  if (hasOwn(parsed, "snoozeDays")) {
+    return keys.length === 1;
+  }
+  return parsed.status === "DONE" || parsed.status === "CANCELLED";
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   const actor = await requireUser(req, res);
   if (!actor) {
@@ -34,6 +52,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const parsed = reminderPatchSchema.parse(req.body);
+      if (existing.source === "CARE_PLAN" && !isAllowedCarePlanPatch(parsed)) {
+        fail(res, "FORBIDDEN", "System-Reminder koennen nur erledigt, entfernt oder begrenzt verschoben werden.", 403);
+        return;
+      }
       const existingReminderDate = new Date(existing.reminder_date);
       const nextReminderDate = parsed.snoozeDays ? new Date(existingReminderDate.getTime() + parsed.snoozeDays * 24 * 60 * 60 * 1000) : parsed.reminderDate;
       const nextStatus = parsed.snoozeDays ? "SNOOZED" : parsed.status;

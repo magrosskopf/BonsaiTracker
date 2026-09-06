@@ -76,3 +76,27 @@ export function getServerSupabaseConfig(): {
 export function isHealthcheckEnabled(): boolean {
   return process.env.HEALTHCHECK_ENABLED !== "false";
 }
+
+export function getAppUrl(): string {
+  const value = readRequiredEnv("NEXT_PUBLIC_APP_URL");
+  assertUrl("NEXT_PUBLIC_APP_URL", value);
+  return value.replace(/\/$/, "");
+}
+
+export function getStripeServerConfig(): {
+  secretKey: string;
+  webhookSecret: string;
+  carePlanPriceId: string;
+  appUrl: string;
+} {
+  const secretKey = readRequiredEnv("STRIPE_SECRET_KEY");
+  const webhookSecret = readRequiredEnv("STRIPE_WEBHOOK_SECRET");
+  const carePlanPriceId = readRequiredEnv("STRIPE_CARE_PLAN_PRICE_ID");
+  if (!secretKey.startsWith("sk_")) {
+    throw new Error("STRIPE_SECRET_KEY must be a Stripe secret key.");
+  }
+  if (!webhookSecret.startsWith("whsec_")) {
+    throw new Error("STRIPE_WEBHOOK_SECRET must be a Stripe webhook signing secret.");
+  }
+  return { secretKey, webhookSecret, carePlanPriceId, appUrl: getAppUrl() };
+}

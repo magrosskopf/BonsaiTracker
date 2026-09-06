@@ -34,6 +34,11 @@ export type Database = {
         Row: {
           acquired_from: string | null
           age: number | null
+          care_plan_activated_at: string | null
+          care_plan_active: boolean
+          care_plan_replaced_at: string | null
+          care_plan_species_id: string | null
+          care_plan_version: string | null
           created_at: string
           custom_style: string | null
           deleted_at: string | null
@@ -72,6 +77,11 @@ export type Database = {
         Insert: {
           acquired_from?: string | null
           age?: number | null
+          care_plan_activated_at?: string | null
+          care_plan_active?: boolean
+          care_plan_replaced_at?: string | null
+          care_plan_species_id?: string | null
+          care_plan_version?: string | null
           created_at?: string
           custom_style?: string | null
           deleted_at?: string | null
@@ -110,6 +120,11 @@ export type Database = {
         Update: {
           acquired_from?: string | null
           age?: number | null
+          care_plan_activated_at?: string | null
+          care_plan_active?: boolean
+          care_plan_replaced_at?: string | null
+          care_plan_species_id?: string | null
+          care_plan_version?: string | null
           created_at?: string
           custom_style?: string | null
           deleted_at?: string | null
@@ -417,11 +432,17 @@ export type Database = {
       reminders: {
         Row: {
           bonsai_id: number
+          care_plan_rule_id: string | null
+          care_plan_species_id: string | null
+          care_plan_target_month: string | null
+          care_plan_version: string | null
+          care_type: string | null
           completed_at: string | null
           created_at: string
           id: number
           reminder_date: string
           snoozed_until: string | null
+          source: string
           status: Database["public"]["Enums"]["reminder_status_enum"]
           sub_entry_id: number | null
           title: string | null
@@ -430,11 +451,17 @@ export type Database = {
         }
         Insert: {
           bonsai_id: number
+          care_plan_rule_id?: string | null
+          care_plan_species_id?: string | null
+          care_plan_target_month?: string | null
+          care_plan_version?: string | null
+          care_type?: string | null
           completed_at?: string | null
           created_at?: string
           id?: number
           reminder_date: string
           snoozed_until?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["reminder_status_enum"]
           sub_entry_id?: number | null
           title?: string | null
@@ -443,11 +470,17 @@ export type Database = {
         }
         Update: {
           bonsai_id?: number
+          care_plan_rule_id?: string | null
+          care_plan_species_id?: string | null
+          care_plan_target_month?: string | null
+          care_plan_version?: string | null
+          care_type?: string | null
           completed_at?: string | null
           created_at?: string
           id?: number
           reminder_date?: string
           snoozed_until?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["reminder_status_enum"]
           sub_entry_id?: number | null
           title?: string | null
@@ -584,6 +617,97 @@ export type Database = {
             columns: ["bonsai_id"]
             isOneToOne: false
             referencedRelation: "bonsais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_customers: {
+        Row: {
+          created_at: string
+          stripe_customer_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          stripe_customer_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          stripe_customer_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_customers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_webhook_events: {
+        Row: {
+          event_id: string
+          received_at: string
+          type: string
+        }
+        Insert: {
+          event_id: string
+          received_at?: string
+          type: string
+        }
+        Update: {
+          event_id?: string
+          received_at?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      user_entitlements: {
+        Row: {
+          active: boolean
+          current_period_end: string | null
+          feature: string
+          source: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          stripe_subscription_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          current_period_end?: string | null
+          feature: string
+          source?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_subscription_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          current_period_end?: string | null
+          feature?: string
+          source?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          stripe_subscription_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1098,4 +1222,3 @@ export const Constants = {
     },
   },
 } as const
-

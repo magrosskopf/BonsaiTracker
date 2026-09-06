@@ -29,6 +29,7 @@ function bonsaiPayload(parsed: Record<string, unknown>, actorUserId: string): Re
     name: parsed.name,
     nickname: parsed.nickname,
     species: parsed.species,
+    care_plan_species_id: parsed.carePlanSpeciesId,
     latin_name: parsed.latinName,
     location: parsed.location,
     indoor_outdoor: parsed.indoorOutdoor,
@@ -202,6 +203,22 @@ export async function appendOwnedBonsaiImage(actorUserId: string, bonsaiId: numb
     throw error;
   }
   return (data ?? []) as string[];
+}
+
+export async function setOwnedBonsaiCarePlanState(actorUserId: string, bonsaiId: number, patch: Partial<BonsaiRow>): Promise<void> {
+  const { error } = await getServerDataClient()
+    .from("bonsais")
+    .update({
+      care_plan_active: patch.care_plan_active,
+      care_plan_version: patch.care_plan_version,
+      care_plan_activated_at: patch.care_plan_activated_at,
+      care_plan_replaced_at: patch.care_plan_replaced_at,
+    } as never)
+    .eq("id", bonsaiId)
+    .eq("user_id", actorUserId);
+  if (error) {
+    throw error;
+  }
 }
 
 export function toBonsaiJsonPatch(parsed: Record<string, unknown>): Json {

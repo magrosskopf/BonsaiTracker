@@ -1,6 +1,7 @@
 export interface BonsaiFormValues {
   name: string;
   species: string;
+  carePlanSpeciesId: string;
   latinName: string;
   location: string;
   indoorOutdoor: string;

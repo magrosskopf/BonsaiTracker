@@ -17,6 +17,7 @@ export default function Profile() {
   const [profileImageUrl, setProfileImageUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [billingBusy, setBillingBusy] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -57,6 +58,19 @@ export default function Profile() {
     }
     setProfile(json.data);
     setSuccess("Profil gespeichert.");
+  }
+
+  async function openBillingPortal() {
+    setBillingBusy(true);
+    setError(null);
+    const response = await apiFetch("/api/billing/portal", { method: "POST" });
+    const json = (await response.json()) as { ok: boolean; data?: { url: string | null }; error?: { message: string } };
+    setBillingBusy(false);
+    if (!response.ok || !json.ok || !json.data?.url) {
+      setError(json.error?.message ?? "Das Stripe Customer Portal konnte nicht geoeffnet werden.");
+      return;
+    }
+    window.location.href = json.data.url;
   }
 
   if (status !== "authenticated" || !session) {
@@ -106,6 +120,29 @@ export default function Profile() {
                   Logout
                 </button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="surface-card card">
+          <div className="card-body gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="card-title">Pflegeplan-Zugang</h2>
+                <p className="text-sm text-base-content/70">
+                  Status: {profile?.carePlanEntitlement.active ? "Aktiv" : "Nicht aktiv"}
+                  {profile?.carePlanEntitlement.status ? ` (${profile.carePlanEntitlement.status})` : ""}
+                </p>
+                {profile?.carePlanEntitlement.currentPeriodEnd ? (
+                  <p className="text-sm text-base-content/60">
+                    Aktuelle Periode bis {new Date(profile.carePlanEntitlement.currentPeriodEnd).toLocaleDateString("de-DE")}
+                  </p>
+                ) : null}
+              </div>
+              <button className="btn btn-outline" disabled={billingBusy} onClick={() => void openBillingPortal()}>
+                {billingBusy ? <span className="loading loading-spinner loading-sm" /> : null}
+                Abo verwalten
+              </button>
             </div>
           </div>
         </section>

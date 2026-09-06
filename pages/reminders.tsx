@@ -59,6 +59,10 @@ function formFromReminder(reminder: ReminderDto): ReminderFormState {
   };
 }
 
+function isCarePlanReminder(reminder: ReminderDto): boolean {
+  return reminder.source === "CARE_PLAN";
+}
+
 function isVisibleReminder(reminder: ReminderDto): boolean {
   return reminder.bonsaiDeletedAt === null && (reminder.status === "PENDING" || reminder.status === "SNOOZED");
 }
@@ -408,13 +412,21 @@ export default function RemindersPage() {
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <div>
                         <div className="badge badge-outline mb-2">{REMINDER_STATUS_LABELS[item.status]}</div>
-                        <h2 className="card-title">{item.title ?? `Pflege für ${item.bonsaiName}`}</h2>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="card-title">{item.title ?? `Pflege für ${item.bonsaiName}`}</h2>
+                          {isCarePlanReminder(item) ? <span className="badge badge-primary">Pflegeplan</span> : null}
+                        </div>
                         <p className="text-sm text-base-content/70">Fällig am {new Date(item.reminderDate).toLocaleDateString("de-DE")}</p>
+                        {isCarePlanReminder(item) ? (
+                          <p className="text-sm text-base-content/60">System-Reminder aus dem Pflegeplan. Titel, Bonsai und Pflegeart bleiben unveraendert.</p>
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <button className="btn btn-outline btn-sm" disabled={isSaving} onClick={() => startEditingReminder(item)}>
-                          Bearbeiten
-                        </button>
+                        {!isCarePlanReminder(item) ? (
+                          <button className="btn btn-outline btn-sm" disabled={isSaving} onClick={() => startEditingReminder(item)}>
+                            Bearbeiten
+                          </button>
+                        ) : null}
                         <button className="btn btn-success btn-sm" disabled={isSaving} onClick={() => void updateReminder(item.id, { status: "DONE" })}>
                           {isSaving ? <span className="loading loading-spinner loading-sm" /> : null}
                           Done
@@ -422,6 +434,11 @@ export default function RemindersPage() {
                         <button className="btn btn-outline btn-sm" disabled={isSaving} onClick={() => void updateReminder(item.id, { snoozeDays: 14 })}>
                           +14 Tage
                         </button>
+                        {isCarePlanReminder(item) ? (
+                          <button className="btn btn-error btn-sm" disabled={isSaving} onClick={() => void updateReminder(item.id, { status: "CANCELLED" })}>
+                            Entfernen
+                          </button>
+                        ) : null}
                         <Link href={`/bonsai/${item.bonsaiId}/subentries`} className="btn btn-primary btn-sm">
                           Jetzt dokumentieren
                         </Link>

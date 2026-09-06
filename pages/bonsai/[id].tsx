@@ -16,12 +16,34 @@ import {
   WINTER_HARDINESS_LABELS,
 } from "@/types/domain";
 
+const CARE_PLAN_CARE_TYPE_LABELS: Record<string, string> = {
+  FERTILIZING: "Duengung",
+  PRUNING: "Schnitt",
+  WIRING: "Drahten",
+  REPOTTING: "Umtopfen",
+  INSPECTION: "Kontrolle",
+};
+
 interface DetailResponse {
   ok: boolean;
   data?: BonsaiDetail;
   error?: {
     message: string;
   };
+}
+
+interface CarePlanContextResponse {
+  ok: boolean;
+  data?: {
+    carePlanSpeciesId: string | null;
+    carePlanActive: boolean;
+    species: { id: string; label: string; latinName: string } | null;
+    preview: Array<{ date: string; careType: string; title: string; note: string; ruleId: string }>;
+    entitlementActive: boolean;
+    replacementSuggested: boolean;
+    note: string;
+  };
+  error?: { message: string };
 }
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
@@ -43,6 +65,9 @@ export default function BonsaiDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [reminders, setReminders] = useState<ReminderDto[]>([]);
+  const [carePlan, setCarePlan] = useState<CarePlanContextResponse["data"] | null>(null);
+  const [carePlanError, setCarePlanError] = useState<string | null>(null);
+  const [carePlanBusy, setCarePlanBusy] = useState(false);
   const [entryFilter, setEntryFilter] = useState<string>("");
   const [slideshowIndex, setSlideshowIndex] = useState(0);
 
@@ -67,6 +92,15 @@ export default function BonsaiDetailPage() {
       const remindersJson = (await remindersResponse.json()) as { ok: boolean; data?: { items: ReminderDto[] } };
       if (remindersResponse.ok && remindersJson.ok && remindersJson.data) {
         setReminders(remindersJson.data.items);
+      }
+      const carePlanResponse = await apiFetch(`/api/bonsais/${id}/care-plan`);
+      const carePlanJson = (await carePlanResponse.json()) as CarePlanContextResponse;
+      if (carePlanResponse.ok && carePlanJson.ok && carePlanJson.data) {
+        setCarePlan(carePlanJson.data);
+        setCarePlanError(null);
+      } else if (carePlanJson.error?.message) {
+        setCarePlan(null);
+        setCarePlanError(carePlanJson.error.message);
       }
       setError(null);
       setLoading(false);
@@ -118,6 +152,56 @@ export default function BonsaiDetailPage() {
     }
 
     setBonsai(json.data);
+  }
+
+  async function runCarePlanAction(action: "activate" | "sync" | "replace") {
+    if (!id) {
+      return;
+    }
+    setCarePlanBusy(true);
+    setCarePlanError(null);
+    const response = await apiFetch(`/api/bonsais/${id}/care-plan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    const json = (await response.json()) as { ok: boolean; error?: { message: string } };
+    if (!response.ok || !json.ok) {
+      setCarePlanError(json.error?.message ?? "Der Pflegeplan konnte nicht aktualisiert werden.");
+      setCarePlanBusy(false);
+      return;
+    }
+    const contextResponse = await apiFetch(`/api/bonsais/${id}/care-plan`);
+    const contextJson = (await contextResponse.json()) as CarePlanContextResponse;
+    if (contextResponse.ok && contextJson.ok && contextJson.data) {
+      setCarePlan(contextJson.data);
+    }
+    const remindersResponse = await apiFetch(`/api/reminders?bonsaiId=${id}`);
+    const remindersJson = (await remindersResponse.json()) as { ok: boolean; data?: { items: ReminderDto[] } };
+    if (remindersResponse.ok && remindersJson.ok && remindersJson.data) {
+      setReminders(remindersJson.data.items);
+    }
+    setCarePlanBusy(false);
+  }
+
+  async function startCheckout() {
+    if (!bonsai) {
+      return;
+    }
+    setCarePlanBusy(true);
+    setCarePlanError(null);
+    const response = await apiFetch("/api/billing/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bonsaiId: bonsai.id }),
+    });
+    const json = (await response.json()) as { ok: boolean; data?: { url: string | null }; error?: { message: string } };
+    setCarePlanBusy(false);
+    if (!response.ok || !json.ok || !json.data?.url) {
+      setCarePlanError(json.error?.message ?? "Stripe Checkout konnte nicht gestartet werden.");
+      return;
+    }
+    window.location.href = json.data.url;
   }
 
   if (status !== "authenticated") {
@@ -209,6 +293,59 @@ export default function BonsaiDetailPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="surface-card card">
+                <div className="card-body gap-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h2 className="card-title">Pflegeplan</h2>
+                      <p className="text-sm text-base-content/70">
+                        {carePlan?.species?.label ?? "Waehle im Bearbeiten-Formular eine Pflegeplan-Pflanzenart."}
+                      </p>
+                    </div>
+                    {carePlan?.carePlanActive ? <span className="badge badge-success">Aktiv</span> : <span className="badge badge-outline">Vorschau</span>}
+                  </div>
+                  {carePlanError ? <div className="alert alert-warning">{carePlanError}</div> : null}
+                  {carePlan ? (
+                    <>
+                      <p className="text-sm text-base-content/70">{carePlan.note}</p>
+                      <div className="space-y-2">
+                        {carePlan.preview.map((item) => (
+                          <article key={`${item.ruleId}-${item.date}`} className="rounded-2xl border border-base-300 bg-base-100/50 p-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="font-medium">{item.title}</p>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="badge badge-outline badge-sm">{CARE_PLAN_CARE_TYPE_LABELS[item.careType] ?? item.careType}</span>
+                                <span className="text-sm text-base-content/60">{new Date(item.date).toLocaleDateString("de-DE")}</span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-base-content/70">{item.note}</p>
+                          </article>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {carePlan.species && carePlan.entitlementActive ? (
+                          <>
+                            {carePlan.replacementSuggested ? (
+                              <button className="btn btn-secondary btn-sm" disabled={carePlanBusy} onClick={() => void runCarePlanAction("replace")}>
+                                Pflegeplan ersetzen
+                              </button>
+                            ) : (
+                              <button className="btn btn-primary btn-sm" disabled={carePlanBusy} onClick={() => void runCarePlanAction(carePlan.carePlanActive ? "sync" : "activate")}>
+                                {carePlan.carePlanActive ? "Synchronisieren" : "Pflegeplan aktivieren"}
+                              </button>
+                            )}
+                          </>
+                        ) : carePlan.species ? (
+                          <button className="btn btn-primary btn-sm" disabled={carePlanBusy} onClick={() => void startCheckout()}>
+                            Pflegeplan freischalten
+                          </button>
+                        ) : null}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-6">
@@ -274,7 +411,10 @@ export default function BonsaiDetailPage() {
                     <div className="space-y-3">
                       {reminders.map((reminder) => (
                         <article key={reminder.id} className="rounded-2xl border border-base-300 bg-base-100/50 p-4">
-                          <p className="font-medium">{reminder.title ?? `Pflege für ${bonsai.name}`}</p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium">{reminder.title ?? `Pflege für ${bonsai.name}`}</p>
+                            {reminder.source === "CARE_PLAN" ? <span className="badge badge-primary badge-sm">Pflegeplan</span> : null}
+                          </div>
                           <p className="text-sm text-base-content/60">{new Date(reminder.reminderDate).toLocaleDateString("de-DE")}</p>
                         </article>
                       ))}

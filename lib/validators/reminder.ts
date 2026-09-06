@@ -19,6 +19,6 @@ export const reminderPatchSchema = z.object({
   status: z.enum(REMINDER_STATUS_OPTIONS).optional(),
   snoozeDays: z.preprocess(
     (value) => (value === undefined || value === null || value === "" ? undefined : Number(value)),
-    z.number().int().positive().max(365).optional(),
+    z.number().int().positive().max(30).optional(),
   ),
 }).strict();

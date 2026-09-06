@@ -8,6 +8,7 @@ const EURO_AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
 export const emptyBonsaiFormValues: BonsaiFormValues = {
   name: "",
   species: "",
+  carePlanSpeciesId: "",
   latinName: "",
   location: "",
   indoorOutdoor: "OUTDOOR",
@@ -47,6 +48,7 @@ export function bonsaiDetailToFormValues(detail: BonsaiDetail): BonsaiFormValues
   return {
     name: detail.name,
     species: detail.species,
+    carePlanSpeciesId: detail.carePlanSpeciesId ?? "",
     latinName: detail.latinName ?? "",
     location: detail.location,
     indoorOutdoor: detail.indoorOutdoor,
@@ -120,6 +122,7 @@ export function bonsaiFormValuesToPayload(values: BonsaiFormValues) {
   return {
     name: values.name,
     species: values.species,
+    carePlanSpeciesId: nullableString(values.carePlanSpeciesId),
     latinName: nullableString(values.latinName),
     location: values.location,
     indoorOutdoor: values.indoorOutdoor,

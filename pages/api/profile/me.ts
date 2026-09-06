@@ -4,7 +4,8 @@ import { requireUser } from "@/lib/authz";
 import { mapSelfProfileToDto } from "@/lib/mappers";
 import { fail, ok } from "@/lib/api/response";
 import { getZodErrorMessage } from "@/lib/api/validation";
-import { getProfile, updateOwnedProfile } from "@/lib/repositories/profiles";
+import { getProfile, getUserEntitlement, updateOwnedProfile } from "@/lib/repositories/profiles";
+import { CARE_PLAN_FEATURE } from "@/lib/care-plans/entitlements";
 import { profilePatchSchema } from "@/lib/validators/profile";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
@@ -21,7 +22,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    ok(res, mapSelfProfileToDto(profile, actor.email, actor.id));
+    const entitlement = await getUserEntitlement(actor.id, CARE_PLAN_FEATURE);
+    ok(res, mapSelfProfileToDto(profile, actor.email, actor.id, {
+      active: entitlement?.active === true,
+      status: entitlement?.stripe_subscription_status ?? null,
+      currentPeriodEnd: entitlement?.current_period_end ?? null,
+    }));
     return;
   }
 

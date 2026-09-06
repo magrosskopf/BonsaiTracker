@@ -7,6 +7,7 @@ import {
   SUN_EXPOSURE_OPTIONS,
   WINTER_HARDINESS_OPTIONS,
 } from "@/types/domain";
+import { isCarePlanSpeciesId } from "@/lib/care-plans/catalog";
 import {
   nullableInteger,
   nullableUtcDateField,
@@ -39,6 +40,11 @@ const defaultNullString = (max: number, min = 1) => nullableTrimmedString(max, m
 
 const optionalNullString = (max: number, min = 1) => nullableTrimmedString(max, min).optional();
 
+const carePlanSpecies = z.preprocess(
+  (value) => (value === "" || value === undefined ? null : value),
+  z.string().nullable().refine((value) => value === null || isCarePlanSpeciesId(value), "Unbekannte Pflegeplan-Pflanzenart."),
+);
+
 const defaultNullInteger = (min: number, max: number) => nullableInteger(min, max).default(null);
 
 const optionalNullInteger = (min: number, max: number) => nullableInteger(min, max).optional();
@@ -56,6 +62,7 @@ const optionalNullEnum = <T extends readonly [string, ...string[]]>(values: T) =
 const bonsaiCreateObjectSchema = z.object({
   name: requiredTrimmedString(2, 80),
   species: defaultedTrimmedString("Unbekannt", 2, 80),
+  carePlanSpeciesId: carePlanSpecies.default(null),
   latinName: defaultNullString(120, 2),
   location: defaultedTrimmedString("Unbekannt", 2, 120),
   indoorOutdoor: defaultedEnum(INDOOR_OUTDOOR_OPTIONS, "OUTDOOR"),
@@ -87,6 +94,7 @@ const bonsaiCreateObjectSchema = z.object({
 const bonsaiPatchObjectSchema = z.object({
   name: requiredTrimmedString(2, 80).optional(),
   species: defaultedTrimmedString("Unbekannt", 2, 80).optional(),
+  carePlanSpeciesId: carePlanSpecies.optional(),
   latinName: optionalNullString(120, 2),
   location: defaultedTrimmedString("Unbekannt", 2, 120).optional(),
   indoorOutdoor: defaultedEnum(INDOOR_OUTDOOR_OPTIONS, "OUTDOOR").optional(),

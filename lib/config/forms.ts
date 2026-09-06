@@ -14,6 +14,7 @@ import {
   ENTRY_TYPE_LABELS,
   ENTRY_TYPE_OPTIONS,
 } from "@/types/domain";
+import { CARE_PLAN_SPECIES } from "@/lib/care-plans/catalog";
 
 export interface SelectOption {
   value: string;
@@ -57,6 +58,12 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     fields: [
       { key: "name", label: "Name", type: "text", required: true },
       { key: "species", label: "Art", type: "text" },
+      {
+        key: "carePlanSpeciesId",
+        label: "Pflegeplan-Pflanzenart",
+        type: "select",
+        options: [{ value: "", label: "Kein Pflegeplan" }, ...CARE_PLAN_SPECIES.map((species) => ({ value: species.id, label: species.label }))],
+      },
       { key: "latinName", label: "Botanischer Name", type: "text" },
       { key: "location", label: "Standort", type: "text", required: true },
       {
