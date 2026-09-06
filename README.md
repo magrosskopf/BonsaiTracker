@@ -11,6 +11,13 @@
 - Supabase CLI migrations live in the external local Supabase project at `../supabase/supabase/migrations/` by default.
 - Pflegeplan access is an internal entitlement updated from Stripe subscription webhooks; Checkout success/cancel URLs only navigate users back into context.
 
+## Environment Policy
+
+- Development uses only the local Supabase stack.
+- Production uses only the self-hosted Supabase stack.
+- Do not point local development at the self-hosted production Supabase instance.
+- As of 2026-09-06, the self-hosted production Supabase schema does not yet include the Pflegeplan Paywall schema changes. The canonical migration lives in the local Supabase repo at `../supabase/supabase/migrations/202609060001_care_plan_paywall.sql`; apply it to production before enabling or verifying the paid Pflegeplan feature there.
+
 ## Flutter Public Client API
 
 - Configure Flutter with `API_BASE_URL`, `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. The publishable key is only for Supabase Auth and explicitly public client flows.
@@ -31,7 +38,7 @@ npm run dev
 ```
 
 If the external Supabase project is not in `../supabase`, set `BONSAI_SUPABASE_PROJECT_ROOT` to its project root before running Supabase CLI scripts.
-Apply `dev/features/2026-09-06_pflegeplan-paywall/migration.sql` to that external Supabase project before running `npm run supabase:types`.
+The Pflegeplan Paywall migration belongs in the external Supabase project at `../supabase/supabase/migrations/202609060001_care_plan_paywall.sql`; keep migrations there as the source of truth before running `npm run supabase:types`.
 
 ## Pflegeplan Billing
 

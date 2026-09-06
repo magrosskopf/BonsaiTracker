@@ -11,6 +11,7 @@ import {
   PASSWORD_RESET_LABEL,
   getAuthCallbackUrl,
   getAuthErrorMessage,
+  getForwardedAuthCallbackPath,
   getGoogleLoginLabel,
   getAuthModeTitle,
   normalizeAuthEmail,
@@ -41,6 +42,15 @@ test("home page builds Supabase auth callback URLs from the current origin", () 
   assert.equal(AUTH_CALLBACK_PATH, "/auth/callback");
   assert.equal(getAuthCallbackUrl("http://localhost:3000"), "http://localhost:3000/auth/callback");
   assert.equal(getAuthCallbackUrl("http://localhost:3000/"), "http://localhost:3000/auth/callback");
+});
+
+test("home page forwards misplaced Supabase auth callback codes to the callback route", () => {
+  assert.equal(getForwardedAuthCallbackPath({}), null);
+  assert.equal(getForwardedAuthCallbackPath({ code: "oauth-code" }), "/auth/callback?code=oauth-code");
+  assert.equal(
+    getForwardedAuthCallbackPath({ code: ["oauth-code", "ignored"], type: "recovery" }),
+    "/auth/callback?code=oauth-code&type=recovery",
+  );
 });
 
 test("home page maps known auth errors to actionable messages", () => {

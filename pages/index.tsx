@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
+
+type QueryValue = string | string[] | undefined;
+type RootAuthCallbackQuery = {
+  code?: QueryValue;
+  type?: QueryValue;
+};
 
 export const GOOGLE_LOGIN_LABELS = {
   login: "Mit Google anmelden",
@@ -22,6 +28,25 @@ const AUTH_INPUT_CLASS = "input input-bordered input-lg w-full bg-base-100 text-
 
 export function getAuthCallbackUrl(origin: string): string {
   return `${origin.replace(/\/$/, "")}${AUTH_CALLBACK_PATH}`;
+}
+
+function getFirstQueryValue(value: QueryValue): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export function getForwardedAuthCallbackPath(query: RootAuthCallbackQuery): string | null {
+  const code = getFirstQueryValue(query.code);
+  if (!code) {
+    return null;
+  }
+
+  const params = new URLSearchParams({ code });
+  const type = getFirstQueryValue(query.type);
+  if (type) {
+    params.set("type", type);
+  }
+
+  return `${AUTH_CALLBACK_PATH}?${params.toString()}`;
 }
 
 export function normalizeAuthEmail(input: string): string {
@@ -108,6 +133,17 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [submittingAction, setSubmittingAction] = useState<SubmitAction | null>(null);
   const submitting = submittingAction !== null;
+
+  useEffect(() => {
+    if (!router.isReady) {
+      return;
+    }
+
+    const forwardedCallbackPath = getForwardedAuthCallbackPath(router.query);
+    if (forwardedCallbackPath) {
+      void router.replace(forwardedCallbackPath);
+    }
+  }, [router]);
 
   function clearFeedback() {
     setError(null);
