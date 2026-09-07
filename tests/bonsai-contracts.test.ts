@@ -124,6 +124,44 @@ test("bonsai form mappings support euro prices and nullable detail fields", () =
   assert.equal(blankPricePayload.purchasePriceCents, null);
 });
 
+test("bonsai form mappings persist care plan species separately from species text", () => {
+  const detail = mapBonsaiDetail({ ...buildBonsaiRecord(), care_plan_species_id: "japanese-maple" });
+  const formValues = bonsaiDetailToFormValues(detail);
+  const selectedPayload = bonsaiFormValuesToPayload({
+    ...emptyBonsaiFormValues,
+    species: "Acer palmatum Freitext",
+    carePlanSpeciesId: "japanese-maple",
+  });
+  const clearedPayload = bonsaiFormValuesToPayload({
+    ...emptyBonsaiFormValues,
+    species: "Acer palmatum Freitext",
+    carePlanSpeciesId: "",
+  });
+
+  assert.equal(formValues.carePlanSpeciesId, "japanese-maple");
+  assert.equal(selectedPayload.species, "Acer palmatum Freitext");
+  assert.equal(selectedPayload.carePlanSpeciesId, "japanese-maple");
+  assert.equal(clearedPayload.species, "Acer palmatum Freitext");
+  assert.equal(clearedPayload.carePlanSpeciesId, null);
+});
+
+test("care plan migration updates care plan species in patch_owned_bonsai", () => {
+  const paywallMigration = readFileSync(
+    join(process.cwd(), "dev", "features", "2026-09-06_pflegeplan-paywall", "migration.sql"),
+    "utf8",
+  );
+  const deployableMigration = readFileSync(
+    join(process.cwd(), "dev", "features", "2026-09-07_care-plan-species-save", "supabase-migration.sql"),
+    "utf8",
+  );
+
+  for (const source of [paywallMigration, deployableMigration]) {
+    assert.match(source, /create or replace function public\.patch_owned_bonsai/);
+    assert.match(source, /care_plan_species_id\s*=\s*case\s+when p_patch \? 'care_plan_species_id'/);
+  }
+  assert.match(paywallMigration, /care_plan_species_id\s+text/);
+});
+
 test("bonsai detail form config keeps selected fields optional and labels price in euro", () => {
   const byKey = fieldConfigByKey();
 

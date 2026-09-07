@@ -895,6 +895,11 @@ export type Database = {
         Returns: {
           acquired_from: string | null
           age: number | null
+          care_plan_activated_at: string | null
+          care_plan_active: boolean
+          care_plan_replaced_at: string | null
+          care_plan_species_id: string | null
+          care_plan_version: string | null
           created_at: string
           custom_style: string | null
           deleted_at: string | null
