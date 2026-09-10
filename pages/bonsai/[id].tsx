@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api/client";
 import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import { formatBonsaiAge, formatBonsaiDate, formatBonsaiDisplayText } from "@/lib/bonsai-display";
 import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
-import type { BillingStatus } from "@/lib/billing/plus";
+import { useBilling } from "@/lib/billing/use-billing";
 import type { BonsaiDetail, ReminderDto } from "@/types/dto";
 import {
   DEVELOPMENT_STAGE_LABELS,
@@ -26,8 +26,6 @@ const CARE_PLAN_CARE_TYPE_LABELS: Record<string, string> = {
   REPOTTING: "Umtopfen",
   INSPECTION: "Kontrolle",
 };
-
-const EMPTY_BILLING_STATUS: BillingStatus = { offer: null, purchaseState: "unavailable", canManage: false };
 
 interface DetailResponse {
   ok: boolean;
@@ -74,7 +72,7 @@ export default function BonsaiDetailPage() {
   const [carePlanError, setCarePlanError] = useState<string | null>(null);
   const [carePlanBusy, setCarePlanBusy] = useState(false);
   const [carePlanSuccess, setCarePlanSuccess] = useState<string | null>(null);
-  const [billingStatus, setBillingStatus] = useState<BillingStatus>(EMPTY_BILLING_STATUS);
+  const billing = useBilling();
   const [entryFilter, setEntryFilter] = useState<string>("");
   const [slideshowIndex, setSlideshowIndex] = useState(0);
 
@@ -109,11 +107,7 @@ export default function BonsaiDetailPage() {
         setCarePlan(null);
         setCarePlanError(carePlanJson.error.message);
       }
-      const billingResponse = await apiFetch("/api/billing/status");
-      const billingJson = (await billingResponse.json()) as { ok: boolean; data?: BillingStatus };
-      if (billingResponse.ok && billingJson.ok && billingJson.data) {
-        setBillingStatus(billingJson.data);
-      }
+      await billing.refreshStatus();
       setError(null);
       setLoading(false);
     })();
@@ -207,54 +201,9 @@ export default function BonsaiDetailPage() {
     if (!response.ok || !json.ok || !json.data) return false;
     setCarePlan(json.data);
     if (json.data.entitlementActive) {
-      setBillingStatus((current) => ({ ...current, purchaseState: "subscription" }));
+      billing.markEntitlementActive();
     }
     return json.data.entitlementActive;
-  }
-
-  async function openBillingPortal() {
-    setCarePlanBusy(true);
-    setCarePlanError(null);
-    const response = await apiFetch("/api/billing/portal", { method: "POST" });
-    const json = (await response.json()) as { ok: boolean; data?: { url: string | null }; error?: { message: string } };
-    setCarePlanBusy(false);
-    if (!response.ok || !json.ok || !json.data?.url) {
-      setCarePlanError(json.error?.message ?? "Die Aboverwaltung konnte nicht geöffnet werden.");
-      return;
-    }
-    window.location.href = json.data.url;
-  }
-
-  async function startCheckout() {
-    if (!bonsai) {
-      return;
-    }
-    setCarePlanBusy(true);
-    setCarePlanError(null);
-    const response = await apiFetch("/api/billing/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bonsaiId: bonsai.id }),
-    });
-    const json = (await response.json()) as { ok: boolean; data?: { kind: "redirect" | "processing" | "manage"; url?: string | null }; error?: { message: string } };
-    setCarePlanBusy(false);
-    if (!response.ok || !json.ok || !json.data) {
-      setCarePlanError(json.error?.message ?? "Stripe Checkout konnte nicht gestartet werden.");
-      return;
-    }
-    if (json.data.kind === "processing") {
-      setBillingStatus((current) => ({ ...current, purchaseState: "checkout_processing", canManage: true }));
-      return;
-    }
-    if (json.data.kind === "manage") {
-      setBillingStatus((current) => ({ ...current, purchaseState: "subscription", canManage: true }));
-      return;
-    }
-    if (!json.data.url) {
-      setCarePlanError("Stripe Checkout konnte nicht gestartet werden.");
-      return;
-    }
-    window.location.href = json.data.url;
   }
 
   if (status !== "authenticated") {
@@ -360,13 +309,14 @@ export default function BonsaiDetailPage() {
                     {carePlan?.carePlanActive ? <span className="badge badge-success">Aktiv</span> : <span className="badge badge-outline">Vorschau</span>}
                   </div>
                   {carePlanError ? <div className="alert alert-warning">{carePlanError}</div> : null}
+                  {billing.error ? <div className="alert alert-warning">{billing.error}</div> : null}
                   {carePlanSuccess ? <div className="alert alert-success">{carePlanSuccess} <Link href="/reminders" className="link font-semibold">Zur Reminder-Liste</Link></div> : null}
                   <CheckoutReturnNotice
                     context="bonsai"
                     checkEntitlement={refreshCarePlanEntitlement}
-                    canManage={billingStatus.canManage}
-                    onManage={() => void openBillingPortal()}
-                    onCheckoutConfirmed={() => setBillingStatus((current) => ({ ...current, purchaseState: "subscription", canManage: true }))}
+                    canManage={billing.status.canManage}
+                    onManage={() => void billing.openPortal()}
+                    onCheckoutConfirmed={billing.markCheckoutConfirmed}
                   />
                   {carePlan ? (
                     <>
@@ -400,11 +350,11 @@ export default function BonsaiDetailPage() {
                           </>
                         ) : carePlan.species ? (
                           <PlusOfferCard
-                            {...billingStatus}
-                            busy={carePlanBusy}
+                            {...billing.status}
+                            busy={carePlanBusy || billing.busy}
                             entitlementActive={carePlan.entitlementActive}
-                            onCheckout={() => void startCheckout()}
-                            onManage={() => void openBillingPortal()}
+                            onCheckout={() => void billing.startCheckout(bonsai.id)}
+                            onManage={() => void billing.openPortal()}
                           />
                         ) : null}
                       </div>

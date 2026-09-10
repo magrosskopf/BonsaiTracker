@@ -1,6 +1,6 @@
 # Implementation Plan: Pflegeplan Launch Experience
 
-**Status**: APPROVED
+**Status**: VERIFY
 **Created**: 2026-09-10
 **Last Modified**: 2026-09-10
 
@@ -33,6 +33,8 @@ Zugang oder Reminder zu erzeugen.
 - `lib/billing/checkout-return.ts`: testbarer Controller fuer Verifikation,
   URL-Bereinigung und 2-Sekunden-Polling ueber maximal 30 Sekunden aktive
   Vordergrundzeit
+- `lib/billing/use-billing.ts`: gemeinsamer Client-Hook fuer Statusabruf,
+  Checkout, Portal, Fehler und lokale Kaufzustandsuebergaenge
 - `components/PlusOfferCard.tsx`: kompakte wiederverwendbare Produkt-/Kaufbox
 - `components/CheckoutReturnNotice.tsx`: Bonsai-/Profil-spezifische
   Rueckkehrmeldung und Aktivierungsfuehrung
@@ -58,9 +60,6 @@ Zugang oder Reminder zu erzeugen.
 - `pages/api/billing/checkout.ts`: vorhandenen Kaufzustand vor Erstellung
   pruefen und strukturierte Ergebnisse (`redirect`, `processing`, `manage`)
   liefern
-- `pages/api/profile/me.ts`, `lib/mappers.ts`, `types/dto.ts`: nur die fuer die
-  Profilanzeige erforderliche Information zum vorhandenen Stripe-Kundenbezug
-  ausgeben; keine Geheimnisse oder rohen Statuswerte darstellen
 - `pages/index.tsx`: serverseitig geladenes Angebot, kompakter
   Pflegeplan-Produktabschnitt und kontextgerechter Registrierungs-/Bonsai-Link
 - `components/BonsaiForm.tsx`, `lib/config/forms.ts`: auffindbarer Hinweis im
@@ -104,6 +103,22 @@ Zugang oder Reminder zu erzeugen.
 7. `PlusOfferCard` rendert Nutzen und Grenzen auch ohne Preis. Nur bei aktuellem
    validem Angebot und erlaubtem Kaufzustand erscheint der zahlungspflichtige
    CTA.
+8. `useBilling` kapselt die auf Profil und Bonsai-Detail identischen Client-
+   Ablaeufe fuer Status, Checkout, Portal und Fehler. Der vorhandene
+   Stripe-Kundenbezug kommt damit aus `billing/status`; das Profil-DTO bleibt
+   bewusst frei von zusaetzlichen Billing-Transportdetails.
+
+## Implementation Refinements
+
+- Der Kundenbezug wird ausschliesslich ueber `pages/api/billing/status.ts`
+  transportiert. Dadurch waren die im ersten Dateientwurf genannten Aenderungen
+  an `pages/api/profile/me.ts`, `lib/mappers.ts` und `types/dto.ts` nicht
+  erforderlich.
+- Die zunaechst duplizierten Client-Aktionen wurden im Review in `useBilling`
+  zusammengezogen.
+- Stripe-Listen werden vollstaendig paginiert und anhand der konfigurierten
+  Price gefiltert, damit weder alte Plus-Vorgaenge uebersehen noch fremde
+  Produkte als Plus behandelt werden.
 
 ## Implementation Steps (vertical TDD slices)
 

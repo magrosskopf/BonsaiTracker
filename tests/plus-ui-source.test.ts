@@ -19,6 +19,8 @@ test("bonsai care-plan context keeps preview and exposes selection, purchase, re
   assert.match(detail, /Pflegeplan-Pflanzenart auswählen/);
   assert.match(detail, /PlusOfferCard/);
   assert.match(detail, /CheckoutReturnNotice/);
+  assert.match(detail, /useBilling/);
+  assert.doesNotMatch(detail, /apiFetch\("\/api\/billing\/(checkout|portal)"/);
   assert.match(detail, /System-Reminder wurden angelegt/);
   assert.match(detail, /href="\/reminders"/);
   assert.match(detail, /carePlan\.preview\.map/);
@@ -29,6 +31,8 @@ test("profile offers Plus independently and never prints raw Stripe status value
   assert.match(profile, /Bonsai Tracker Plus/);
   assert.match(profile, /PlusOfferCard/);
   assert.match(profile, /CheckoutReturnNotice/);
+  assert.match(profile, /useBilling/);
+  assert.doesNotMatch(profile, /apiFetch\("\/api\/billing\/(checkout|portal)"/);
   assert.match(profile, /Bonsai auswählen/);
   assert.doesNotMatch(profile, /carePlanEntitlement\.status/);
   assert.doesNotMatch(profile, /Status:/);

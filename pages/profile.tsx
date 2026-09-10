@@ -6,11 +6,9 @@ import CheckoutReturnNotice from "@/components/CheckoutReturnNotice";
 import PlusOfferCard from "@/components/PlusOfferCard";
 import { apiFetch } from "@/lib/api/client";
 import { useRequireAuth } from "@/lib/auth/use-require-auth";
-import type { BillingStatus } from "@/lib/billing/plus";
+import { useBilling } from "@/lib/billing/use-billing";
 import type { SelfProfileDto } from "@/types/dto";
 import { POST_TYPE_LABELS } from "@/types/domain";
-
-const EMPTY_BILLING_STATUS: BillingStatus = { offer: null, purchaseState: "unavailable", canManage: false };
 
 export default function Profile() {
   const router = useRouter();
@@ -22,8 +20,7 @@ export default function Profile() {
   const [profileImageUrl, setProfileImageUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [billingBusy, setBillingBusy] = useState(false);
-  const [billingStatus, setBillingStatus] = useState<BillingStatus>(EMPTY_BILLING_STATUS);
+  const billing = useBilling();
 
   async function refreshProfile(updateForm = false): Promise<boolean> {
     const response = await apiFetch("/api/profile/me");
@@ -41,18 +38,12 @@ export default function Profile() {
     return json.data.carePlanEntitlement.active;
   }
 
-  async function refreshBillingStatus(): Promise<void> {
-    const response = await apiFetch("/api/billing/status");
-    const json = (await response.json()) as { ok: boolean; data?: BillingStatus };
-    if (response.ok && json.ok && json.data) setBillingStatus(json.data);
-  }
-
   useEffect(() => {
     if (status !== "authenticated") {
       return;
     }
 
-    void Promise.all([refreshProfile(true), refreshBillingStatus()]);
+    void Promise.all([refreshProfile(true), billing.refreshStatus()]);
   }, [status]);
 
   async function saveProfile() {
@@ -76,48 +67,6 @@ export default function Profile() {
     setSuccess("Profil gespeichert.");
   }
 
-  async function openBillingPortal() {
-    setBillingBusy(true);
-    setError(null);
-    const response = await apiFetch("/api/billing/portal", { method: "POST" });
-    const json = (await response.json()) as { ok: boolean; data?: { url: string | null }; error?: { message: string } };
-    setBillingBusy(false);
-    if (!response.ok || !json.ok || !json.data?.url) {
-      setError(json.error?.message ?? "Das Stripe Customer Portal konnte nicht geöffnet werden.");
-      return;
-    }
-    window.location.href = json.data.url;
-  }
-
-  async function startCheckout() {
-    setBillingBusy(true);
-    setError(null);
-    const response = await apiFetch("/api/billing/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    const json = (await response.json()) as { ok: boolean; data?: { kind: "redirect" | "processing" | "manage"; url?: string | null }; error?: { message: string } };
-    setBillingBusy(false);
-    if (!response.ok || !json.ok || !json.data) {
-      setError(json.error?.message ?? "Stripe Checkout konnte nicht gestartet werden.");
-      return;
-    }
-    if (json.data.kind === "processing") {
-      setBillingStatus((current) => ({ ...current, purchaseState: "checkout_processing", canManage: true }));
-      return;
-    }
-    if (json.data.kind === "manage") {
-      setBillingStatus((current) => ({ ...current, purchaseState: "subscription", canManage: true }));
-      return;
-    }
-    if (!json.data.url) {
-      setError("Stripe Checkout konnte nicht gestartet werden.");
-      return;
-    }
-    window.location.href = json.data.url;
-  }
-
   if (status !== "authenticated" || !session) {
     return null;
   }
@@ -132,13 +81,14 @@ export default function Profile() {
         </div>
 
         {error ? <div className="alert alert-error">{error}</div> : null}
+        {billing.error ? <div className="alert alert-error">{billing.error}</div> : null}
         {success ? <div className="alert alert-success">{success}</div> : null}
         <CheckoutReturnNotice
           context="profile"
           checkEntitlement={() => refreshProfile(false)}
-          canManage={billingStatus.canManage}
-          onManage={() => void openBillingPortal()}
-          onCheckoutConfirmed={() => setBillingStatus((current) => ({ ...current, purchaseState: "subscription", canManage: true }))}
+          canManage={billing.status.canManage}
+          onManage={() => void billing.openPortal()}
+          onCheckoutConfirmed={billing.markCheckoutConfirmed}
         />
 
         <section className="surface-card card">
@@ -178,7 +128,7 @@ export default function Profile() {
 
         <section className="surface-card card">
           <div className="card-body gap-4">
-            <h2 className="card-title">{billingStatus.offer?.productName ?? "Bonsai Tracker Plus"}</h2>
+            <h2 className="card-title">{billing.status.offer?.productName ?? "Bonsai Tracker Plus"}</h2>
             {profile?.carePlanEntitlement.active ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
@@ -191,19 +141,19 @@ export default function Profile() {
                 ) : null}
                   <Link href="/dashboard" className="link text-sm font-semibold">Bonsai auswählen</Link>
                 </div>
-                {billingStatus.canManage ? (
-                  <button className="btn btn-outline" disabled={billingBusy} onClick={() => void openBillingPortal()}>
-                    {billingBusy ? <span className="loading loading-spinner loading-sm" /> : null}
+                {billing.status.canManage ? (
+                  <button className="btn btn-outline" disabled={billing.busy} onClick={() => void billing.openPortal()}>
+                    {billing.busy ? <span className="loading loading-spinner loading-sm" /> : null}
                     Abo verwalten
                   </button>
                 ) : null}
               </div>
             ) : (
               <PlusOfferCard
-                {...billingStatus}
-                busy={billingBusy}
-                onCheckout={() => void startCheckout()}
-                onManage={() => void openBillingPortal()}
+                {...billing.status}
+                busy={billing.busy}
+                onCheckout={() => void billing.startCheckout()}
+                onManage={() => void billing.openPortal()}
               />
             )}
           </div>

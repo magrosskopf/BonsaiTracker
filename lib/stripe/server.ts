@@ -20,6 +20,7 @@ interface StripeSession {
 
 interface StripeList<T> {
   data: T[];
+  has_more: boolean;
 }
 
 export interface StripeSubscriptionLike {
@@ -81,12 +82,39 @@ export async function createStripeCustomer(email: string | null, userId: string)
   return customer.id;
 }
 
+async function listStripeCollection<T extends { id: string }>(
+  path: string,
+  parameters: Record<string, string | number>,
+): Promise<T[]> {
+  const items: T[] = [];
+  let startingAfter: string | undefined;
+  while (true) {
+    const page = await stripeRequest<StripeList<T>>(path, {
+      ...parameters,
+      limit: 100,
+      starting_after: startingAfter,
+    }, "GET");
+    items.push(...page.data);
+    if (!page.has_more || page.data.length === 0) return items;
+    startingAfter = page.data[page.data.length - 1].id;
+  }
+}
+
 export async function getStripePurchaseState(customerId: string): Promise<StripePurchaseState> {
+  const { carePlanPriceId } = getStripeServerConfig();
   const [sessions, subscriptions] = await Promise.all([
-    stripeRequest<StripeList<StripeCheckoutSessionSummary>>("/checkout/sessions", { customer: customerId, limit: 10 }, "GET"),
-    stripeRequest<StripeList<StripeSubscriptionSummary>>("/subscriptions", { customer: customerId, status: "all", limit: 10 }, "GET"),
+    listStripeCollection<StripeCheckoutSessionSummary>("/checkout/sessions", { customer: customerId }),
+    listStripeCollection<StripeSubscriptionSummary>("/subscriptions", { customer: customerId, status: "all" }),
   ]);
-  return classifyStripePurchase(sessions.data, subscriptions.data);
+  await Promise.all(sessions.map(async (session) => {
+    if (session.status !== "open" || session.metadata?.price_id) return;
+    session.line_items = await stripeRequest<StripeList<{ id: string; price: { id: string } | string | null }>>(
+      `/checkout/sessions/${encodeURIComponent(session.id)}/line_items`,
+      { limit: 100 },
+      "GET",
+    );
+  }));
+  return classifyStripePurchase(sessions, subscriptions, carePlanPriceId);
 }
 
 export async function retrieveCheckoutSession(sessionId: string): Promise<StripeCheckoutSessionSummary> {
@@ -109,6 +137,7 @@ export async function createCarePlanCheckoutSession(input: {
     success_url: `${appUrl}${contextPath}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}${contextPath}?checkout=cancelled`,
     "metadata[user_id]": input.userId,
+    "metadata[price_id]": carePlanPriceId,
     "metadata[bonsai_id]": input.bonsaiId ?? null,
     "subscription_data[metadata][user_id]": input.userId,
   }, "POST", buildCheckoutIdempotencyKey(input.userId, input.purchaseState));

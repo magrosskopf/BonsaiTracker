@@ -14,6 +14,7 @@ interface CheckoutReturnNoticeProps {
   onCheckoutConfirmed?: () => void;
 }
 
+// See /dev/features/2026-09-09_pflegeplan-launch-experience/implementation.md - Section Code Architecture 6.
 export default function CheckoutReturnNotice({ context, checkEntitlement, canManage, onManage, onCheckoutConfirmed }: CheckoutReturnNoticeProps) {
   const router = useRouter();
   const [phase, setPhase] = useState<ReturnPhase>("idle");
@@ -45,15 +46,20 @@ export default function CheckoutReturnNotice({ context, checkEntitlement, canMan
 
     setPhase("verifying");
     void (async () => {
-      const response = await apiFetch(`/api/billing/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
-      const json = (await response.json()) as { ok: boolean; data?: { confirmed: true } };
-      if (response.ok && json.ok && json.data?.confirmed) {
-        onCheckoutConfirmed?.();
-        setPhase("processing");
-      } else {
+      try {
+        const response = await apiFetch(`/api/billing/checkout-session?session_id=${encodeURIComponent(sessionId)}`);
+        const json = (await response.json()) as { ok: boolean; data?: { confirmed: true } };
+        if (response.ok && json.ok && json.data?.confirmed) {
+          onCheckoutConfirmed?.();
+          setPhase("processing");
+        } else {
+          setPhase("invalid");
+        }
+      } catch {
         setPhase("invalid");
+      } finally {
+        await cleanUrl().catch(() => undefined);
       }
-      await cleanUrl();
     })();
   }, [onCheckoutConfirmed, router]);
 

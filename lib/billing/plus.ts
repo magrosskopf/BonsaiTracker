@@ -24,20 +24,24 @@ export interface StripeCheckoutSessionSummary {
   id: string;
   status: string | null;
   mode: string | null;
+  payment_status: string | null;
   customer: string | null;
   metadata: Record<string, string> | null;
+  line_items?: { data: Array<{ price: { id: string } | string | null }> } | null;
   url?: string | null;
 }
 
 export interface StripeSubscriptionSummary {
   id: string;
   status: string;
+  items: { data: Array<{ price: { id: string } | string }> };
 }
 
 export type StripePurchaseState =
   | { kind: "available"; marker: string }
   | { kind: "checkout_processing"; marker: string }
-  | { kind: "subscription"; marker: string };
+  | { kind: "subscription_processing"; marker: string }
+  | { kind: "subscribed"; marker: string };
 
 export type BillingAvailability = StripePurchaseState["kind"] | "unavailable";
 
@@ -80,15 +84,24 @@ export function toPlusOffer(price: StripePriceLike): PlusOffer | null {
 export function classifyStripePurchase(
   checkoutSessions: readonly StripeCheckoutSessionSummary[],
   subscriptions: readonly StripeSubscriptionSummary[],
+  priceId: string,
 ): StripePurchaseState {
-  const latestSession = checkoutSessions[0];
-  const latestSubscription = subscriptions[0];
+  const plusSessions = checkoutSessions.filter((item) => {
+    if (item.metadata?.price_id) return item.metadata.price_id === priceId;
+    return item.line_items?.data.some((lineItem) => (typeof lineItem.price === "string" ? lineItem.price : lineItem.price?.id) === priceId) === true;
+  });
+  const plusSubscriptions = subscriptions.filter((item) =>
+    item.items.data.some((lineItem) => (typeof lineItem.price === "string" ? lineItem.price : lineItem.price.id) === priceId),
+  );
+  const latestSession = plusSessions[0];
+  const latestSubscription = plusSubscriptions[0];
   const marker = `${latestSession?.id ?? "no-session"}:${latestSession?.status ?? "none"}:${latestSubscription?.id ?? "no-subscription"}:${latestSubscription?.status ?? "none"}`;
-  if (checkoutSessions.some((item) => item.status === "open")) {
+  if (plusSessions.some((item) => item.status === "open")) {
     return { kind: "checkout_processing", marker };
   }
-  if (subscriptions.some((item) => !TERMINAL_SUBSCRIPTION_STATUSES.has(item.status))) {
-    return { kind: "subscription", marker };
+  const running = plusSubscriptions.find((item) => !TERMINAL_SUBSCRIPTION_STATUSES.has(item.status));
+  if (running) {
+    return { kind: running.status === "active" || running.status === "trialing" ? "subscribed" : "subscription_processing", marker };
   }
   return { kind: "available", marker };
 }
@@ -100,5 +113,5 @@ export function buildCheckoutIdempotencyKey(userId: string, purchaseState: Strip
 }
 
 export function isCompletedCheckoutForUser(session: StripeCheckoutSessionSummary, userId: string): boolean {
-  return session.status === "complete" && session.mode === "subscription" && session.metadata?.user_id === userId;
+  return session.status === "complete" && session.payment_status === "paid" && session.mode === "subscription" && session.metadata?.user_id === userId;
 }

@@ -24,6 +24,7 @@ export interface EntitlementPoller {
   handleVisibilityChange: () => void;
 }
 
+// See /dev/features/2026-09-09_pflegeplan-launch-experience/implementation.md - Section Code Architecture 6.
 export function createEntitlementPoller<TTimer = ReturnType<typeof setTimeout>>({
   checkAccess,
   isVisible,
@@ -88,6 +89,8 @@ export function createEntitlementPoller<TTimer = ReturnType<typeof setTimeout>>(
         onActive();
         return;
       }
+    } catch {
+      // A transient request failure consumes foreground time but does not end the bounded retry window.
     } finally {
       inFlight = false;
     }

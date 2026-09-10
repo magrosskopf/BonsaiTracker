@@ -21,18 +21,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fail(res, "BAD_REQUEST", "Ungültige Bonsai-ID.", 400);
       return;
     }
+    await getCurrentPlusOffer();
     const existing = await getStripeCustomer(actor.id);
     const customerId = existing?.stripe_customer_id ?? (await createStripeCustomer(actor.email, actor.id));
     if (!existing) {
       await upsertStripeCustomer(actor.id, customerId);
     }
-    await getCurrentPlusOffer();
     const purchaseState = await getStripePurchaseState(customerId);
     if (purchaseState.kind === "checkout_processing") {
       ok(res, { kind: "processing" as const });
       return;
     }
-    if (purchaseState.kind === "subscription") {
+    if (purchaseState.kind === "subscribed" || purchaseState.kind === "subscription_processing") {
       ok(res, { kind: "manage" as const });
       return;
     }

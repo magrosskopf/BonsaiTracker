@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createEntitlementPoller, stripCheckoutParams } from "@/lib/billing/checkout-return";
 
 class FakeClock {
@@ -133,4 +135,35 @@ test("manual retry starts a fresh immediate polling window", async () => {
   poller.retry();
   await clock.advance(0);
   assert.equal(checks, 17);
+});
+
+test("a transient entitlement request error does not stop later checks", async () => {
+  const clock = new FakeClock();
+  let checks = 0;
+  let active = 0;
+  const poller = createEntitlementPoller({
+    checkAccess: async () => {
+      checks += 1;
+      if (checks === 1) throw new Error("network unavailable");
+      return true;
+    },
+    isVisible: () => true,
+    now: clock.now,
+    setTimer: clock.setTimer,
+    clearTimer: clock.clearTimer,
+    onActive: () => { active += 1; },
+    onTimeout: () => assert.fail("must recover before timeout"),
+  });
+  poller.start();
+  await clock.advance(0);
+  await clock.advance(2_000);
+  assert.equal(checks, 2);
+  assert.equal(active, 1);
+});
+
+test("checkout verification failures transition safely and still clean the URL", () => {
+  const source = readFileSync(join(process.cwd(), "components", "CheckoutReturnNotice.tsx"), "utf8");
+  assert.match(source, /catch\s*\{/);
+  assert.match(source, /finally\s*\{/);
+  assert.match(source, /cleanUrl\(\)\.catch/);
 });

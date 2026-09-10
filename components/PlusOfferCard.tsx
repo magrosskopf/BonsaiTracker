@@ -25,9 +25,9 @@ export default function PlusOfferCard({ offer, purchaseState, canManage, busy = 
           </div>
         ) : purchaseState === "checkout_processing" ? (
           <div className="alert alert-info text-sm">Ein Checkout wird bereits verarbeitet. Bitte schließe ihn ab oder prüfe den Zugang erneut.</div>
-        ) : purchaseState === "subscription" && !entitlementActive ? (
+        ) : (purchaseState === "subscribed" || purchaseState === "subscription_processing") && !entitlementActive ? (
           <div className="space-y-3">
-            <div className="alert alert-info text-sm">Deine Subscription wird verarbeitet. Ein weiteres Abo kann nicht abgeschlossen werden.</div>
+            <div className="alert alert-info text-sm">Deine Bonsai-Tracker-Plus-Subscription wird verarbeitet. Ein weiteres Abo kann nicht abgeschlossen werden.</div>
             {canManage ? <button className="btn btn-outline btn-sm" disabled={busy} onClick={onManage}>Abo verwalten</button> : null}
           </div>
         ) : purchaseState === "available" ? (
