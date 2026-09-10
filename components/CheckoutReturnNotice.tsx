@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api/client";
-import { createEntitlementPoller, stripCheckoutParams, type EntitlementPoller } from "@/lib/billing/checkout-return";
+import { createEntitlementPoller, stripCheckoutParams } from "@/lib/billing/checkout-return";
 
 type ReturnPhase = "idle" | "verifying" | "processing" | "ready" | "timeout" | "cancelled" | "invalid";
 
@@ -19,7 +19,6 @@ export default function CheckoutReturnNotice({ context, checkEntitlement, canMan
   const router = useRouter();
   const [phase, setPhase] = useState<ReturnPhase>("idle");
   const processed = useRef<string | null>(null);
-  const poller = useRef<EntitlementPoller | null>(null);
   const checkEntitlementRef = useRef(checkEntitlement);
   checkEntitlementRef.current = checkEntitlement;
 
@@ -71,13 +70,11 @@ export default function CheckoutReturnNotice({ context, checkEntitlement, canMan
       onActive: () => setPhase("ready"),
       onTimeout: () => setPhase("timeout"),
     });
-    poller.current = controller;
     document.addEventListener("visibilitychange", controller.handleVisibilityChange);
     controller.start();
     return () => {
       document.removeEventListener("visibilitychange", controller.handleVisibilityChange);
       controller.stop();
-      poller.current = null;
     };
   }, [phase]);
 
