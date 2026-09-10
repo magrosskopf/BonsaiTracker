@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { requireUser } from "@/lib/authz";
 import { fail, ok } from "@/lib/api/response";
-import { createCarePlanCheckoutSession, createStripeCustomer } from "@/lib/stripe/server";
+import { createCarePlanCheckoutSession, createStripeCustomer, getCurrentPlusOffer, getStripePurchaseState } from "@/lib/stripe/server";
 import { getStripeCustomer, upsertStripeCustomer } from "@/lib/repositories/profiles";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const bonsaiId = req.body?.bonsaiId ? Number(req.body.bonsaiId) : null;
     if (bonsaiId !== null && (!Number.isInteger(bonsaiId) || bonsaiId <= 0)) {
-      fail(res, "BAD_REQUEST", "Ungueltige Bonsai-ID.", 400);
+      fail(res, "BAD_REQUEST", "Ungültige Bonsai-ID.", 400);
       return;
     }
     const existing = await getStripeCustomer(actor.id);
@@ -26,9 +26,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!existing) {
       await upsertStripeCustomer(actor.id, customerId);
     }
-    const session = await createCarePlanCheckoutSession({ userId: actor.id, customerId, bonsaiId });
-    ok(res, { url: session.url });
+    await getCurrentPlusOffer();
+    const purchaseState = await getStripePurchaseState(customerId);
+    if (purchaseState.kind === "checkout_processing") {
+      ok(res, { kind: "processing" as const });
+      return;
+    }
+    if (purchaseState.kind === "subscription") {
+      ok(res, { kind: "manage" as const });
+      return;
+    }
+    const session = await createCarePlanCheckoutSession({ userId: actor.id, customerId, bonsaiId, purchaseState });
+    ok(res, { kind: "redirect" as const, url: session.url });
   } catch {
-    fail(res, "INTERNAL_SERVER_ERROR", "Stripe Checkout konnte nicht gestartet werden.", 500);
+    fail(res, "INTERNAL_SERVER_ERROR", "Das aktuelle Angebot konnte nicht geladen oder Stripe Checkout nicht gestartet werden. Bitte versuche es später erneut.", 500);
   }
 }

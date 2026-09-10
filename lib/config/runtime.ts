@@ -98,5 +98,8 @@ export function getStripeServerConfig(): {
   if (!webhookSecret.startsWith("whsec_")) {
     throw new Error("STRIPE_WEBHOOK_SECRET must be a Stripe webhook signing secret.");
   }
+  if (!carePlanPriceId.startsWith("price_")) {
+    throw new Error("STRIPE_CARE_PLAN_PRICE_ID must be an active recurring Stripe Price ID.");
+  }
   return { secretKey, webhookSecret, carePlanPriceId, appUrl: getAppUrl() };
 }

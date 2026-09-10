@@ -8,7 +8,7 @@ Last Modified: 2026-09-06
 
 Bonsai Tracker kann heute Bonsais, Pflegeeintraege und manuelle Reminder abbilden, aber Nutzer muessen selbst wissen, wann fuer eine bestimmte Pflanzenart typische Pflegearbeiten anstehen. Gerade beim Anlegen oder Pflegen mehrerer Bonsais ist diese Planung fehleranfaellig und erzeugt wiederkehrenden manuellen Aufwand.
 
-Das erste zahlungspflichtige Feature soll diesen konkreten Mehrwert liefern: Fuer eine kuratierte Pflanzenart zeigt Bonsai Tracker eine Pflegeplan-Vorschau und kann nach bezahlter Pflegeplan-Subscription automatisch System-Reminder fuer typische saisonale Arbeiten erzeugen.
+Das erste zahlungspflichtige Feature soll diesen konkreten Mehrwert liefern: Fuer eine kuratierte Pflanzenart zeigt Bonsai Tracker eine Pflegeplan-Vorschau und kann mit aktiver Bonsai-Tracker-Plus-Subscription automatisch System-Reminder fuer typische saisonale Arbeiten erzeugen.
 
 ## Solution
 
@@ -16,7 +16,7 @@ Nutzer koennen beim Anlegen eines Bonsai oder spaeter im Bonsai-Kontext eine kur
 
 Die Pflegeplan-Aktivierung ist hinter der Paywall. Nutzer ohne Entitlement sehen im Pflegeplan-Kontext eine Pflegeplan-Paywall mit Stripe-Checkout-CTA. Nach erfolgreichem Checkout fuehrt die App zurueck in den Bonsai-Kontext; die Zahlung allein veraendert keinen Bonsai. Erst ein expliziter Klick auf Pflegeplan aktivieren erzeugt System-Reminder.
 
-Die App fuehrt fuer dieses Feature eine Stripe-backed Pflegeplan-Subscription ein. Stripe ist die Zahlungsquelle; die fachliche Paywall prueft serverseitig ein internes Entitlement. Aboverwaltung laeuft im ersten Schnitt ueber Stripe Customer Portal aus dem Profilbereich.
+Die App fuehrt fuer dieses Feature die Stripe-backed Bonsai-Tracker-Plus-Subscription ein, deren erster enthaltener Vorteil der Pflegeplan ist. Stripe ist die Zahlungsquelle; die fachliche Paywall prueft serverseitig ein internes Entitlement. Aboverwaltung laeuft im ersten Schnitt ueber Stripe Customer Portal aus dem Profilbereich.
 
 ## User Stories
 
@@ -73,7 +73,7 @@ Die App fuehrt fuer dieses Feature eine Stripe-backed Pflegeplan-Subscription ei
 2. The Pflegeplan-Vorschau must be visible before payment.
 3. Pflegeplan-Aktivierung and System-Reminder generation must require a server-side Entitlement.
 4. The existing manual Nutzer-Reminder capability must remain free and editable.
-5. The app must support a single monthly Pflegeplan-Subscription through Stripe.
+5. The app must support the single annual "Bonsai Tracker Plus" Subscription for 19,99 EUR through Stripe.
 6. The app must not introduce one-time purchases, tiers or trial setup in the first release.
 7. The app must support Stripe Checkout from the Pflegeplan-Paywall.
 8. The app must support Stripe Customer Portal from the profile/account area.
@@ -120,7 +120,7 @@ Die App fuehrt fuer dieses Feature eine Stripe-backed Pflegeplan-Subscription ei
 - Allow constrained System-Reminder actions: done, snooze and remove.
 - Preserve full edit behavior for Nutzer-Reminder.
 - Implement an internal server-side Entitlement check for all paid Pflegeplan mutations.
-- Add Stripe integration for one monthly Pflegeplan-Subscription.
+- Add Stripe integration for the single annual "Bonsai Tracker Plus" Subscription for 19,99 EUR.
 - Use Stripe Checkout for new Subscription purchase from Pflegeplan-Paywall.
 - Use Stripe webhooks as the authoritative source for local Entitlement changes.
 - Treat Stripe subscription statuses `active` and `trialing` as Entitlement-active.
@@ -191,7 +191,7 @@ Die App fuehrt fuer dieses Feature eine Stripe-backed Pflegeplan-Subscription ei
 - Weather, Standort, region, climate zone, week-number or exact horticultural timing logic.
 - Push notifications, email reminders or calendar integrations.
 - A standalone pricing page.
-- Multiple subscription tiers, annual plan, one-time purchase or first-party trial setup.
+- Multiple subscription tiers, a monthly plan, one-time purchase or first-party trial setup.
 - A first-party billing management UI beyond local status display and Stripe Customer Portal link.
 - Auto-activation for existing bonsais.
 - Hiding or deleting existing System-Reminder when Entitlement ends.

@@ -1,8 +1,10 @@
 import Link from "next/link";
+import type { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
+import type { PlusOffer } from "@/lib/billing/plus";
 
 type QueryValue = string | string[] | undefined;
 type RootAuthCallbackQuery = {
@@ -122,7 +124,20 @@ function AuthField({
   );
 }
 
-export default function Home() {
+interface HomeProps {
+  offer: PlusOffer | null;
+}
+
+export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
+  try {
+    const { getCurrentPlusOffer } = await import("@/lib/stripe/server");
+    return { props: { offer: await getCurrentPlusOffer() } };
+  } catch {
+    return { props: { offer: null } };
+  }
+};
+
+export default function Home({ offer }: HomeProps) {
   const router = useRouter();
   const { session, status, signOut } = useAuth();
   const [authMode, setAuthMode] = useState<AuthMode>("login");
@@ -320,7 +335,8 @@ export default function Home() {
   const authError = getAuthErrorMessage(router.query.error);
 
   return (
-    <main className="page-shell mx-auto flex min-h-screen max-w-6xl flex-col justify-center gap-8 px-6 py-10 lg:flex-row lg:items-center">
+    <main className="page-shell mx-auto min-h-screen max-w-6xl space-y-8 px-6 py-10">
+      <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="landing-copy max-w-xl space-y-6">
         <div className="badge badge-outline px-4 py-3 text-primary">Bonsai Tracker</div>
         <h1 className="text-5xl font-bold leading-tight">Behalte Pflege, Entwicklung und Fotos deiner Bonsai übersichtlich an einem Ort.</h1>
@@ -374,7 +390,7 @@ export default function Home() {
             {authMode === "reset" ? (
               <form className="space-y-5 pt-2" onSubmit={handlePasswordReset}>
                 <h3 className="text-lg font-semibold">{getAuthModeTitle(authMode)}</h3>
-                <p className="text-sm text-base-content/60">Erhalte eine E-Mail, um dein Passwort fuer ein bestehendes Konto zu erneuern.</p>
+                <p className="text-sm text-base-content/60">Erhalte eine E-Mail, um dein Passwort für ein bestehendes Konto zu erneuern.</p>
                 <AuthField label="E-Mail-Adresse">
                   <input
                     className={AUTH_INPUT_CLASS}
@@ -471,6 +487,32 @@ export default function Home() {
                 </button>
               </form>
             ) : null}
+          </div>
+        </div>
+      </section>
+      </div>
+
+      <section className="surface-card card">
+        <div className="card-body gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-3xl space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="card-title text-2xl">{offer?.productName ?? "Bonsai Tracker Plus"}</h2>
+              {offer ? <span className="badge badge-primary badge-lg">{offer.priceLabel} {offer.billingPeriodLabel}</span> : null}
+            </div>
+            <p>
+              Erhalte für passende Pflanzenarten eine Vorschau der kommenden 12 Monate und erstelle daraus automatische System-Reminder für typische saisonale Arbeiten.
+            </p>
+            <p className="text-sm text-base-content/70">
+              Pflegepläne zeigen typische Zeitfenster, keine exakte Pflegegarantie. Sie enthalten keine Gieß-Erinnerungen – prüfe immer den Zustand am eigenen Baum.
+            </p>
+            {!offer ? <p className="text-sm text-warning">Der aktuelle Preis ist derzeit nicht verfügbar. Bitte versuche es später erneut.</p> : null}
+          </div>
+          <div className="card-actions shrink-0">
+            {status === "authenticated" && session ? (
+              <Link href="/dashboard" className="btn btn-primary">Zu meinen Bonsais</Link>
+            ) : (
+              <button className="btn btn-primary" type="button" onClick={() => switchAuthMode("signup")}>Jetzt registrieren</button>
+            )}
           </div>
         </div>
       </section>

@@ -18,12 +18,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const customer = await getStripeCustomer(actor.id);
     if (!customer) {
-      fail(res, "NOT_FOUND", "Kein Stripe-Kunde fuer dieses Konto vorhanden.", 404);
+      fail(res, "NOT_FOUND", "Kein Stripe-Kunde für dieses Konto vorhanden.", 404);
       return;
     }
     const session = await createCustomerPortalSession(customer.stripe_customer_id);
     ok(res, { url: session.url });
   } catch {
-    fail(res, "INTERNAL_SERVER_ERROR", "Das Stripe Customer Portal konnte nicht geoeffnet werden.", 500);
+    fail(res, "INTERNAL_SERVER_ERROR", "Das Stripe Customer Portal konnte nicht geöffnet werden.", 500);
   }
 }

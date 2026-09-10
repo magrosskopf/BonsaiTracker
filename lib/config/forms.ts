@@ -57,7 +57,7 @@ export const bonsaiFormStepConfigs: FormStepConfig[] = [
     sectionTitle: "Grunddaten",
     fields: [
       { key: "name", label: "Name", type: "text", required: true },
-      { key: "species", label: "Art", type: "text" },
+      { key: "species", label: "Art-Freitext (eigene Beschreibung)", type: "text" },
       {
         key: "carePlanSpeciesId",
         label: "Pflegeplan-Pflanzenart",

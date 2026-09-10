@@ -2,10 +2,13 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useState } from "react";
 import AuthenticatedImage from "@/components/AuthenticatedImage";
+import CheckoutReturnNotice from "@/components/CheckoutReturnNotice";
+import PlusOfferCard from "@/components/PlusOfferCard";
 import { apiFetch } from "@/lib/api/client";
 import { useRequireAuth } from "@/lib/auth/use-require-auth";
 import { formatBonsaiAge, formatBonsaiDate, formatBonsaiDisplayText } from "@/lib/bonsai-display";
 import { collectBonsaiTimelineImages } from "@/lib/bonsai-images";
+import type { BillingStatus } from "@/lib/billing/plus";
 import type { BonsaiDetail, ReminderDto } from "@/types/dto";
 import {
   DEVELOPMENT_STAGE_LABELS,
@@ -17,12 +20,14 @@ import {
 } from "@/types/domain";
 
 const CARE_PLAN_CARE_TYPE_LABELS: Record<string, string> = {
-  FERTILIZING: "Duengung",
+  FERTILIZING: "Düngung",
   PRUNING: "Schnitt",
   WIRING: "Drahten",
   REPOTTING: "Umtopfen",
   INSPECTION: "Kontrolle",
 };
+
+const EMPTY_BILLING_STATUS: BillingStatus = { offer: null, purchaseState: "unavailable", canManage: false };
 
 interface DetailResponse {
   ok: boolean;
@@ -68,6 +73,8 @@ export default function BonsaiDetailPage() {
   const [carePlan, setCarePlan] = useState<CarePlanContextResponse["data"] | null>(null);
   const [carePlanError, setCarePlanError] = useState<string | null>(null);
   const [carePlanBusy, setCarePlanBusy] = useState(false);
+  const [carePlanSuccess, setCarePlanSuccess] = useState<string | null>(null);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus>(EMPTY_BILLING_STATUS);
   const [entryFilter, setEntryFilter] = useState<string>("");
   const [slideshowIndex, setSlideshowIndex] = useState(0);
 
@@ -101,6 +108,11 @@ export default function BonsaiDetailPage() {
       } else if (carePlanJson.error?.message) {
         setCarePlan(null);
         setCarePlanError(carePlanJson.error.message);
+      }
+      const billingResponse = await apiFetch("/api/billing/status");
+      const billingJson = (await billingResponse.json()) as { ok: boolean; data?: BillingStatus };
+      if (billingResponse.ok && billingJson.ok && billingJson.data) {
+        setBillingStatus(billingJson.data);
       }
       setError(null);
       setLoading(false);
@@ -160,6 +172,7 @@ export default function BonsaiDetailPage() {
     }
     setCarePlanBusy(true);
     setCarePlanError(null);
+    setCarePlanSuccess(null);
     const response = await apiFetch(`/api/bonsais/${id}/care-plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -181,7 +194,35 @@ export default function BonsaiDetailPage() {
     if (remindersResponse.ok && remindersJson.ok && remindersJson.data) {
       setReminders(remindersJson.data.items);
     }
+    if (action === "activate") {
+      setCarePlanSuccess("System-Reminder wurden angelegt.");
+    }
     setCarePlanBusy(false);
+  }
+
+  async function refreshCarePlanEntitlement(): Promise<boolean> {
+    if (!id) return false;
+    const response = await apiFetch(`/api/bonsais/${id}/care-plan`);
+    const json = (await response.json()) as CarePlanContextResponse;
+    if (!response.ok || !json.ok || !json.data) return false;
+    setCarePlan(json.data);
+    if (json.data.entitlementActive) {
+      setBillingStatus((current) => ({ ...current, purchaseState: "subscription" }));
+    }
+    return json.data.entitlementActive;
+  }
+
+  async function openBillingPortal() {
+    setCarePlanBusy(true);
+    setCarePlanError(null);
+    const response = await apiFetch("/api/billing/portal", { method: "POST" });
+    const json = (await response.json()) as { ok: boolean; data?: { url: string | null }; error?: { message: string } };
+    setCarePlanBusy(false);
+    if (!response.ok || !json.ok || !json.data?.url) {
+      setCarePlanError(json.error?.message ?? "Die Aboverwaltung konnte nicht geöffnet werden.");
+      return;
+    }
+    window.location.href = json.data.url;
   }
 
   async function startCheckout() {
@@ -195,10 +236,22 @@ export default function BonsaiDetailPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bonsaiId: bonsai.id }),
     });
-    const json = (await response.json()) as { ok: boolean; data?: { url: string | null }; error?: { message: string } };
+    const json = (await response.json()) as { ok: boolean; data?: { kind: "redirect" | "processing" | "manage"; url?: string | null }; error?: { message: string } };
     setCarePlanBusy(false);
-    if (!response.ok || !json.ok || !json.data?.url) {
+    if (!response.ok || !json.ok || !json.data) {
       setCarePlanError(json.error?.message ?? "Stripe Checkout konnte nicht gestartet werden.");
+      return;
+    }
+    if (json.data.kind === "processing") {
+      setBillingStatus((current) => ({ ...current, purchaseState: "checkout_processing", canManage: true }));
+      return;
+    }
+    if (json.data.kind === "manage") {
+      setBillingStatus((current) => ({ ...current, purchaseState: "subscription", canManage: true }));
+      return;
+    }
+    if (!json.data.url) {
+      setCarePlanError("Stripe Checkout konnte nicht gestartet werden.");
       return;
     }
     window.location.href = json.data.url;
@@ -294,18 +347,27 @@ export default function BonsaiDetailPage() {
                 </div>
               </div>
 
-              <div className="surface-card card">
+              <div className="surface-card card" id="pflegeplan">
                 <div className="card-body gap-4">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="card-title">Pflegeplan</h2>
                       <p className="text-sm text-base-content/70">
-                        {carePlan?.species?.label ?? "Waehle im Bearbeiten-Formular eine Pflegeplan-Pflanzenart."}
+                        {carePlan?.species?.label ?? "Wähle eine kuratierte Pflegeplan-Pflanzenart. Der Art-Freitext in den Grunddaten bleibt deine eigene Beschreibung."}
                       </p>
+                      {!carePlan?.species ? <Link href={`/bonsai/edit/${bonsai.id}`} className="link text-sm font-semibold">Pflegeplan-Pflanzenart auswählen</Link> : null}
                     </div>
                     {carePlan?.carePlanActive ? <span className="badge badge-success">Aktiv</span> : <span className="badge badge-outline">Vorschau</span>}
                   </div>
                   {carePlanError ? <div className="alert alert-warning">{carePlanError}</div> : null}
+                  {carePlanSuccess ? <div className="alert alert-success">{carePlanSuccess} <Link href="/reminders" className="link font-semibold">Zur Reminder-Liste</Link></div> : null}
+                  <CheckoutReturnNotice
+                    context="bonsai"
+                    checkEntitlement={refreshCarePlanEntitlement}
+                    canManage={billingStatus.canManage}
+                    onManage={() => void openBillingPortal()}
+                    onCheckoutConfirmed={() => setBillingStatus((current) => ({ ...current, purchaseState: "subscription", canManage: true }))}
+                  />
                   {carePlan ? (
                     <>
                       <p className="text-sm text-base-content/70">{carePlan.note}</p>
@@ -337,9 +399,13 @@ export default function BonsaiDetailPage() {
                             )}
                           </>
                         ) : carePlan.species ? (
-                          <button className="btn btn-primary btn-sm" disabled={carePlanBusy} onClick={() => void startCheckout()}>
-                            Pflegeplan freischalten
-                          </button>
+                          <PlusOfferCard
+                            {...billingStatus}
+                            busy={carePlanBusy}
+                            entitlementActive={carePlan.entitlementActive}
+                            onCheckout={() => void startCheckout()}
+                            onManage={() => void openBillingPortal()}
+                          />
                         ) : null}
                       </div>
                     </>

@@ -1,11 +1,25 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { NextApiRequest } from "next";
+import {
+  buildCheckoutIdempotencyKey,
+  classifyStripePurchase,
+  type PlusOffer,
+  type StripeCheckoutSessionSummary,
+  type StripePriceLike,
+  type StripePurchaseState,
+  type StripeSubscriptionSummary,
+  toPlusOffer,
+} from "@/lib/billing/plus";
 import { getStripeServerConfig } from "@/lib/config/runtime";
 
 interface StripeSession {
   id: string;
   url: string | null;
   customer: string | null;
+}
+
+interface StripeList<T> {
+  data: T[];
 }
 
 export interface StripeSubscriptionLike {
@@ -25,15 +39,22 @@ function encodeForm(data: Record<string, string | number | null | undefined>): U
   return params;
 }
 
-async function stripeRequest<T>(path: string, body: Record<string, string | number | null | undefined>): Promise<T> {
+async function stripeRequest<T>(
+  path: string,
+  body: Record<string, string | number | null | undefined> = {},
+  method: "GET" | "POST" = "POST",
+  idempotencyKey?: string,
+): Promise<T> {
   const { secretKey } = getStripeServerConfig();
-  const response = await fetch(`https://api.stripe.com/v1${path}`, {
-    method: "POST",
+  const encoded = encodeForm(body);
+  const response = await fetch(`https://api.stripe.com/v1${path}${method === "GET" && encoded.size ? `?${encoded}` : ""}`, {
+    method,
     headers: {
       Authorization: `Bearer ${secretKey}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
     },
-    body: encodeForm(body),
+    body: method === "POST" ? encoded : undefined,
   });
   const json = (await response.json()) as T & { error?: { message?: string } };
   if (!response.ok) {
@@ -42,18 +63,41 @@ async function stripeRequest<T>(path: string, body: Record<string, string | numb
   return json;
 }
 
+export async function getCurrentPlusOffer(): Promise<PlusOffer> {
+  const { carePlanPriceId } = getStripeServerConfig();
+  const price = await stripeRequest<StripePriceLike>(`/prices/${encodeURIComponent(carePlanPriceId)}`, { "expand[]": "product" }, "GET");
+  const offer = toPlusOffer(price);
+  if (!offer) {
+    throw new Error("The configured Stripe Price is not an active annual EUR subscription offer.");
+  }
+  return offer;
+}
+
 export async function createStripeCustomer(email: string | null, userId: string): Promise<string> {
   const customer = await stripeRequest<{ id: string }>("/customers", {
     email,
     "metadata[user_id]": userId,
-  });
+  }, "POST", `plus-customer:${userId}`);
   return customer.id;
+}
+
+export async function getStripePurchaseState(customerId: string): Promise<StripePurchaseState> {
+  const [sessions, subscriptions] = await Promise.all([
+    stripeRequest<StripeList<StripeCheckoutSessionSummary>>("/checkout/sessions", { customer: customerId, limit: 10 }, "GET"),
+    stripeRequest<StripeList<StripeSubscriptionSummary>>("/subscriptions", { customer: customerId, status: "all", limit: 10 }, "GET"),
+  ]);
+  return classifyStripePurchase(sessions.data, subscriptions.data);
+}
+
+export async function retrieveCheckoutSession(sessionId: string): Promise<StripeCheckoutSessionSummary> {
+  return stripeRequest<StripeCheckoutSessionSummary>(`/checkout/sessions/${encodeURIComponent(sessionId)}`, {}, "GET");
 }
 
 export async function createCarePlanCheckoutSession(input: {
   userId: string;
   customerId: string;
   bonsaiId?: number | null;
+  purchaseState: StripePurchaseState;
 }): Promise<StripeSession> {
   const { appUrl, carePlanPriceId } = getStripeServerConfig();
   const contextPath = input.bonsaiId ? `/bonsai/${input.bonsaiId}` : "/profile";
@@ -62,12 +106,12 @@ export async function createCarePlanCheckoutSession(input: {
     customer: input.customerId,
     "line_items[0][price]": carePlanPriceId,
     "line_items[0][quantity]": 1,
-    success_url: `${appUrl}${contextPath}?checkout=success`,
+    success_url: `${appUrl}${contextPath}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}${contextPath}?checkout=cancelled`,
     "metadata[user_id]": input.userId,
     "metadata[bonsai_id]": input.bonsaiId ?? null,
     "subscription_data[metadata][user_id]": input.userId,
-  });
+  }, "POST", buildCheckoutIdempotencyKey(input.userId, input.purchaseState));
 }
 
 export async function createCustomerPortalSession(customerId: string): Promise<StripeSession> {

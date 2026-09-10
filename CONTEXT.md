@@ -103,7 +103,7 @@ Historie erhalten.
 _Avoid_: Automatische Neuberechnung, stille Synchronisierung, Historienloeschung
 
 **Inaktiver Pflegeplan-Zugang**:
-Der Zustand, in dem ein Nutzer keine aktive Pflegeplan-Subscription mehr hat;
+Der Zustand, in dem ein Nutzer keine aktive Bonsai-Tracker-Plus-Subscription mehr hat;
 neue oder aktualisierte Pflegeplan-Generierung ist gesperrt, bereits erzeugte
 System-Reminder bleiben aber nutzbar.
 _Avoid_: Geloeschter Pflegeplan, gesperrte Reminder, verlorene Premium-Daten
@@ -145,15 +145,15 @@ Die Produktgrenze, die zahlungspflichtige Funktionen von frei nutzbaren
 Kernfunktionen trennt; manuelle Reminder gehoeren nicht zur Paywall.
 _Avoid_: Feature-Sperre, Premium-Sperre
 
-**Subscription**:
-Der zahlungspflichtige Zugang eines Nutzers zu Premium-Funktionen wie dem
-Pflegeplan; sie wird extern bezahlt, aber fachlich als Produktzugang verstanden.
-_Avoid_: Stripe-Status, Abo-Flag
+**Bonsai-Tracker-Plus-Subscription**:
+Das einzelne jaehrliche Abo-Angebot "Bonsai Tracker Plus" fuer 19,99 EUR, das
+aktuell den Pflegeplan und spaeter weitere Produktvorteile enthalten kann.
+_Avoid_: Pflegeplan-Subscription, Stripe-Status, Abo-Flag, Premium-Stufe, Einmalkauf, Trial
 
-**Pflegeplan-Subscription**:
-Das einzelne monatliche Abo-Angebot, das einem Nutzer Zugang zur Aktivierung von
-Pflegeplaenen gibt.
-_Avoid_: Premium-Stufe, Einmalkauf, Trial
+**Laufende Bonsai-Tracker-Plus-Subscription**:
+Eine Plus-Subscription, die aktiv ist oder noch bezahlt, fortgesetzt oder
+reaktiviert werden kann; sie schliesst eine zweite parallele Subscription aus.
+_Avoid_: Zweitabo, endgueltig beendete Subscription, neuer Checkout
 
 **Entitlement**:
 Das serverseitig gepruefte Recht eines Nutzers, eine Premium-Funktion zu nutzen;
@@ -161,7 +161,7 @@ es kapselt Zahlungsdetails und ist die fachliche Grundlage der Paywall-Pruefung.
 _Avoid_: Stripe-Checkout, Client-Flag, UI-Sperre
 
 **Stripe-Anbindung**:
-Die Zahlungsintegration, ueber die ein Nutzer eine Subscription erwerben und
+Die Zahlungsintegration, ueber die ein Nutzer eine Bonsai-Tracker-Plus-Subscription erwerben und
 deren Zahlungsstatus aktualisiert werden kann.
 _Avoid_: Entitlement, Paywall, Pflegeplan-Zugang
 
@@ -172,11 +172,16 @@ zurueckbringt.
 _Avoid_: Pricing-Seite, allgemeine Premium-Seite, Checkout
 
 **Aboverwaltung**:
-Der Zugang eines Nutzers zur Verwaltung seiner Pflegeplan-Subscription; im
+Der Zugang eines Nutzers zur Verwaltung seiner Bonsai-Tracker-Plus-Subscription; im
 ersten Schnitt fuehrt sie aus dem Profilbereich in das Stripe Customer Portal.
 _Avoid_: Eigene Rechnungsverwaltung, Profilbearbeitung, Paywall
 
 **Abgebrochener Checkout**:
-Ein Stripe-Checkout, der ohne aktivierte Subscription endet; er aktiviert keinen
+Ein Stripe-Checkout, der ohne aktivierte Bonsai-Tracker-Plus-Subscription endet; er aktiviert keinen
 Pflegeplan und erzeugt keine System-Reminder.
 _Avoid_: Fehlgeschlagene Zahlung, inaktiver Pflegeplan, Rueckkehr mit Zugang
+
+**Bestaetigter Checkout**:
+Ein serverseitig verifizierter, abgeschlossener Stripe-Checkout des eingeloggten
+Nutzers; er bestaetigt den Kaufvorgang, ist aber noch kein Entitlement.
+_Avoid_: Erfolgsparameter, Pflegeplan-Zugang, Pflegeplan-Aktivierung

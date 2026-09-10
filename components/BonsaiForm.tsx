@@ -262,7 +262,7 @@ export default function BonsaiForm({
               <div>
                 <p className="font-medium">Mehr Angaben sind optional</p>
                 <p className="text-sm text-base-content/70">
-                  Art, Standort, Bilder und Pflegeprofil können direkt mit erfasst werden, blockieren den Schnellstart aber nicht.
+                  Die optionale Pflegeplan-Pflanzenart findest du unter „Weitere Details“. Art, Standort und Bilder blockieren den Schnellstart nicht.
                 </p>
               </div>
               <button

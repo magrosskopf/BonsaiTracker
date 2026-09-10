@@ -119,3 +119,16 @@ test("waitlist page is no longer part of the app surface", () => {
   assert.equal(source.includes('href="/waitlist"'), false);
   assert.equal(source.includes("WaitlistRequestForm"), false);
 });
+
+test("home page explains the Plus care-plan value and its limits without a hard-coded price", () => {
+  const source = readFileSync(join(repoRoot, "pages", "index.tsx"), "utf8");
+
+  assert.match(source, /Bonsai Tracker Plus/);
+  assert.match(source, /12 Monate/);
+  assert.match(source, /System-Reminder/);
+  assert.match(source, /typische Zeitfenster/);
+  assert.match(source, /keine Gieß-Erinnerungen/);
+  assert.match(source, /eigenen Baum/);
+  assert.match(source, /offer\.priceLabel/);
+  assert.doesNotMatch(source, /19,99/);
+});
