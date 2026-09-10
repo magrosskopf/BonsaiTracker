@@ -1,6 +1,6 @@
 # Pflegeplan Launch Experience
 
-**Status**: APPROVED
+**Status**: IMPLEMENTED
 **Created**: 2026-09-09
 **Last Modified**: 2026-09-10
 
@@ -103,36 +103,36 @@ Eine separate Pricing- oder Marketing-Route ist dafuer nicht erforderlich. Die P
 
 ## Acceptance Criteria
 
-- [ ] Die Startseite erklaert den Pflegeplan, seinen Nutzen, seine Grenzen sowie aktuellen Preis und Abrechnungszeitraum.
-- [ ] Die Startseite bleibt auf 390 px und 1440 px Breite ohne ueberlappende oder abgeschnittene Inhalte nutzbar.
-- [ ] Die Startseite enthaelt einen klaren Weg zur Registrierung beziehungsweise fuer eingeloggte Nutzer zu ihren Bonsais.
-- [ ] Im Schnellstart ist auffindbar, dass die optionale Pflegeplan-Pflanzenart unter den weiteren Details liegt.
-- [ ] Ein Bonsai ohne Pflegeplan-Pflanzenart bietet im Pflegeplan-Bereich einen direkten Link zum Bearbeiten.
-- [ ] Eine vorhandene Pflegeplan-Vorschau bleibt fuer Nutzer ohne Entitlement vollstaendig sichtbar.
-- [ ] Die Paywall zeigt Produktname, Preis, Abrechnungszeitraum, automatische Verlaengerung, enthaltene Leistung, Aboverwaltung und den manuellen Aktivierungsschritt nach Zahlung.
-- [ ] Der Checkout-CTA ist als kostenpflichtiges Abo eindeutig beschriftet.
-- [ ] Parallele Checkout-Anfragen und eine bereits offene Checkout Session erzeugen keinen zweiten unabhaengigen Kaufvorgang.
-- [ ] Bei einer laufenden Bonsai-Tracker-Plus-Subscription kann kein weiteres Abo abgeschlossen werden; die UI zeigt stattdessen Verarbeitung oder Aboverwaltung.
-- [ ] Erst nach `canceled` oder `incomplete_expired` kann derselbe Nutzer eine neue Bonsai-Tracker-Plus-Subscription abschliessen.
-- [ ] `checkout=success` erzeugt allein weder Entitlement noch Reminder.
-- [ ] Eine Checkout-Erfolgsmeldung erscheint nur nach serverseitiger Pruefung einer abgeschlossenen, dem eingeloggten Nutzer zugeordneten Checkout Session.
-- [ ] Eine fehlende, ungueltige, nicht abgeschlossene oder fremde Checkout-Session-ID erzeugt keine Erfolgsmeldung und veraendert keine Daten.
-- [ ] Nach erfolgreichem Checkout wird das Entitlement sofort und danach alle zwei Sekunden fuer maximal 30 Sekunden aktiver Vordergrundzeit geprueft; in einem nicht sichtbaren Browser-Tab pausiert das Polling.
-- [ ] Waehrend der Zugangsverarbeitung wird kein zweiter Checkout-CTA angeboten.
-- [ ] Nach aktivem Zugang ist "Pflegeplan aktivieren" der eindeutige primaere naechste Schritt.
-- [ ] Nach Aktivierung fuehrt ein Link zu den erzeugten System-Remindern.
-- [ ] `checkout=cancelled` zeigt eine neutrale Meldung und veraendert keine Daten.
-- [ ] Verarbeitete Checkout-Parameter werden clientseitig aus der URL entfernt.
-- [ ] Das Profil zeigt keine rohen Stripe-Statuswerte und bietet Aboverwaltung nur an, wenn sie nutzbar ist.
-- [ ] Das Profil bietet Nutzern ohne Bonsai Tracker Plus einen eigenstaendigen, eindeutig beschrifteten Checkout-Einstieg mit aktuellen Produkt- und Preisdaten.
-- [ ] Nach verifiziertem Profil-Checkout fuehrt der naechste Schritt zur Bonsai-Auswahl, ohne automatisch einen Pflegeplan zu aktivieren.
-- [ ] Sichtbare Preisangaben entsprechen der aktiven Stripe Price, die Checkout verwendet.
-- [ ] Eine Product-ID in `STRIPE_CARE_PLAN_PRICE_ID` wird vor dem Checkout als Konfigurationsfehler erkannt.
-- [ ] Bei nicht erreichbaren oder ungueltigen Stripe-Produktdaten bleiben Produktnutzen, Registrierung und kostenlose Funktionen erreichbar, waehrend Preis und Checkout-CTA nicht angezeigt werden.
-- [ ] Bei einem Stripe-Produktdatenfehler wird kein fest codierter oder zwischengespeicherter Preis als aktuelles Angebot ausgegeben.
-- [ ] Tests decken Startseiten-Copy, Paywall-Zustaende, Checkout-Rueckkehr, begrenztes Entitlement-Polling und Profil-Copy ab.
-- [ ] `npm test`, `npm run typecheck` und `npm run build` laufen erfolgreich.
-- [ ] Startseite und Bonsai-Detail werden im Browser auf Mobile und Desktop visuell geprueft.
+- [x] Die Startseite erklaert den Pflegeplan, seinen Nutzen, seine Grenzen sowie aktuellen Preis und Abrechnungszeitraum.
+- [x] Die Startseite enthaelt einen klaren Weg zur Registrierung beziehungsweise fuer eingeloggte Nutzer zu ihren Bonsais.
+- [x] Im Schnellstart ist auffindbar, dass die optionale Pflegeplan-Pflanzenart unter den weiteren Details liegt.
+- [x] Ein Bonsai ohne Pflegeplan-Pflanzenart bietet im Pflegeplan-Bereich einen direkten Link zum Bearbeiten.
+- [x] Eine vorhandene Pflegeplan-Vorschau bleibt fuer Nutzer ohne Entitlement vollstaendig sichtbar.
+- [x] Die Paywall zeigt Produktname, Preis, Abrechnungszeitraum, automatische Verlaengerung, enthaltene Leistung, Aboverwaltung und den manuellen Aktivierungsschritt nach Zahlung.
+- [x] Der Checkout-CTA ist als kostenpflichtiges Abo eindeutig beschriftet.
+- [x] Parallele Checkout-Anfragen und eine bereits offene Checkout Session erzeugen keinen zweiten unabhaengigen Kaufvorgang.
+- [x] Bei einer laufenden Bonsai-Tracker-Plus-Subscription kann kein weiteres Abo abgeschlossen werden; die UI zeigt stattdessen Verarbeitung oder Aboverwaltung.
+- [x] Erst nach `canceled` oder `incomplete_expired` kann derselbe Nutzer eine neue Bonsai-Tracker-Plus-Subscription abschliessen.
+- [x] `checkout=success` erzeugt allein weder Entitlement noch Reminder.
+- [x] Eine Checkout-Erfolgsmeldung erscheint nur nach serverseitiger Pruefung einer abgeschlossenen, dem eingeloggten Nutzer zugeordneten Checkout Session.
+- [x] Eine fehlende, ungueltige, nicht abgeschlossene oder fremde Checkout-Session-ID erzeugt keine Erfolgsmeldung und veraendert keine Daten.
+- [x] Nach erfolgreichem Checkout wird das Entitlement sofort und danach alle zwei Sekunden fuer maximal 30 Sekunden aktiver Vordergrundzeit geprueft; in einem nicht sichtbaren Browser-Tab pausiert das Polling.
+- [x] Waehrend der Zugangsverarbeitung wird kein zweiter Checkout-CTA angeboten.
+- [x] Nach aktivem Zugang ist "Pflegeplan aktivieren" der eindeutige primaere naechste Schritt.
+- [x] Nach Aktivierung fuehrt ein Link zu den erzeugten System-Remindern.
+- [x] `checkout=cancelled` zeigt eine neutrale Meldung und veraendert keine Daten.
+- [x] Verarbeitete Checkout-Parameter werden clientseitig aus der URL entfernt.
+- [x] Das Profil zeigt keine rohen Stripe-Statuswerte und bietet Aboverwaltung nur an, wenn sie nutzbar ist.
+- [x] Das Profil bietet Nutzern ohne Bonsai Tracker Plus einen eigenstaendigen, eindeutig beschrifteten Checkout-Einstieg mit aktuellen Produkt- und Preisdaten.
+- [x] Nach verifiziertem Profil-Checkout fuehrt der naechste Schritt zur Bonsai-Auswahl, ohne automatisch einen Pflegeplan zu aktivieren.
+- [x] Sichtbare Preisangaben entsprechen der aktiven Stripe Price, die Checkout verwendet.
+- [x] Eine Product-ID in `STRIPE_CARE_PLAN_PRICE_ID` wird vor dem Checkout als Konfigurationsfehler erkannt.
+- [x] Bei nicht erreichbaren oder ungueltigen Stripe-Produktdaten bleiben Produktnutzen, Registrierung und kostenlose Funktionen erreichbar, waehrend Preis und Checkout-CTA nicht angezeigt werden.
+- [x] Bei einem Stripe-Produktdatenfehler wird kein fest codierter oder zwischengespeicherter Preis als aktuelles Angebot ausgegeben.
+- [x] Tests decken Startseiten-Copy, Paywall-Zustaende, Checkout-Rueckkehr, begrenztes Entitlement-Polling und Profil-Copy ab.
+- [x] `npm test`, `npm run typecheck` und `npm run build` laufen erfolgreich.
+- [ ] Die Startseite bleibt auf 390 px und 1440 px Breite ohne ueberlappende oder abgeschnittene Inhalte nutzbar. *(Manuelle Browser-QA auf Nutzerwunsch ausgelassen.)*
+- [ ] Startseite und Bonsai-Detail werden im Browser auf Mobile und Desktop visuell geprueft. *(Auf Nutzerwunsch ausgelassen.)*
 
 ## Out-of-Scope
 

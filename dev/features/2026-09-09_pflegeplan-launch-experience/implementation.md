@@ -1,6 +1,6 @@
 # Implementation Plan: Pflegeplan Launch Experience
 
-**Status**: VERIFY
+**Status**: COMPLETE
 **Created**: 2026-09-10
 **Last Modified**: 2026-09-10
 
@@ -176,16 +176,16 @@ Nach jedem Slice laufen die betroffene Testdatei und `npm run typecheck`.
 
 ## Validation Checklist
 
-- [ ] Einzeltests jedes TDD-Slices sind rot vor und gruen nach Implementierung.
-- [ ] `npm run typecheck` laeuft regelmaessig und abschliessend erfolgreich.
-- [ ] `npm test` laeuft einmal am Ende erfolgreich.
-- [ ] `npm run build` laeuft erfolgreich.
-- [ ] Startseite und Bonsai-Detail sind bei 390 px und 1440 px visuell geprueft.
-- [ ] Checkout-Erfolg schreibt kein Entitlement und erzeugt keine Reminder.
-- [ ] Product-ID und ungueltige/inaktive Stripe-Angebote werden fail-closed
+- [x] Einzeltests jedes TDD-Slices sind rot vor und gruen nach Implementierung.
+- [x] `npm run typecheck` laeuft regelmaessig und abschliessend erfolgreich.
+- [x] `npm test` laeuft einmal am Ende erfolgreich.
+- [x] `npm run build` laeuft erfolgreich.
+- [ ] Startseite und Bonsai-Detail sind bei 390 px und 1440 px visuell geprueft. *(Auf Nutzerwunsch ausgelassen.)*
+- [x] Checkout-Erfolg schreibt kein Entitlement und erzeugt keine Reminder.
+- [x] Product-ID und ungueltige/inaktive Stripe-Angebote werden fail-closed
   behandelt.
-- [ ] Keine fest codierte sichtbare Preisangabe dient als aktuelles Angebot.
-- [ ] Bestehende nutzereigene Arbeitsbaum-Aenderungen bleiben erhalten.
-- [ ] Abschliessender Zwei-Achsen-Code-Review gegen den Start-Commit ist ohne
+- [x] Keine fest codierte sichtbare Preisangabe dient als aktuelles Angebot.
+- [x] Bestehende nutzereigene Arbeitsbaum-Aenderungen bleiben erhalten.
+- [x] Abschliessender Zwei-Achsen-Code-Review gegen den Start-Commit ist ohne
   offene relevante Findings oder Findings wurden behoben und erneut geprueft.
-- [ ] Spec ist `IMPLEMENTED`, Plan ist `COMPLETE`, Feature-Commit ist erstellt.
+- [x] Spec ist `IMPLEMENTED`, Plan ist `COMPLETE`, Feature-Commit ist erstellt.
